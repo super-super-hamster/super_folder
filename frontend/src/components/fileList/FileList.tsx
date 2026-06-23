@@ -5,7 +5,8 @@ import { useSelectionStore } from '../../store/selectionStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTagStore } from '../../store/tagStore'
-import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetTagsForFiles } from '../../../wailsjs/go/main/App'
+import { useSettingsStore } from '../../store/settingsStore'
+import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetTagsForFiles, SearchFiles, GetFavorites } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Checkbox } from '@heroui/react'
@@ -14,6 +15,7 @@ import { useCallback } from 'react'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
 import folderAnim from '../../assets/anim/folder.json'
+import documentAnim from '../../assets/anim/document.json'
 import ContextMenu from './ContextMenu'
 import RenamePopover from './RenamePopover'
 import ConversionView from '../conversion/ConversionView'
@@ -23,7 +25,7 @@ import { processFiles } from '../../utils/fileSorting'
 import { ProgressCapsule } from '../common/ProgressCapsule'
 import { useTaskStore } from '../../store/taskStore'
 
-const AnimatedFolderIcon = () => {
+const AnimatedFolderIcon = ({ className = "w-16 h-16" }: { className?: string }) => {
   const lottieRef = useRef<LottieRefCurrentProps>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -50,12 +52,80 @@ const AnimatedFolderIcon = () => {
   }, [])
 
   return (
-    <div ref={containerRef} className="w-16 h-16 pointer-events-none">
+    <div ref={containerRef} className={`${className} pointer-events-none`}>
       <Lottie
         lottieRef={lottieRef}
         animationData={folderAnim}
         loop={false}
         autoplay={false}
+      />
+    </div>
+  )
+}
+
+const AnimatedDocumentIcon = ({ className = "w-16 h-16" }: { className?: string }) => {
+  const lottieRef = useRef<LottieRefCurrentProps>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isHoveringRef = useRef(false)
+
+  useEffect(() => {
+    const parent = containerRef.current?.closest('.group')
+    if (!parent) return
+
+    const handleMouseEnter = () => {
+      isHoveringRef.current = true
+      lottieRef.current?.setDirection(1)
+      const anim = lottieRef.current?.animationItem
+      if (anim && anim.currentFrame >= anim.totalFrames - 1) {
+        lottieRef.current?.goToAndPlay(0)
+      } else {
+        lottieRef.current?.play()
+      }
+    }
+    
+    const handleMouseLeave = () => {
+      isHoveringRef.current = false
+      lottieRef.current?.setDirection(1)
+      lottieRef.current?.play()
+    }
+
+    parent.addEventListener('mouseenter', handleMouseEnter)
+    parent.addEventListener('mouseleave', handleMouseLeave)
+
+    return () => {
+      parent.removeEventListener('mouseenter', handleMouseEnter)
+      parent.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }, [])
+
+  const handleEnterFrame = (e: any) => {
+    if (isHoveringRef.current) return
+    const anim = lottieRef.current?.animationItem
+    if (!anim) return
+    
+    const current = e.currentTime
+    const total = e.totalTime
+    const half = total / 2
+
+    // Stop at 50%
+    if (current >= half && current < half + 2) {
+      anim.pause()
+    }
+  }
+
+  return (
+    <div ref={containerRef} className={`${className} pointer-events-none`}>
+      <Lottie
+        lottieRef={lottieRef}
+        animationData={documentAnim}
+        loop={false}
+        autoplay={false}
+        onEnterFrame={handleEnterFrame}
+        onComplete={() => {
+           if (isHoveringRef.current) {
+             lottieRef.current?.goToAndPlay(0)
+           }
+        }}
       />
     </div>
   )
@@ -187,11 +257,12 @@ if (!(window as any).runtime) {
 
 export default function FileList() {
   const { tabs, activeTabId, navigate } = useTabsStore()
-  const { isRightSidebarOpen, setRightSidebarOpen, refreshKey, setSearchFocused, sortOption, recentSortOption, isGrouped, scrollToPath, setScrollToPath } = useUIStore()
+  const { isRightSidebarOpen, setRightSidebarOpen, refreshKey, setSearchFocused, sortOption, recentSortOption, isGrouped, scrollToPath, setScrollToPath, searchQuery, searchFilter, viewMode } = useUIStore()
   const { selectedPaths, isSelectionMode, toggleSelect, selectOnly, selectAll, setSelection, toggleSelectionMode, clearSelection } = useSelectionStore()
   const { operation, items: clipboardItems, capsuleKey, copy, cut } = useClipboardStore()
   const { openMenu } = useContextMenuStore()
   const { startRename } = useRenameStore()
+  const { searchPresets } = useSettingsStore()
   
   const [files, setFiles] = useState<models.FileInfo[]>([])
   const [loading, setLoading] = useState(false)
@@ -318,10 +389,12 @@ export default function FileList() {
     return () => observer.disconnect()
   }, [currentPath])
 
+  const effectiveColumns = viewMode === 'list' ? 1 : columns
+
   const listItems = useMemo(() => {
     const activeSortOption = currentPath === 'recent://' ? recentSortOption : sortOption
-    return processFiles(files, activeSortOption, columns, isGrouped)
-  }, [files, sortOption, recentSortOption, columns, isGrouped, currentPath])
+    return processFiles(files, activeSortOption, effectiveColumns, isGrouped)
+  }, [files, sortOption, recentSortOption, effectiveColumns, isGrouped, currentPath])
 
   const flatFiles = useMemo(() => {
     const result: models.FileInfo[] = []
@@ -483,7 +556,9 @@ export default function FileList() {
     count: listItems.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index) => {
-      return listItems[index].type === 'header' ? 45 : 144
+      if (!listItems[index]) return 40
+      if (listItems[index].type === 'header') return 45
+      return viewMode === 'list' ? 40 : 144
     },
     getItemKey: (index) => {
       const item = listItems[index]
@@ -492,6 +567,10 @@ export default function FileList() {
     },
     overscan: 2,
   })
+
+  useEffect(() => {
+    rowVirtualizer.measure()
+  }, [viewMode, effectiveColumns])
 
   useEffect(() => {
     if (scrollToPath && listItems.length > 0) {
@@ -615,7 +694,73 @@ export default function FileList() {
       prevPathRef.current = currentPath
     }
 
-    const fetchPromise = currentPath === 'recent://' ? GetRecentItems() : ReadDir(currentPath)
+    let fetchPromise: Promise<models.FileInfo[]>
+    
+    let keyword = searchQuery ? searchQuery.trim() : ''
+    let tags: string[] = []
+    let tagLogic = 'OR'
+    
+    if (keyword.toLowerCase().includes('tag:')) {
+      const parts = keyword.split('&')
+      if (parts.length > 1) {
+        tagLogic = 'AND'
+        tags = parts.map(p => {
+          const m = p.match(/tag:([^&\s]+)/i)
+          return m ? m[1] : ''
+        }).filter(Boolean)
+        keyword = keyword.replace(/tag:([^&\s]+)/gi, '').replace(/&/g, '').trim()
+      } else {
+        const m = keyword.match(/tag:([^\s]+)/gi)
+        if (m) {
+          tags = m.map(t => t.split(':')[1])
+          keyword = keyword.replace(/tag:([^\s]+)/gi, '').trim()
+        }
+      }
+    }
+
+    if (currentPath && currentPath.startsWith('preset://')) {
+      const presetId = currentPath.replace('preset://', '')
+      const preset = searchPresets.find(p => p.id === presetId)
+      if (preset) {
+        const req = {
+          keyword: '',
+          isRegex: preset.filter.isRegex || false,
+          caseSensitive: preset.filter.isCaseSensitive || false,
+          onlyFiles: preset.filter.type === 'file',
+          onlyFolders: preset.filter.type === 'folder',
+          extensions: preset.filter.extensions || [],
+          tags: [],
+          tagLogic: 'OR',
+          maxDepth: 0,
+          rootPath: '',
+          limit: 2000
+        }
+        fetchPromise = SearchFiles(req)
+      } else {
+        fetchPromise = Promise.resolve([])
+      }
+    } else if (searchQuery && searchQuery.trim() !== '') {
+      const req = {
+        keyword: keyword,
+        isRegex: searchFilter?.isRegex || false,
+        caseSensitive: searchFilter?.isCaseSensitive || false,
+        onlyFiles: searchFilter?.type === 'file',
+        onlyFolders: searchFilter?.type === 'folder',
+        extensions: searchFilter?.extensions || [],
+        tags: tags,
+        tagLogic: tagLogic,
+        maxDepth: 0,
+        rootPath: currentPath,
+        limit: 2000
+      }
+      fetchPromise = SearchFiles(req)
+    } else if (currentPath === 'favorite://') {
+      fetchPromise = GetFavorites()
+    } else if (currentPath === 'recent://') {
+      fetchPromise = GetRecentItems()
+    } else {
+      fetchPromise = ReadDir(currentPath)
+    }
 
     fetchPromise
       .then((res) => {
@@ -813,6 +958,16 @@ export default function FileList() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return '--'
+    try {
+      const date = new Date(dateValue)
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    } catch {
+      return '--'
+    }
+  }
+
   if (currentPath?.endsWith('\\转换')) {
     return <ConversionView />
   }
@@ -845,10 +1000,18 @@ export default function FileList() {
         }
       }}
     >
+      {viewMode === 'list' && (
+        <div className={`grid ${isSelectionMode ? 'grid-cols-[20px_1fr_96px_128px]' : 'grid-cols-[1fr_96px_128px]'} items-center gap-4 pl-[40px] pr-10 py-2 border-b border-gray-200 bg-gray-50/80 backdrop-blur shrink-0 text-xs font-semibold text-gray-500 wails-no-drag`}>
+          {isSelectionMode && <div></div>}
+          <div className="text-left">名称</div>
+          <div className="text-right">大小</div>
+          <div className="text-right">修改日期</div>
+        </div>
+      )}
       <div 
         ref={scrollRef} 
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-6 pt-4 no-scrollbar pb-20 relative"
+        className="flex-1 w-full overflow-y-auto px-6 pt-4 no-scrollbar pb-20 relative"
         onPointerDown={handlePointerDown}
       >
       {loading ? (
@@ -917,11 +1080,11 @@ export default function FileList() {
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
                 display: 'grid',
-                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${effectiveColumns}, minmax(0, 1fr))`,
                 gap: '0.5rem',
               }}
             >
-              {Array.from({ length: columns }).map((_, colIndex) => {
+              {Array.from({ length: effectiveColumns }).map((_, colIndex) => {
                 const file = item.items[colIndex]
                 if (!file) return <div key={colIndex} />
 
@@ -943,47 +1106,93 @@ export default function FileList() {
                       openMenu(e.clientX, e.clientY, file.path, file.name)
                     }}
                     onDoubleClick={() => handleDoubleClick(file)}
-                    className={`flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'}`}
+                    className={
+                        viewMode === 'list' 
+                        ? `grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md transition-colors cursor-pointer group select-none relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100/60'}`
+                        : `flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'}`
+                      }
                   >
-                    <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center mb-2 text-blue-900 transition-transform relative">
-                      {isImage(file.ext) ? (
-                        <ThumbnailImage path={file.path} alt={file.name} />
-                      ) : file.isDir ? (
-                        <AnimatedFolderIcon />
+                    {viewMode === 'list' ? (
+                        <>
+                          {isSelectionMode && (
+                            <div className="flex items-center justify-center w-5 h-full" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox 
+                                isSelected={selectedPaths.has(file.path)} 
+                                onChange={() => toggleSelect(file.path)} 
+                              >
+                                <Checkbox.Content>
+                                  <Checkbox.Control className="w-[18px] h-[18px] shadow-none border-2 border-gray-400 data-[selected=true]:border-blue-500 rounded-full">
+                                    <Checkbox.Indicator />
+                                  </Checkbox.Control>
+                                </Checkbox.Content>
+                              </Checkbox>
+                            </div>
+                          )}
+                          <div className="w-6 h-6 flex items-center justify-center text-blue-900">
+                            {file.isDir ? (
+                              <AnimatedFolderIcon className="w-6 h-6" />
+                            ) : getFileIcon(file) === 'document_line.svg' ? (
+                              <AnimatedDocumentIcon className="w-6 h-6" />
+                            ) : (
+                              <img src={`/src/assets/icons/${getFileIcon(file)}`} className="w-5 h-5 object-contain" draggable={false} alt="file icon" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium text-gray-700 truncate text-left" title={file.name}>
+                            {file.name}
+                          </div>
+                          <div className="text-xs text-gray-400 text-right">
+                            {file.isDir ? '--' : formatSize(file.size)}
+                          </div>
+                          <div className="text-xs text-gray-400 text-right">
+                            {formatDate(file.modTime)}
+                          </div>
+                        </>
                       ) : (
-                        <img
-                          src={`/src/assets/icons/${getFileIcon(file)}`}
-                          className="w-12 h-12 object-contain"
-                          alt="icon"
-                        />
+                        <>
+                          <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center mb-2 text-blue-900 transition-transform relative">
+                            {isImage(file.ext) ? (
+                              <ThumbnailImage path={file.path} alt={file.name} />
+                            ) : file.isDir ? (
+                              <AnimatedFolderIcon />
+                            ) : getFileIcon(file) === 'document_line.svg' ? (
+                              <AnimatedDocumentIcon />
+                            ) : (
+                              <img
+                                src={`/src/assets/icons/${getFileIcon(file)}`}
+                                className="w-12 h-12 object-contain"
+                                alt="icon"
+                                draggable={false}
+                              />
+                            )}
+                            
+                            {fileTagColors[file.path] && (
+                              <div className="absolute -bottom-1 -right-1 z-10 flex items-center justify-center">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{color: fileTagColors[file.path]}}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="h-10 w-full flex flex-col items-center justify-start overflow-hidden relative">
+                            <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all" title={file.name}>
+                              {file.name}
+                            </span>
+                          </div>
+      
+                          {isSelectionMode && (
+                            <div className="absolute bottom-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox 
+                                isSelected={selectedPaths.has(file.path)} 
+                                onChange={() => toggleSelect(file.path)} 
+                              >
+                                <Checkbox.Content>
+                                  <Checkbox.Control className="w-[18px] h-[18px] shadow-none border-2 border-gray-400 data-[selected=true]:border-blue-500 rounded-full">
+                                    <Checkbox.Indicator />
+                                  </Checkbox.Control>
+                                </Checkbox.Content>
+                              </Checkbox>
+                            </div>
+                          )}
+                        </>
                       )}
-                      
-                      {fileTagColors[file.path] && (
-                        <div className="absolute -bottom-1 -right-1 z-10 flex items-center justify-center">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{color: fileTagColors[file.path]}}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="h-10 w-full flex flex-col items-center justify-start overflow-hidden relative">
-                      <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all">
-                        {file.name}
-                      </span>
-                    </div>
-
-                    {isSelectionMode && (
-                      <div className="absolute bottom-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox 
-                          isSelected={selectedPaths.has(file.path)} 
-                          onChange={() => toggleSelect(file.path)} 
-                        >
-                          <Checkbox.Content>
-                            <Checkbox.Control className="w-[18px] h-[18px] shadow-none border-2 border-gray-400 data-[selected=true]:border-blue-500 rounded-full">
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                          </Checkbox.Content>
-                        </Checkbox>
-                      </div>
-                    )}
                   </div>
                 )
               })}

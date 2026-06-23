@@ -6,8 +6,16 @@ export function AddTagToFile(arg1, arg2) {
   return window['go']['main']['App']['AddTagToFile'](arg1, arg2);
 }
 
+export function AutoCleanThumbnailCache(arg1) {
+  return window['go']['main']['App']['AutoCleanThumbnailCache'](arg1);
+}
+
 export function CancelPaste(arg1) {
   return window['go']['main']['App']['CancelPaste'](arg1);
+}
+
+export function ClearThumbnailCache() {
+  return window['go']['main']['App']['ClearThumbnailCache']();
 }
 
 export function Close() {
@@ -28,6 +36,10 @@ export function CreateFolder(arg1) {
 
 export function CreateTag(arg1) {
   return window['go']['main']['App']['CreateTag'](arg1);
+}
+
+export function DeleteFileRemark(arg1) {
+  return window['go']['main']['App']['DeleteFileRemark'](arg1);
 }
 
 export function DeleteTag(arg1) {
@@ -54,6 +66,18 @@ export function GetDrives() {
   return window['go']['main']['App']['GetDrives']();
 }
 
+export function GetFavoritePaths() {
+  return window['go']['main']['App']['GetFavoritePaths']();
+}
+
+export function GetFavorites() {
+  return window['go']['main']['App']['GetFavorites']();
+}
+
+export function GetFileRemark(arg1) {
+  return window['go']['main']['App']['GetFileRemark'](arg1);
+}
+
 export function GetFileTags(arg1) {
   return window['go']['main']['App']['GetFileTags'](arg1);
 }
@@ -70,8 +94,16 @@ export function GetRecentItems() {
   return window['go']['main']['App']['GetRecentItems']();
 }
 
+export function GetTagUsageCounts() {
+  return window['go']['main']['App']['GetTagUsageCounts']();
+}
+
 export function GetTagsForFiles(arg1) {
   return window['go']['main']['App']['GetTagsForFiles'](arg1);
+}
+
+export function GetThumbnailCacheSize() {
+  return window['go']['main']['App']['GetThumbnailCacheSize']();
 }
 
 export function Maximize() {
@@ -80,6 +112,14 @@ export function Maximize() {
 
 export function Minimize() {
   return window['go']['main']['App']['Minimize']();
+}
+
+export function OpenFileWithDefault(arg1) {
+  return window['go']['main']['App']['OpenFileWithDefault'](arg1);
+}
+
+export function OpenInTerminal(arg1) {
+  return window['go']['main']['App']['OpenInTerminal'](arg1);
 }
 
 export function PasteFiles(arg1, arg2, arg3) {
@@ -94,6 +134,10 @@ export function ReadDir(arg1) {
   return window['go']['main']['App']['ReadDir'](arg1);
 }
 
+export function ReadFileText(arg1) {
+  return window['go']['main']['App']['ReadFileText'](arg1);
+}
+
 export function RemoveTagFromFile(arg1, arg2) {
   return window['go']['main']['App']['RemoveTagFromFile'](arg1, arg2);
 }
@@ -106,8 +150,20 @@ export function ResolvePasteConflict(arg1, arg2, arg3) {
   return window['go']['main']['App']['ResolvePasteConflict'](arg1, arg2, arg3);
 }
 
+export function SearchFiles(arg1) {
+  return window['go']['main']['App']['SearchFiles'](arg1);
+}
+
 export function SetConfig(arg1, arg2) {
   return window['go']['main']['App']['SetConfig'](arg1, arg2);
+}
+
+export function SetFileRemark(arg1, arg2) {
+  return window['go']['main']['App']['SetFileRemark'](arg1, arg2);
+}
+
+export function ToggleFavorite(arg1, arg2) {
+  return window['go']['main']['App']['ToggleFavorite'](arg1, arg2);
 }
 
 export function UpdateTag(arg1) {
@@ -116,4 +172,8 @@ export function UpdateTag(arg1) {
 
 export function UpdateTagsOrder(arg1) {
   return window['go']['main']['App']['UpdateTagsOrder'](arg1);
+}
+
+export function WriteFileText(arg1, arg2) {
+  return window['go']['main']['App']['WriteFileText'](arg1, arg2);
 }

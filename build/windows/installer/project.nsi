@@ -84,6 +84,11 @@ Section
 
     !insertmacro wails.webview2runtime
 
+    # Gracefully stop and kill any existing instances/services before overwriting files
+    nsExec::ExecToLog 'sc stop FileManagerSearch'
+    nsExec::ExecToLog 'taskkill /F /IM ${PRODUCT_EXECUTABLE}'
+    Sleep 1000 # Wait for processes to release file locks
+
     SetOutPath $INSTDIR
 
     !insertmacro wails.files
@@ -94,11 +99,23 @@ Section
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
 
+    # Register and start the background service with the user-selected path
+    nsExec::ExecToLog 'sc delete FileManagerSearch'
+    Sleep 500
+    nsExec::ExecToLog 'sc create FileManagerSearch binPath= "\"$INSTDIR\${PRODUCT_EXECUTABLE}\" --service" start= auto obj= LocalSystem'
+    nsExec::ExecToLog 'sc start FileManagerSearch'
+
     !insertmacro wails.writeUninstaller
 SectionEnd
 
 Section "uninstall"
     !insertmacro wails.setShellContext
+
+    # Stop and delete the background service
+    nsExec::ExecToLog 'sc stop FileManagerSearch'
+    nsExec::ExecToLog 'taskkill /F /IM ${PRODUCT_EXECUTABLE}'
+    nsExec::ExecToLog 'sc delete FileManagerSearch'
+    Sleep 1000
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
 

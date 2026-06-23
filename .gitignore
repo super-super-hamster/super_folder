@@ -1,3 +1,6 @@
 build/bin
 node_modules
 frontend/dist
+
+file-manager.exe
+build/windows/installer/tmp/

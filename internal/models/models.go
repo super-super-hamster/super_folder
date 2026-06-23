@@ -40,3 +40,15 @@ type FileTag struct {
 	Path  string `json:"path" gorm:"primaryKey;index"` // The full path of the file
 	TagID string `json:"tagId" gorm:"primaryKey"`      // The Tag ID
 }
+
+// Remark represents a single user remark for a file
+type Remark struct {
+	Path    string `json:"path" gorm:"primaryKey"`
+	Content string `json:"content"`
+}
+
+// Favorite represents a favorited file or directory
+type Favorite struct {
+	Path  string `json:"path" gorm:"primaryKey"`
+	IsDir bool   `json:"isDir"`
+}

@@ -203,6 +203,24 @@ const WarningModal = () => {
   const { modalData, closeModal } = useModalStore()
   const [showDetails, setShowDetails] = useState(false)
   
+  const getFriendlyMessage = (rawMessage?: string) => {
+    if (!rawMessage) return '抱歉，操作未能成功。可能文件正被占用或权限不足。';
+    const lower = rawMessage.toLowerCase();
+    if (lower.includes('access is denied') || lower.includes('permission denied')) {
+      return '很抱歉，权限不足，无法操作该文件或文件夹。';
+    }
+    if (lower.includes('used by another process') || lower.includes('in use')) {
+      return '该文件正在被其他程序使用，请关闭相关程序后再试。';
+    }
+    if (lower.includes('no such file') || lower.includes('not found') || lower.includes('cannot find')) {
+      return '找不到指定的文件，它可能已经被移动或删除。';
+    }
+    if (lower.includes('already exists')) {
+      return '同名文件已存在。';
+    }
+    return '抱歉，操作未能成功，发生了一个未知错误。';
+  }
+  
   return (
     <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
       <div className="flex items-center gap-2 mb-4 text-red-500">
@@ -211,7 +229,7 @@ const WarningModal = () => {
       </div>
       
       <p className="text-gray-700 mb-2 text-sm text-center">
-        操作无法完成。这通常是因为目标文件正在被其他程序占用，或者由于系统权限不足导致的。
+        {getFriendlyMessage(modalData?.message)}
       </p>
 
       <div className="w-full flex justify-end mb-4">
@@ -238,6 +256,44 @@ const WarningModal = () => {
       >
         确定
       </button>
+    </div>
+  )
+}
+
+const UnsavedWarningModal = () => {
+  const { modalData, closeModal } = useModalStore()
+
+  const handleConfirm = () => {
+    if (modalData?.onConfirm) {
+      modalData.onConfirm()
+    }
+    closeModal()
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
+      <div className="flex items-center gap-2 mb-4 text-yellow-500">
+        <img src="/src/assets/icons/warning_line.svg" className="w-6 h-6" alt="Warning" />
+        <h2 className="text-xl font-bold">未保存的更改</h2>
+      </div>
+      <p className="text-gray-600 mb-6 text-sm text-center">
+        您有未保存的修改，确认要离开吗？未保存的内容将会丢失。
+      </p>
+      
+      <div className="flex w-full gap-3">
+        <button 
+          onClick={closeModal}
+          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          取消
+        </button>
+        <button 
+          onClick={handleConfirm}
+          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          确认离开
+        </button>
+      </div>
     </div>
   )
 }
@@ -287,7 +343,7 @@ export const ModalManager = () => {
             if (activeModal) closeModal()
             if (isModalVisible) setModalVisible(false)
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -299,6 +355,7 @@ export const ModalManager = () => {
             {activeModal === 'conflict' && <ConflictModal />}
             {activeModal === 'rename_conflict' && <RenameConflictModal />}
             {activeModal === 'warning' && <WarningModal />}
+            {activeModal === 'unsaved_warning' && <UnsavedWarningModal />}
             {activeModal === 'permanent_delete_confirm' && <PermanentDeleteConfirmModal />}
           </motion.div>
         </motion.div>

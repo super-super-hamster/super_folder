@@ -5,7 +5,9 @@ import (
 
 	"encoding/json"
 	"file-manager/internal/database"
+	"file-manager/internal/search/service"
 	"file-manager/internal/thumbnail"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -16,6 +18,15 @@ import (
 var assets embed.FS
 
 func main() {
+	// Check for service mode
+	if len(os.Args) > 1 && os.Args[1] == "--service" {
+		err := service.Run()
+		if err != nil {
+			println("Service Run Error:", err.Error())
+		}
+		return
+	}
+
 	// Initialize database
 	err := database.InitDB()
 	if err != nil {

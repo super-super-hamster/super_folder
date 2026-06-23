@@ -49,6 +49,21 @@ const getTimeGroup = (modTime: any): string => {
 
 const timeGroupOrder = ['1小时内', '一天内', '一周内', '一个月内', '一个月以上', '未知时间']
 
+const getSizeGroup = (size: number): string => {
+  if (size === undefined || size === null) return '未知大小'
+  const KB = 1024
+  const MB = 1024 * KB
+  const GB = 1024 * MB
+  
+  if (size >= GB) return '>1GB'
+  if (size >= 100 * MB) return '100MB - 1GB'
+  if (size >= MB) return '1MB - 100MB'
+  if (size >= KB) return '1KB - 1MB'
+  return '<1KB'
+}
+
+const sizeGroupOrder = ['>1GB', '100MB - 1GB', '1MB - 100MB', '1KB - 1MB', '<1KB', '未知大小']
+
 export const processFiles = (
   files: models.FileInfo[], 
   sortOption: SortOption, 
@@ -65,6 +80,10 @@ export const processFiles = (
       return a.name.localeCompare(b.name, 'zh-CN')
     } else if (sortOption === 'name_desc') {
       return b.name.localeCompare(a.name, 'zh-CN')
+    } else if (sortOption === 'size_asc') {
+      return (a.size || 0) - (b.size || 0)
+    } else if (sortOption === 'size_desc') {
+      return (b.size || 0) - (a.size || 0)
     } else if (sortOption === 'time_asc') {
       const ta = new Date(a.modTime || 0).getTime()
       const tb = new Date(b.modTime || 0).getTime()
@@ -93,6 +112,8 @@ export const processFiles = (
     let groupKey = ''
     if (sortOption.startsWith('name')) {
       groupKey = getInitial(file.name)
+    } else if (sortOption.startsWith('size')) {
+      groupKey = getSizeGroup(file.size)
     } else {
       groupKey = getTimeGroup(file.modTime)
     }
@@ -118,8 +139,12 @@ export const processFiles = (
     })
   } else if (sortOption === 'time_asc') {
     sortedGroupKeys.sort((a, b) => timeGroupOrder.indexOf(b) - timeGroupOrder.indexOf(a)) 
-  } else {
+  } else if (sortOption === 'time_desc') {
     sortedGroupKeys.sort((a, b) => timeGroupOrder.indexOf(a) - timeGroupOrder.indexOf(b))
+  } else if (sortOption === 'size_asc') {
+    sortedGroupKeys.sort((a, b) => sizeGroupOrder.indexOf(b) - sizeGroupOrder.indexOf(a))
+  } else if (sortOption === 'size_desc') {
+    sortedGroupKeys.sort((a, b) => sizeGroupOrder.indexOf(a) - sizeGroupOrder.indexOf(b))
   }
 
   const listItems: VirtualListItem[] = []

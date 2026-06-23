@@ -24,11 +24,14 @@ export default function DynamicBreadcrumb({ path }: Props) {
             aria-label="Hidden paths"
             placeholder="..."
             onSelectionChange={(key) => {
-              const selectedIdxStr = key as string
+              const selectedIdxStr = Array.from(key as any as Set<string>)[0] || (key as string)
               if (!selectedIdxStr) return
               const selectedIdx = parseInt(selectedIdxStr)
               const targetPath = allSegments.slice(0, selectedIdx + 1).join('\\') + (selectedIdx === 0 ? '\\' : '')
-              useTabsStore.getState().navigate(targetPath, allSegments[selectedIdx])
+              const { tabs, activeTabId, navigate } = useTabsStore.getState()
+              const isLast = selectedIdx === allSegments.length - 1
+              const activeTab = tabs.find(t => t.id === activeTabId)
+              navigate(targetPath, allSegments[selectedIdx], isLast && activeTab ? activeTab.isDir : true)
             }}
           >
             <Select.Trigger className="bg-transparent shadow-none border-0 hover:bg-gray-200/50 px-1 min-h-0 h-6 w-8 rounded data-[hover=true]:bg-gray-200/80 cursor-pointer flex items-center justify-center">
@@ -63,7 +66,10 @@ export default function DynamicBreadcrumb({ path }: Props) {
               className="px-1 rounded hover:bg-gray-200 cursor-pointer transition-colors text-sm"
               onClick={(e) => {
                 e.stopPropagation()
-                useTabsStore.getState().navigate(targetPath, seg)
+                const isLast = idx === allSegments.length - 1
+                const { tabs, activeTabId, navigate } = useTabsStore.getState()
+                const activeTab = tabs.find(t => t.id === activeTabId)
+                navigate(targetPath, seg, isLast && activeTab ? activeTab.isDir : true)
               }}
             >
               {seg === 'recent://' ? '最近访问' : seg}

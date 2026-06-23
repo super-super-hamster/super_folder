@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client'
 import './style.css'
 import App from './App'
 import { HeroUIProvider } from '@heroui/system'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 if (!(window as any).go) {
   (window as any).go = {
@@ -97,7 +98,9 @@ const root = createRoot(container!)
 root.render(
     <React.StrictMode>
         <HeroUIProvider>
-            <App/>
+            <ErrorBoundary>
+                <App/>
+            </ErrorBoundary>
         </HeroUIProvider>
     </React.StrictMode>
 )

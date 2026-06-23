@@ -24,6 +24,10 @@ img, svg, a {
   user-drag: none;
 }
 
+input, textarea, button, select {
+  --wails-draggable: no-drag;
+}
+
 .wails-no-drag {
   --wails-draggable: no-drag;
 }

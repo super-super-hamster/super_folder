@@ -12,25 +12,27 @@ import (
 var DB *gorm.DB
 
 func InitDB() error {
-	// Put DB in APPDATA
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		appData = os.TempDir()
+	programData := os.Getenv("ProgramData")
+	if programData == "" {
+		programData = `C:\ProgramData`
 	}
-	dbDir := filepath.Join(appData, "file-manager")
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
+	dbDir := filepath.Join(programData, "file-manager")
+	if err := os.MkdirAll(dbDir, 0777); err != nil {
 		return err
 	}
 	dbPath := filepath.Join(dbDir, "config.db")
 
 	var err error
-	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(dbPath+"?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)"), &gorm.Config{})
 	if err != nil {
 		return err
 	}
 
+	// Make sure WAL is applied
+	DB.Exec("PRAGMA journal_mode=WAL;")
+
 	// Migrate the schema
-	return DB.AutoMigrate(&models.Config{}, &models.Thumbnail{}, &models.Tag{}, &models.FileTag{})
+	return DB.AutoMigrate(&models.Config{}, &models.Thumbnail{}, &models.Tag{}, &models.FileTag{}, &models.Remark{}, &models.Favorite{})
 }
 
 func GetConfig(key string) (string, error) {
@@ -66,15 +68,61 @@ func SaveThumbnail(thumb *models.Thumbnail) error {
 	return DB.Save(thumb).Error
 }
 
+func GetThumbnailCacheSize() (int64, error) {
+	var size int64
+	err := DB.Table("thumbnails").Select("COALESCE(SUM(LENGTH(data) + LENGTH(path) + 8), 0)").Scan(&size).Error
+	return size, err
+}
+
+func ClearThumbnailCache() error {
+	if err := DB.Exec("DELETE FROM thumbnails").Error; err != nil {
+		return err
+	}
+	return DB.Exec("VACUUM").Error
+}
+
+func AutoCleanThumbnailCache(limitMB int) error {
+	limitBytes := int64(limitMB) * 1024 * 1024
+	size, err := GetThumbnailCacheSize()
+	if err != nil || size <= limitBytes {
+		return err
+	}
+
+	// Delete oldest 20% of thumbnails repeatedly until we're under limit
+	for size > limitBytes {
+		err = DB.Exec(`DELETE FROM thumbnails WHERE path IN (
+			SELECT path FROM thumbnails ORDER BY mod_time ASC LIMIT (MAX(100, (SELECT COUNT(*)/5 FROM thumbnails)))
+		)`).Error
+		if err != nil {
+			return err
+		}
+		size, _ = GetThumbnailCacheSize()
+	}
+	return DB.Exec("VACUUM").Error
+}
+
 // Tag Management
 
 func GetGlobalTags() ([]models.Tag, error) {
 	var tags []models.Tag
-	err := DB.Distinct("tags.*").
-		Joins("JOIN file_tags ON file_tags.tag_id = tags.id").
-		Order("tags.sort_order asc").
-		Find(&tags).Error
+	err := DB.Order("sort_order asc").Find(&tags).Error
 	return tags, err
+}
+
+func GetTagUsageCounts() (map[string]int, error) {
+	var results []struct {
+		TagID string
+		Count int
+	}
+	err := DB.Table("file_tags").Select("tag_id, count(*) as count").Group("tag_id").Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+	counts := make(map[string]int)
+	for _, r := range results {
+		counts[r.TagID] = r.Count
+	}
+	return counts, nil
 }
 
 func CreateTag(tag *models.Tag) error {
@@ -165,3 +213,54 @@ func SetTagsForFile(path string, tagIDs []string) error {
 		return nil
 	})
 }
+
+func GetRemark(path string) (string, error) {
+	var remark models.Remark
+	err := DB.Where("path = ?", path).First(&remark).Error
+	if err == gorm.ErrRecordNotFound {
+		return "", nil // No remark found is not an error
+	}
+	if err != nil {
+		return "", err
+	}
+	return remark.Content, nil
+}
+
+func SetRemark(path string, content string) error {
+	var remark models.Remark
+	result := DB.Where("path = ?", path).First(&remark)
+	if result.Error == gorm.ErrRecordNotFound {
+		remark = models.Remark{Path: path, Content: content}
+		return DB.Create(&remark).Error
+	}
+	remark.Content = content
+	return DB.Save(&remark).Error
+}
+
+func DeleteRemark(path string) error {
+	return DB.Where("path = ?", path).Delete(&models.Remark{}).Error
+}
+
+// Favorite Management
+
+func GetFavoritesList() ([]models.Favorite, error) {
+	var favs []models.Favorite
+	err := DB.Find(&favs).Error
+	return favs, err
+}
+
+func AddFavorite(path string, isDir bool) error {
+	fav := models.Favorite{Path: path, IsDir: isDir}
+	return DB.Where(models.Favorite{Path: path}).FirstOrCreate(&fav).Error
+}
+
+func RemoveFavorite(path string) error {
+	return DB.Where("path = ?", path).Delete(&models.Favorite{}).Error
+}
+
+func IsFavorite(path string) (bool, error) {
+	var count int64
+	err := DB.Model(&models.Favorite{}).Where("path = ?", path).Count(&count).Error
+	return count > 0, err
+}
+

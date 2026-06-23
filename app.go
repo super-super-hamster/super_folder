@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"file-manager/internal/converter"
 	"file-manager/internal/database"
@@ -11,8 +15,6 @@ import (
 	"file-manager/internal/models"
 	"sort"
 	"strings"
-	"net"
-	"net/http"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
@@ -355,3 +357,163 @@ func (a *App) GetConvertibleFormats(paths []string) []string {
 func (a *App) ConvertFile(sourcePath string, targetExt string) (string, error) {
 	return converter.ConvertFile(sourcePath, targetExt)
 }
+
+// Search bindings
+func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	programData := os.Getenv("ProgramData")
+	if programData == "" {
+		programData = `C:\ProgramData`
+	}
+	portFile := filepath.Join(programData, "file-manager", "search_port.txt")
+	portBytes, err := os.ReadFile(portFile)
+	if err != nil {
+		return nil, fmt.Errorf("search service is not ready (cannot read port file)")
+	}
+	port := strings.TrimSpace(string(portBytes))
+	if port == "" || port == "0" {
+		return nil, fmt.Errorf("search service is not ready")
+	}
+
+	url := fmt.Sprintf("http://127.0.0.1:%s/search", port)
+	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("search service returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Paths []string `json:"paths"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var fileInfos []models.FileInfo
+	for _, p := range result.Paths {
+		info, err := os.Stat(p)
+		if err != nil {
+			continue
+		}
+		fileInfos = append(fileInfos, models.FileInfo{
+			Name:    info.Name(),
+			Path:    p,
+			IsDir:   info.IsDir(),
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
+			Ext:     filepath.Ext(info.Name()),
+		})
+	}
+
+	return fileInfos, nil
+}
+
+func (a *App) GetFileRemark(path string) (string, error) {
+	return database.GetRemark(path)
+}
+
+func (a *App) SetFileRemark(path string, content string) error {
+	return database.SetRemark(path, content)
+}
+
+func (a *App) DeleteFileRemark(path string) error {
+	return database.DeleteRemark(path)
+}
+
+func (a *App) OpenFileWithDefault(path string) error {
+	cmd := exec.Command("cmd", "/c", "start", "", path)
+	return cmd.Start()
+}
+
+func (a *App) OpenInTerminal(path string) error {
+	cmd := exec.Command("cmd", "/c", "start", "powershell")
+	cmd.Dir = path
+	return cmd.Start()
+}
+
+func (a *App) ReadFileText(path string) (string, error) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func (a *App) WriteFileText(path string, content string) error {
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// Settings and Cache bindings
+
+func (a *App) GetThumbnailCacheSize() (int64, error) {
+	return database.GetThumbnailCacheSize()
+}
+
+func (a *App) ClearThumbnailCache() error {
+	return database.ClearThumbnailCache()
+}
+
+func (a *App) AutoCleanThumbnailCache(limitMB int) error {
+	return database.AutoCleanThumbnailCache(limitMB)
+}
+
+func (a *App) GetTagUsageCounts() (map[string]int, error) {
+	return database.GetTagUsageCounts()
+}
+
+// Favorites bindings
+
+func (a *App) ToggleFavorite(path string, isDir bool) error {
+	isFav, err := database.IsFavorite(path)
+	if err != nil {
+		return err
+	}
+	if isFav {
+		return database.RemoveFavorite(path)
+	}
+	return database.AddFavorite(path, isDir)
+}
+
+func (a *App) GetFavoritePaths() ([]string, error) {
+	favs, err := database.GetFavoritesList()
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, f := range favs {
+		paths = append(paths, f.Path)
+	}
+	return paths, nil
+}
+
+func (a *App) GetFavorites() ([]models.FileInfo, error) {
+	favs, err := database.GetFavoritesList()
+	if err != nil {
+		return nil, err
+	}
+	var files []models.FileInfo
+	for _, f := range favs {
+		info, err := os.Stat(f.Path)
+		if err != nil {
+			continue // skip files that no longer exist
+		}
+		files = append(files, models.FileInfo{
+			Name:    info.Name(),
+			Path:    f.Path,
+			IsDir:   info.IsDir(),
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
+			Ext:     filepath.Ext(info.Name()),
+		})
+	}
+	return files, nil
+}
+

@@ -1,6 +1,27 @@
-import { useEffect, useState } from 'react'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useEffect, useState, useCallback } from 'react'
+import EditorLib from 'react-simple-code-editor'
+const Editor = (EditorLib as any).default || EditorLib
+import Prism from 'prismjs'
+import 'prismjs/themes/prism-tomorrow.css'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-jsx'
+import 'prismjs/components/prism-tsx'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-css'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-java'
+import 'prismjs/components/prism-c'
+import 'prismjs/components/prism-cpp'
+import 'prismjs/components/prism-csharp'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-sql'
+import 'prismjs/components/prism-yaml'
+import 'prismjs/components/prism-markdown'
+import 'prismjs/components/prism-go'
+
+import { ReadFileText, WriteFileText } from '../../../wailsjs/go/main/App'
+import { useUIStore } from '../../store/uiStore'
 
 interface CodePreviewProps {
   path: string
@@ -23,7 +44,7 @@ const languageMap: Record<string, string> = {
   '.cpp': 'cpp',
   '.cs': 'csharp',
   '.sh': 'bash',
-  '.bat': 'batch',
+  '.bat': 'bash',
   '.xml': 'xml',
   '.yaml': 'yaml',
   '.yml': 'yaml',
@@ -31,47 +52,103 @@ const languageMap: Record<string, string> = {
 }
 
 export default function CodePreview({ path, ext }: CodePreviewProps) {
-  const [code, setCode] = useState<string | null>(null)
+  const [code, setCode] = useState('')
+  const [originalCode, setOriginalCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const { setUnsavedEditorPath } = useUIStore()
 
   useEffect(() => {
     setLoading(true)
     setError(null)
-    setCode(null)
 
-    fetch(`/file?path=${encodeURIComponent(path)}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Failed to load file')
-        const size = res.headers.get('content-length')
-        if (size && parseInt(size) > 2 * 1024 * 1024) {
-          throw new Error('File is too large to preview (>2MB)')
-        }
-        return res.text()
+    ReadFileText(path)
+      .then((text: string) => {
+        setCode(text)
+        setOriginalCode(text)
       })
-      .then((text) => setCode(text))
-      .catch((err) => setError(err.message))
+      .catch((err: any) => setError(err.message || String(err)))
       .finally(() => setLoading(false))
   }, [path])
 
+  useEffect(() => {
+    if (!loading) {
+      if (code !== originalCode) {
+        setUnsavedEditorPath(path)
+      } else {
+        setUnsavedEditorPath(null)
+      }
+    }
+    return () => setUnsavedEditorPath(null)
+  }, [code, originalCode, loading, path, setUnsavedEditorPath])
+
+  const handleSave = useCallback(async () => {
+    try {
+      await WriteFileText(path, code)
+      setOriginalCode(code)
+      setUnsavedEditorPath(null)
+    } catch (err) {
+      console.error('Failed to save code file:', err)
+    }
+  }, [path, code, setUnsavedEditorPath])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleSave])
+
   const language = languageMap[ext.toLowerCase()] || 'text'
 
-  if (loading) return <div className="p-4 text-sm text-gray-500 flex items-center justify-center h-full">Loading code...</div>
+  const highlight = (codeToHighlight: string) => {
+    try {
+      if (Prism.languages[language]) {
+        return Prism.highlight(codeToHighlight, Prism.languages[language], language)
+      }
+      return codeToHighlight
+    } catch (e) {
+      return codeToHighlight
+    }
+  }
+
+  if (loading) return <div className="p-4 text-sm text-gray-500 flex items-center justify-center h-full">加载代码中...</div>
   if (error) return <div className="p-4 text-sm text-red-500 flex items-center justify-center h-full">{error}</div>
 
   return (
-    <div className="w-full h-full overflow-auto bg-[#1E1E1E] no-scrollbar preview-code">
-      <style>{`
-        .preview-code pre::-webkit-scrollbar { display: none; }
-      `}</style>
-      <SyntaxHighlighter
-        language={language}
-        style={vscDarkPlus}
-        customStyle={{ margin: 0, padding: '16px', fontSize: '13px', background: 'transparent', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        showLineNumbers={true}
-      >
-        {code || ''}
-      </SyntaxHighlighter>
+    <div className="w-full h-full overflow-auto bg-[#1d1f21] relative no-scrollbar wails-no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      {code !== originalCode && (
+        <div className="absolute top-2 right-4 z-10 px-3 py-1 bg-yellow-100/10 text-yellow-500 text-xs font-medium rounded-full shadow-sm border border-yellow-500/30">
+          未保存 (Ctrl+S)
+        </div>
+      )}
+      <div className="min-h-full min-w-full p-4" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
+        <style>{`
+          .code-editor-override textarea {
+            outline: none !important;
+          }
+        `}</style>
+        <Editor
+          value={code}
+          onValueChange={setCode}
+          highlight={highlight}
+          padding={10}
+          className="text-sm code-editor-override"
+          textareaClassName="focus:outline-none"
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: 13,
+            backgroundColor: 'transparent',
+            minHeight: '100%',
+            color: '#c5c8c6'
+          }}
+        />
+      </div>
     </div>
   )
 }

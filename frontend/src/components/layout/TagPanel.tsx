@@ -206,7 +206,7 @@ export default function TagPanel() {
                 <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 border-none shadow-none rounded-lg overflow-hidden ring-0 outline-none tag-panel-combobox-group">
                   <Input 
                     className="text-gray-800 bg-transparent border-none shadow-none outline-none tag-panel-combobox-input"
-                    placeholder="搜索或输入新标签..." 
+                    placeholder="" 
                     autoFocus 
                     onKeyDown={(e: any) => {
                       if (e.key === 'Enter' && inputValue) {

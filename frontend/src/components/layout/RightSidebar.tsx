@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import FilePreview from '../preview/FilePreview'
+import RemarkPanel from '../preview/RemarkPanel'
 import { useUIStore } from '../../store/uiStore'
 import TagPanel from './TagPanel'
 
@@ -71,10 +72,11 @@ export default function RightSidebar() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-hidden relative pb-4 pt-2 w-full no-scrollbar">
+      <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full custom-scrollbar">
         {activeTab === '预览' && (
           <div className="w-full flex flex-col relative px-4 max-h-full min-h-0">
             <FilePreview />
+            <RemarkPanel />
           </div>
         )}
         {activeTab === '信息' && (

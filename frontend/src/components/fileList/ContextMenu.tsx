@@ -4,12 +4,13 @@ import { useContextMenuStore } from '../../store/contextMenuStore'
 import { useSelectionStore } from '../../store/selectionStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useRenameStore } from '../../store/renameStore'
+import { useFavoriteStore } from '../../store/favoriteStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTaskStore } from '../../store/taskStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
-import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats } from '../../../wailsjs/go/main/App'
+import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInTerminal } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
@@ -17,10 +18,11 @@ import copyAnim from '../../assets/anim/copy.json'
 import trashAnim from '../../assets/anim/trash.json'
 
 export default function ContextMenu() {
-  const { isVisible, x, y, targetPath, targetName, closeMenu } = useContextMenuStore()
+  const { isVisible, x, y, targetPath, targetName, isDir, closeMenu } = useContextMenuStore()
   const { copy, cut, items: clipboardItems, operation } = useClipboardStore()
   const { selectedPaths, clearSelection } = useSelectionStore()
   const { startRename } = useRenameStore()
+  const { favorites, toggleFavorite } = useFavoriteStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
   const isRunning = useTaskStore(state => state.isRunning)
@@ -82,6 +84,18 @@ export default function ContextMenu() {
     const targets = selectedFiles.includes(targetPath) ? selectedFiles : [targetPath]
 
     switch(action) {
+      case 'open_with_default':
+        targets.forEach(path => {
+          OpenFileWithDefault(path).catch(console.error)
+        })
+        break
+      case 'open_terminal':
+        if (targetPath) {
+          OpenInTerminal(targets[0]).catch(console.error)
+        } else if (currentPath) {
+          OpenInTerminal(currentPath).catch(console.error)
+        }
+        break
       case 'convert':
         if (currentPath && convertibleFormats.length > 0) {
           const store = useConversionStore.getState()
@@ -132,6 +146,11 @@ export default function ContextMenu() {
         const el = document.getElementById(`file-${targetPath}`)
         if (el) {
           startRename(targetPath, targetName, el.getBoundingClientRect())
+        }
+        break
+      case 'favorite':
+        if (targetPath) {
+          toggleFavorite(targetPath, isDir).catch(console.error)
         }
         break
       case 'copy-path':
@@ -237,30 +256,50 @@ export default function ContextMenu() {
                 copyLottieRef.current?.setDirection(-1);
                 copyLottieRef.current?.play();
               }}
-              className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"
+              className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"
             >
-              <div className="w-4 h-4 mr-3 flex items-center justify-center opacity-70">
-                <Lottie lottieRef={copyLottieRef} animationData={copyAnim} autoplay={false} loop={false} />
+              <div className="flex items-center">
+                <div className="w-4 h-4 mr-3 flex items-center justify-center opacity-70">
+                  <Lottie lottieRef={copyLottieRef} animationData={copyAnim} autoplay={false} loop={false} />
+                </div>
+                复制
               </div>
-              复制
+              <span className="text-gray-400 text-xs tracking-wider">Ctrl+C</span>
             </button>
-            <button onClick={() => handleAction('cut')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/scissors_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="cut" />
-              剪切
+            <button onClick={() => handleAction('cut')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              <div className="flex items-center">
+                <img src="/src/assets/icons/scissors_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="cut" />
+                剪切
+              </div>
+              <span className="text-gray-400 text-xs tracking-wider">Ctrl+X</span>
             </button>
-            <button onClick={() => handleAction('paste')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
-              {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
-              粘贴
+            <button onClick={() => handleAction('paste')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
+              <div className="flex items-center">
+                {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
+                粘贴
+              </div>
+              <span className="text-gray-400 text-xs tracking-wider">Ctrl+V</span>
             </button>
             <div className="h-px bg-gray-200 my-1 mx-2" />
-            <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/terminal_box_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
-              复制路径
+            <button onClick={() => handleAction('favorite')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              {favorites.has(targetPath) ? (
+                <>
+                  <img src="/src/assets/icons/star_fill.svg" className="w-4 h-4 mr-3" alt="unfavorite" />
+                  取消收藏
+                </>
+              ) : (
+                <>
+                  <img src="/src/assets/icons/star_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="favorite" />
+                  收藏
+                </>
+              )}
             </button>
-            <div className="h-px bg-gray-200 my-1 mx-2" />
-            <button onClick={() => handleAction('rename')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              {renderIcon("M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z")}
-              重命名
+            <button onClick={() => handleAction('rename')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              <div className="flex items-center">
+                {renderIcon("M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z")}
+                重命名
+              </div>
+              <span className="text-gray-400 text-xs tracking-wider">F2</span>
             </button>
             <button 
               onClick={() => handleAction('convert')} 
@@ -280,12 +319,30 @@ export default function ContextMenu() {
                 trashLottieRef.current?.setDirection(-1);
                 trashLottieRef.current?.play();
               }}
-              className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="w-4 h-4 mr-3 flex items-center justify-center opacity-80">
-                <Lottie lottieRef={trashLottieRef} animationData={trashAnim} autoplay={false} loop={false} />
+              <div className="flex items-center">
+                <div className="w-4 h-4 mr-3 flex items-center justify-center opacity-80">
+                  <Lottie lottieRef={trashLottieRef} animationData={trashAnim} autoplay={false} loop={false} />
+                </div>
+                删除
               </div>
-              删除
+              <span className="text-gray-400 text-xs tracking-wider">Del</span>
+            </button>
+            <div className="h-px bg-gray-200 my-1 mx-2" />
+            <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
+              复制路径
+            </button>
+            {isDir && (
+              <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
+                在终端中打开
+              </button>
+            )}
+            <button onClick={() => handleAction('open_with_default')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              <img src="/src/assets/icons/share_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open" />
+              使用默认程序打开
             </button>
           </>
         ) : (
@@ -294,9 +351,12 @@ export default function ContextMenu() {
               {renderIcon("M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15")}
               刷新
             </button>
-            <button onClick={() => handleAction('paste')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
-              {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
-              粘贴
+            <button onClick={() => handleAction('paste')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
+              <div className="flex items-center">
+                {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
+                粘贴
+              </div>
+              <span className="text-gray-400 text-xs tracking-wider">Ctrl+V</span>
             </button>
             <div className="h-px bg-gray-200 my-1 mx-2" />
             <button onClick={() => handleCreate('folder')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
@@ -309,8 +369,12 @@ export default function ContextMenu() {
             </button>
             <div className="h-px bg-gray-200 my-1 mx-2" />
             <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/terminal_box_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
+              <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
               复制当前路径
+            </button>
+            <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+              <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
+              在终端中打开
             </button>
           </>
         )}

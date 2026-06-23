@@ -4,7 +4,11 @@ import {models} from '../models';
 
 export function AddTagToFile(arg1:string,arg2:models.Tag):Promise<void>;
 
+export function AutoCleanThumbnailCache(arg1:number):Promise<void>;
+
 export function CancelPaste(arg1:string):Promise<void>;
+
+export function ClearThumbnailCache():Promise<void>;
 
 export function Close():Promise<void>;
 
@@ -15,6 +19,8 @@ export function CreateFile(arg1:string):Promise<void>;
 export function CreateFolder(arg1:string):Promise<void>;
 
 export function CreateTag(arg1:models.Tag):Promise<void>;
+
+export function DeleteFileRemark(arg1:string):Promise<void>;
 
 export function DeleteTag(arg1:string):Promise<void>;
 
@@ -28,6 +34,12 @@ export function GetDefaultPaths():Promise<Record<string, string>>;
 
 export function GetDrives():Promise<Array<string>>;
 
+export function GetFavoritePaths():Promise<Array<string>>;
+
+export function GetFavorites():Promise<Array<models.FileInfo>>;
+
+export function GetFileRemark(arg1:string):Promise<string>;
+
 export function GetFileTags(arg1:string):Promise<Array<models.Tag>>;
 
 export function GetGlobalTags():Promise<Array<models.Tag>>;
@@ -36,11 +48,19 @@ export function GetLocalServerPort():Promise<number>;
 
 export function GetRecentItems():Promise<Array<models.FileInfo>>;
 
+export function GetTagUsageCounts():Promise<Record<string, number>>;
+
 export function GetTagsForFiles(arg1:Array<string>):Promise<Record<string, Array<models.Tag>>>;
+
+export function GetThumbnailCacheSize():Promise<number>;
 
 export function Maximize():Promise<void>;
 
 export function Minimize():Promise<void>;
+
+export function OpenFileWithDefault(arg1:string):Promise<void>;
+
+export function OpenInTerminal(arg1:string):Promise<void>;
 
 export function PasteFiles(arg1:string,arg2:Array<string>,arg3:string):Promise<string>;
 
@@ -48,14 +68,24 @@ export function PermanentDelete(arg1:Array<string>):Promise<string>;
 
 export function ReadDir(arg1:string):Promise<Array<models.FileInfo>>;
 
+export function ReadFileText(arg1:string):Promise<string>;
+
 export function RemoveTagFromFile(arg1:string,arg2:string):Promise<void>;
 
 export function RenameFile(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
 
 export function ResolvePasteConflict(arg1:string,arg2:string,arg3:boolean):Promise<void>;
 
+export function SearchFiles(arg1:Record<string, any>):Promise<Array<models.FileInfo>>;
+
 export function SetConfig(arg1:string,arg2:string):Promise<void>;
+
+export function SetFileRemark(arg1:string,arg2:string):Promise<void>;
+
+export function ToggleFavorite(arg1:string,arg2:boolean):Promise<void>;
 
 export function UpdateTag(arg1:models.Tag):Promise<void>;
 
 export function UpdateTagsOrder(arg1:Array<string>):Promise<void>;
+
+export function WriteFileText(arg1:string,arg2:string):Promise<void>;

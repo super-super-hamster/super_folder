@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type ModalType = 'progress' | 'conflict' | 'rename_conflict' | 'warning' | 'permanent_delete_confirm' | null
+export type ModalType = 'progress' | 'conflict' | 'rename_conflict' | 'warning' | 'unsaved_warning' | 'permanent_delete_confirm' | null
 
 interface ModalState {
   activeModal: ModalType

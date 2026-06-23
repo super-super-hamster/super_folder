@@ -2,35 +2,52 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
+import { useSettingsStore } from '../../store/settingsStore'
+import { useFavoriteStore } from '../../store/favoriteStore'
 import { GetDefaultPaths, GetDrives } from '../../../wailsjs/go/main/App'
 
 export default function Sidebar() {
-  const { isSidebarExpanded, setSidebarExpanded } = useUIStore()
+  const { isSidebarExpanded, setSidebarExpanded, setSettingsOpen } = useUIStore()
   const { navigate, activeTabId, tabs } = useTabsStore()
+  const { shortcuts, searchPresets, loadFromBackend } = useSettingsStore()
+  const { fetchFavorites } = useFavoriteStore()
   const [drives, setDrives] = useState<string[]>([])
   const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
 
   useEffect(() => {
     GetDrives().then(setDrives)
     GetDefaultPaths().then(setDefaultPaths)
+    loadFromBackend()
+    fetchFavorites()
   }, [])
 
   const activeTab = tabs.find(t => t.id === activeTabId)
   const currentPath = activeTab?.currentPath
 
+  const shortcutMapping: Record<string, string> = {
+    'desktop': 'Desktop',
+    'downloads': 'Downloads',
+    'documents': 'Documents',
+    'pictures': 'Pictures',
+    'music': 'Music',
+    'videos': 'Videos',
+  }
+
   const navItems = [
-    { name: '桌面', icon: 'computer_line.svg', path: defaultPaths['Desktop'] },
-    { name: '图片', icon: 'pic_2_fill.svg', path: defaultPaths['Pictures'] },
-    { name: '下载', icon: 'download_2_line.svg', path: defaultPaths['Downloads'] },
-    { name: '文档', icon: 'document_line.svg', path: defaultPaths['Documents'] },
-    { name: '音乐', icon: 'music_2_line.svg', path: defaultPaths['Music'] },
-    { name: '视频', icon: 'video_line.svg', path: defaultPaths['Videos'] },
-    { name: '收藏', icon: 'star_fill.svg', path: '' }, // Star icon
+    ...shortcuts.filter(s => s.visible).map(s => ({
+      name: s.name,
+      icon: s.id === 'documents' ? 'document_line.svg' : s.id === 'pictures' ? 'pic_2_fill.svg' : s.icon,
+      path: defaultPaths[shortcutMapping[s.id]]
+    })),
+    { name: '收藏', icon: 'star_fill.svg', path: 'favorite://' }, // Star icon
     { name: '最近访问', icon: 'history_anticlockwise_line.svg', path: 'recent://' },
   ]
 
   const handleNavigate = (path: string | undefined, name: string) => {
-    if (path) navigate(path, name)
+    if (path) {
+      setSettingsOpen(false)
+      navigate(path, name)
+    }
   }
 
   const isItemActive = (path: string | undefined) => path && currentPath === path
@@ -98,10 +115,14 @@ export default function Sidebar() {
             </motion.span>
           </div>
         ))}
+
+
       </div>
       
       <div className="mt-auto wails-no-drag">
-        <div className={`flex items-center py-2 rounded-xl hover:bg-gray-100 cursor-pointer text-gray-700 transition-colors ${
+        <div 
+          onClick={() => setSettingsOpen(true)}
+          className={`flex items-center py-2 rounded-xl hover:bg-gray-100 cursor-pointer text-gray-700 transition-colors ${
           isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
         }`}>
           <img src="/src/assets/icons/settings_5_line.svg" alt="Settings" className="w-6 h-6 shrink-0" />
