@@ -1,4 +1,4 @@
-package converter
+﻿package converter
 
 import (
 	"bytes"
@@ -300,3 +300,4 @@ func convertData(src, dst, srcExt, targetExt string) error {
 
 	return errors.New("unsupported data conversion")
 }
+

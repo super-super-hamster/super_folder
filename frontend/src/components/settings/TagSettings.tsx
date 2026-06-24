@@ -308,10 +308,10 @@ const TagSettings = () => {
                         }
                       }}
                     >
-                      <ComboBox.InputGroup className="bg-white border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500/20 rounded-lg overflow-hidden outline-none h-10 transition-all">
+                      <ComboBox.InputGroup className="bg-white rounded-lg overflow-hidden outline-none h-10 transition-all focus-within:!ring-0">
                         <Input 
-                          className="text-gray-800 bg-transparent border-none shadow-none outline-none px-3"
-                          placeholder="搜索分类或输入新标签... (例如: 项目: 重构)" 
+                          className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-3 h-full"
+                          placeholder="" 
                           autoFocus 
                           onKeyDown={(e: any) => {
                             if (e.key === 'Enter' && inputValue) {

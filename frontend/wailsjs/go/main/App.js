@@ -10,12 +10,20 @@ export function AutoCleanThumbnailCache(arg1) {
   return window['go']['main']['App']['AutoCleanThumbnailCache'](arg1);
 }
 
+export function BatchRenameFiles(arg1) {
+  return window['go']['main']['App']['BatchRenameFiles'](arg1);
+}
+
 export function CancelPaste(arg1) {
   return window['go']['main']['App']['CancelPaste'](arg1);
 }
 
 export function ClearThumbnailCache() {
   return window['go']['main']['App']['ClearThumbnailCache']();
+}
+
+export function ClearUndoStack() {
+  return window['go']['main']['App']['ClearUndoStack']();
 }
 
 export function Close() {
@@ -94,6 +102,10 @@ export function GetRecentItems() {
   return window['go']['main']['App']['GetRecentItems']();
 }
 
+export function GetRenameSchemes() {
+  return window['go']['main']['App']['GetRenameSchemes']();
+}
+
 export function GetTagUsageCounts() {
   return window['go']['main']['App']['GetTagUsageCounts']();
 }
@@ -138,6 +150,10 @@ export function ReadFileText(arg1) {
   return window['go']['main']['App']['ReadFileText'](arg1);
 }
 
+export function RedoOperation() {
+  return window['go']['main']['App']['RedoOperation']();
+}
+
 export function RemoveTagFromFile(arg1, arg2) {
   return window['go']['main']['App']['RemoveTagFromFile'](arg1, arg2);
 }
@@ -148,6 +164,10 @@ export function RenameFile(arg1, arg2, arg3) {
 
 export function ResolvePasteConflict(arg1, arg2, arg3) {
   return window['go']['main']['App']['ResolvePasteConflict'](arg1, arg2, arg3);
+}
+
+export function SaveRenameScheme(arg1, arg2) {
+  return window['go']['main']['App']['SaveRenameScheme'](arg1, arg2);
 }
 
 export function SearchFiles(arg1) {
@@ -162,8 +182,16 @@ export function SetFileRemark(arg1, arg2) {
   return window['go']['main']['App']['SetFileRemark'](arg1, arg2);
 }
 
+export function StartTerminal(arg1) {
+  return window['go']['main']['App']['StartTerminal'](arg1);
+}
+
 export function ToggleFavorite(arg1, arg2) {
   return window['go']['main']['App']['ToggleFavorite'](arg1, arg2);
+}
+
+export function UndoOperation() {
+  return window['go']['main']['App']['UndoOperation']();
 }
 
 export function UpdateTag(arg1) {

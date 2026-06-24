@@ -1,4 +1,4 @@
-package service
+﻿package service
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"file-manager/internal/database"
-	"file-manager/internal/models"
-	"file-manager/internal/search/usn"
+	"super_folder/internal/database"
+	"super_folder/internal/models"
+	"super_folder/internal/search/usn"
 )
 
 type Searcher struct {
@@ -146,7 +146,7 @@ func (s *Searcher) handleSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Searcher) executeSearch(req *SearchRequest) []string {
-	if strings.HasPrefix(req.Keyword, "备注:") {
+	if strings.HasPrefix(req.Keyword, "澶囨敞:") {
 		return s.executeRemarkSearch(req)
 	}
 
@@ -400,7 +400,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 }
 
 func (s *Searcher) executeRemarkSearch(req *SearchRequest) []string {
-	actualKeyword := strings.TrimPrefix(req.Keyword, "备注:")
+	actualKeyword := strings.TrimPrefix(req.Keyword, "澶囨敞:")
 	var remarks []models.Remark
 	
 	// Query SQLite for matching remarks
@@ -429,3 +429,4 @@ func (s *Searcher) executeRemarkSearch(req *SearchRequest) []string {
 	}
 	return results
 }
+

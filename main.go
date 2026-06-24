@@ -4,9 +4,10 @@ import (
 	"embed"
 
 	"encoding/json"
-	"file-manager/internal/database"
-	"file-manager/internal/search/service"
-	"file-manager/internal/thumbnail"
+	"super_folder/internal/database"
+	"super_folder/internal/rename"
+	"super_folder/internal/search/service"
+	"super_folder/internal/thumbnail"
 	"os"
 
 	"github.com/wailsapp/wails/v2"
@@ -31,6 +32,12 @@ func main() {
 	err := database.InitDB()
 	if err != nil {
 		println("DB Init Error:", err.Error())
+	}
+
+	// Initialize rename schemes
+	err = rename.InitSchemes()
+	if err != nil {
+		println("Rename Schemes Init Error:", err.Error())
 	}
 
 	// Read window bounds

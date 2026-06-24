@@ -1,4 +1,4 @@
-package fs
+﻿package fs
 
 import (
 	"syscall"
@@ -54,3 +54,4 @@ func DeleteToRecycleBin(paths []string) error {
 	}
 	return nil
 }
+

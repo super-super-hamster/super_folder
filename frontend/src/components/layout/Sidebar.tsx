@@ -55,7 +55,7 @@ export default function Sidebar() {
   return (
     <motion.div
       className="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-100 wails-draggable py-4 overflow-hidden shrink-0"
-      initial={{ width: 64 }}
+      initial={false}
       animate={{ width: isSidebarExpanded ? 220 : 64 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       onMouseEnter={() => setSidebarExpanded(true)}
@@ -75,7 +75,7 @@ export default function Sidebar() {
             <img src={`/src/assets/icons/${item.icon}`} alt={item.name} className="w-6 h-6 shrink-0" />
             <motion.span
               className="whitespace-nowrap overflow-hidden"
-              initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+              initial={false}
               animate={{ 
                 opacity: isSidebarExpanded ? 1 : 0, 
                 width: isSidebarExpanded ? 'auto' : 0,
@@ -104,7 +104,7 @@ export default function Sidebar() {
             <img src="/src/assets/icons/hard_drive.svg" alt="Drive" className="w-6 h-6 shrink-0" />
             <motion.span
               className="whitespace-nowrap overflow-hidden"
-              initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+              initial={false}
               animate={{ 
                 opacity: isSidebarExpanded ? 1 : 0, 
                 width: isSidebarExpanded ? 'auto' : 0,
@@ -128,7 +128,7 @@ export default function Sidebar() {
           <img src="/src/assets/icons/settings_5_line.svg" alt="Settings" className="w-6 h-6 shrink-0" />
           <motion.span
             className="whitespace-nowrap overflow-hidden"
-            initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+            initial={false}
             animate={{ 
               opacity: isSidebarExpanded ? 1 : 0, 
               width: isSidebarExpanded ? 'auto' : 0,

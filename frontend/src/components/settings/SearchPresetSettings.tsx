@@ -76,8 +76,8 @@ const SearchPresetSettings = () => {
 
   const submitExclude = () => {
     if (excludeInput.trim()) {
-      const newExcludes = excludeInput.split(',').map(e => e.trim()).filter(e => e)
-      const uniqueExcludes = Array.from(new Set([...filterState.excludedFolders, ...newExcludes]))
+      const folder = excludeInput.trim()
+      const uniqueExcludes = Array.from(new Set([...filterState.excludedFolders, folder]))
       setFilterState(p => ({ ...p, excludedFolders: uniqueExcludes }))
       setExcludeInput('')
     }
@@ -164,7 +164,6 @@ const SearchPresetSettings = () => {
                 <input 
                   type="text"
                   autoFocus
-                  placeholder="例如：全部图片" 
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-white rounded-lg outline-none focus:bg-gray-50 focus:ring-2 focus:ring-gray-200 transition-all placeholder-gray-400"
@@ -269,7 +268,6 @@ const SearchPresetSettings = () => {
                               onChange={e => setExcludeInput(e.target.value)} 
                               onKeyDown={e => { if (e.key === 'Enter') submitExclude() }}
                               onBlur={submitExclude}
-                              placeholder="逗号分隔"
                               className="w-24 text-xs px-2 py-1 rounded bg-white border border-gray-200 outline-none text-gray-700"
                             />
                           ) : (

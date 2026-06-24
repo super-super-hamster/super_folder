@@ -6,6 +6,13 @@ interface Props {
 }
 
 export default function DynamicBreadcrumb({ path }: Props) {
+  if (path === 'favorite://') {
+    return <span className="truncate">收藏</span>
+  }
+  if (path === 'recent://') {
+    return <span className="truncate">最近访问</span>
+  }
+
   const allSegments = path.replace(/\\$/, '').split('\\')
 
   if (allSegments.length === 0) return null

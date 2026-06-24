@@ -1,8 +1,9 @@
-module file-manager
+module super_folder
 
 go 1.25.0
 
 require (
+	github.com/UserExistsError/conpty v0.1.4
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/uuid v1.6.0
@@ -18,6 +19,7 @@ require (
 require (
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect

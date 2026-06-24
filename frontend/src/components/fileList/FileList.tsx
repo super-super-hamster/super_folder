@@ -19,8 +19,10 @@ import documentAnim from '../../assets/anim/document.json'
 import ContextMenu from './ContextMenu'
 import RenamePopover from './RenamePopover'
 import ConversionView from '../conversion/ConversionView'
+import BatchRenameView from '../rename/BatchRenameView'
 import { useContextMenuStore } from '../../store/contextMenuStore'
 import { useRenameStore } from '../../store/renameStore'
+import { useBatchRenameStore } from '../../store/batchRenameStore'
 import { processFiles } from '../../utils/fileSorting'
 import { ProgressCapsule } from '../common/ProgressCapsule'
 import { useTaskStore } from '../../store/taskStore'
@@ -134,23 +136,46 @@ const AnimatedDocumentIcon = ({ className = "w-16 h-16" }: { className?: string 
 const ThumbnailImage = ({ path, alt }: { path: string, alt: string }) => {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
-  const [shouldLoad, setShouldLoad] = useState(false)
+  const [srcUrl, setSrcUrl] = useState<string | null>(null)
   
   useEffect(() => {
+    const abortController = new AbortController()
+    let objectUrl: string | null = null;
+    
     const timer = setTimeout(() => {
-      setShouldLoad(true)
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [])
+      fetch(`/thumb?path=${encodeURIComponent(path)}`, { signal: abortController.signal })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to load')
+          return res.blob()
+        })
+        .then(blob => {
+          objectUrl = URL.createObjectURL(blob)
+          setSrcUrl(objectUrl)
+        })
+        .catch(err => {
+          if (err.name !== 'AbortError') {
+            setError(true)
+          }
+        })
+    }, 150) // slightly longer debounce for fast scrolling
+
+    return () => {
+      clearTimeout(timer)
+      abortController.abort()
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [path])
   
   return (
     <div className="w-16 h-16 relative overflow-hidden rounded-xl">
       {!loaded && !error && (
         <div className="absolute inset-0 w-full h-full bg-gray-200 animate-pulse rounded-xl" />
       )}
-      {!error && shouldLoad ? (
+      {!error && srcUrl ? (
         <img
-          src={`/thumb?path=${encodeURIComponent(path)}`}
+          src={srcUrl}
           alt={alt}
           onLoad={() => setLoaded(true)}
           onError={() => {
@@ -262,11 +287,36 @@ export default function FileList() {
   const { operation, items: clipboardItems, capsuleKey, copy, cut } = useClipboardStore()
   const { openMenu } = useContextMenuStore()
   const { startRename } = useRenameStore()
+  const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
   const { searchPresets } = useSettingsStore()
   
   const [files, setFiles] = useState<models.FileInfo[]>([])
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleBatchRename = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.files && detail.files.length > 0) {
+        useBatchRenameStore.getState().setFiles(detail.files)
+        
+        if (currentPath) {
+          useTabsStore.getState().navigate(currentPath + '\\批量重命名', '批量重命名', true)
+        }
+      } else {
+        const selectedArr = Array.from(useSelectionStore.getState().selectedPaths)
+        if (selectedArr.length > 1) {
+          const selectedFiles = files.filter(f => selectedArr.includes(f.path))
+          useBatchRenameStore.getState().setFiles(selectedFiles)
+          if (currentPath) {
+            useTabsStore.getState().navigate(currentPath + '\\批量重命名', '批量重命名', true)
+          }
+        }
+      }
+    }
+    window.addEventListener('triggerBatchRename', handleBatchRename)
+    return () => window.removeEventListener('triggerBatchRename', handleBatchRename)
+  }, [files])
   
   const [localPort, setLocalPort] = useState<number | null>(null)
   useEffect(() => {
@@ -365,6 +415,13 @@ export default function FileList() {
           const el = document.getElementById(`file-${targetPath}`)
           if (targetFile && el) {
             startRename(targetPath, targetFile.name, el.getBoundingClientRect())
+          }
+        } else if (selectedArr.length > 1) {
+          const selectedFiles = files.filter(f => selectedPaths.has(f.path))
+          setBatchRenameFiles(selectedFiles)
+          
+          if (currentPath) {
+            navigate(currentPath + '\\批量重命名', '批量重命名', true)
           }
         }
       } else if (e.ctrlKey && e.key.toLowerCase() === 'f') {
@@ -758,6 +815,8 @@ export default function FileList() {
       fetchPromise = GetFavorites()
     } else if (currentPath === 'recent://') {
       fetchPromise = GetRecentItems()
+    } else if (currentPath?.endsWith('\\转换') || currentPath?.endsWith('\\批量重命名')) {
+      fetchPromise = Promise.resolve([])
     } else {
       fetchPromise = ReadDir(currentPath)
     }
@@ -891,9 +950,7 @@ export default function FileList() {
   }
 
   const handleDoubleClick = (file: models.FileInfo) => {
-    if (file.isDir) {
-      navigate(file.path, file.name)
-    }
+    navigate(file.path, file.name, file.isDir)
   }
 
   const getFileIcon = (file: models.FileInfo) => {
@@ -970,6 +1027,10 @@ export default function FileList() {
 
   if (currentPath?.endsWith('\\转换')) {
     return <ConversionView />
+  }
+
+  if (currentPath?.endsWith('\\批量重命名')) {
+    return <BatchRenameView />
   }
 
   if (!currentPath) {

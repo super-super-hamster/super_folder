@@ -4,6 +4,7 @@ import { useContextMenuStore } from '../../store/contextMenuStore'
 import { useSelectionStore } from '../../store/selectionStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useRenameStore } from '../../store/renameStore'
+import { useBatchRenameStore } from '../../store/batchRenameStore'
 import { useFavoriteStore } from '../../store/favoriteStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
@@ -22,6 +23,7 @@ export default function ContextMenu() {
   const { copy, cut, items: clipboardItems, operation } = useClipboardStore()
   const { selectedPaths, clearSelection } = useSelectionStore()
   const { startRename } = useRenameStore()
+  const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
   const { favorites, toggleFavorite } = useFavoriteStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
@@ -143,9 +145,16 @@ export default function ContextMenu() {
         DeleteToRecycleBin(targets).then(() => triggerRefresh()).catch(console.error)
         break
       case 'rename':
-        const el = document.getElementById(`file-${targetPath}`)
-        if (el) {
-          startRename(targetPath, targetName, el.getBoundingClientRect())
+        if (targets.length === 1) {
+          const el = document.getElementById(`file-${targetPath}`)
+          if (el) {
+            startRename(targetPath, targetName, el.getBoundingClientRect())
+          }
+        } else if (targets.length > 1) {
+          // Since ContextMenu doesn't have the file objects directly, we can read them
+          // Or we can just use the global useFileListStore if we had one.
+          // Wait, we can fetch them via ReadDir or just dispatch a custom event.
+          window.dispatchEvent(new CustomEvent('triggerBatchRename'))
         }
         break
       case 'favorite':

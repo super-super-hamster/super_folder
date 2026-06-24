@@ -1,6 +1,9 @@
 build/bin
 node_modules
 frontend/dist
+frontend/node_modules
 
-file-manager.exe
+*.exe
+*.log
+.DS_Store
 build/windows/installer/tmp/

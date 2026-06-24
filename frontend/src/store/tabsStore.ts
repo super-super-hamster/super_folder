@@ -6,6 +6,12 @@ export interface HistoryEntry {
   isDir: boolean
 }
 
+export const getSpecialTitle = (path: string) => {
+  if (path === 'favorite://') return '收藏'
+  if (path === 'recent://') return '最近访问'
+  return path.split('\\').pop() || path
+}
+
 export interface Tab {
   id: string
   title: string
@@ -76,7 +82,7 @@ export const useTabsStore = create<TabsState>((set) => ({
             ...tab,
             currentPath: path,
             isDir,
-            title: title || path.split('\\').pop() || path,
+            title: title || getSpecialTitle(path),
             history: newHistory,
             historyIndex: newHistory.length - 1,
           }
@@ -96,7 +102,7 @@ export const useTabsStore = create<TabsState>((set) => ({
             currentPath: entry.path,
             isDir: entry.isDir,
             historyIndex: newIndex,
-            title: entry.path.split('\\').pop() || entry.path,
+            title: getSpecialTitle(entry.path),
           }
         }
         return tab
@@ -116,7 +122,7 @@ export const useTabsStore = create<TabsState>((set) => ({
             currentPath: entry.path,
             isDir: entry.isDir,
             historyIndex: newIndex,
-            title: entry.path.split('\\').pop() || entry.path,
+            title: getSpecialTitle(entry.path),
           }
         }
         return tab
@@ -134,7 +140,7 @@ export const useTabsStore = create<TabsState>((set) => ({
             currentPath: entry.path,
             isDir: entry.isDir,
             historyIndex: newIndex,
-            title: entry.path.split('\\').pop() || entry.path,
+            title: getSpecialTitle(entry.path),
           }
         }
         return tab

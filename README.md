@@ -1,19 +1,192 @@
-# README
 
-## About
+<h1 align="center">Super Folder</h1>
 
-This is the official Wails React-TS template.
+<p align="center">
+  一款面向 Windows 的现代文件管理器，拥有简洁优雅的界面和强大的文件处理能力。
+</p>
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+<p align="center">
+  <img src="https://img.shields.io/badge/平台-Windows-blue" alt="Platform" />
+  <img src="https://img.shields.io/badge/语言-Go%20%2B%20React-green" alt="Stack" />
+  <img src="https://img.shields.io/badge/开源-MIT-orange" alt="License" />
+</p>
 
-## Live Development
+---
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+## ✨ 特性一览
 
-## Building
+- 🔍 **闪电般的全盘搜索** — 基于 NTFS USN Journal 引擎，毫秒级检索全盘文件
+- 🏷️ **文件标签系统** — 为任意文件打上自定义标签，支持按标签筛选搜索
+- 📝 **文件备注** — 给文件附加笔记和说明，再也不会忘记文件用途
+- 📂 **多标签页浏览** — 像浏览器一样同时打开多个文件夹
+- 🔄 **批量重命名** — 内置 JavaScript 脚本引擎，支持可视化操作与高级代码自定义
+- 🖼️ **格式转换** — 直接在管理器内转换图片和数据文件格式
+- 👁️ **文件预览** — 侧栏即时预览图片、文档、代码、视频等多种格式
+- 💻 **内置终端** — 一键呼出 PowerShell 终端，无需切换窗口
+- ⏪ **撤销 / 重做** — 文件操作支持撤销和恢复，误操作也不怕
+- ⭐ **收藏夹** — 一键收藏常用文件和文件夹，快速访问
 
-To build a redistributable, production mode package, use `wails build`.
+---
+
+## 🖥️ 界面预览
+
+### 主界面
+
+应用采用三栏式布局设计：左侧导航栏、中央文件列表、右侧功能面板。所有面板均为独立的圆角卡片，整体呈现简洁通透的视觉风格。
+
+- **左侧导航栏** — 默认收起仅显示图标，鼠标移入时平滑展开
+- **顶部标签页** — 支持多标签浏览，带有流畅的切换动画
+- **右侧面板** — 预览、信息、标签管理三合一
+
+### 搜索
+
+搜索框支持多种高级过滤条件：
+
+- 按文件类型筛选（仅文件 / 仅文件夹）
+- 按扩展名过滤（如 `.txt`、`.docx`）
+- 区分大小写 / 正则表达式
+- 排除指定文件夹
+- 按标签筛选（AND / OR 逻辑）
+- 按备注内容搜索
+- 限定搜索目录和深度
+
+### 设置
+
+设置页面包含四个板块：
+
+| 板块 | 功能 |
+|------|------|
+| **文件夹** | 自定义侧边栏快捷路径的显示与隐藏 |
+| **缓存** | 管理缩略图缓存大小，支持自动清理 |
+| **搜索** | 配置搜索预设方案，保存常用搜索条件 |
+| **标签** | 全局标签的创建、编辑、排序与删除 |
+
+---
+
+## 📁 核心功能
+
+### 文件操作
+
+Super Folder 覆盖了日常文件管理的所有基础操作：
+
+- **复制 / 剪切 / 粘贴** — 支持进度显示，可随时取消
+- **重命名** — 单文件快速重命名，自动检测冲突
+- **删除** — 移至回收站或永久删除，均支持进度跟踪
+- **新建文件 / 文件夹** — 右键菜单快速创建
+- **冲突处理** — 粘贴时遇到同名文件，可选择覆盖、重命名或跳过，并支持"应用到全部"
+
+### 批量重命名
+
+选中多个文件后按 `F2` 或通过右键菜单进入批量重命名界面：
+
+- **基础模式** — 提供查找替换、添加前缀/后缀、序号等可视化输入框
+- **高级模式** — 通过 JavaScript 代码自定义重命名逻辑
+- **实时预览** — 右侧即时显示重命名后的效果
+- **安全检测** — 自动识别重复名称和非法字符，禁止危险操作
+- **预设方案** — 内置"添加日期前缀"、"数字补零对齐"等常用方案，也可保存自定义方案
+
+```javascript
+// 示例：为文件名添加日期后缀
+function rename(file, index, files) {
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  return file.name + '_' + dateStr + file.ext;
+}
+```
+
+### 格式转换
+
+选中文件后通过右键菜单一键转换格式，无需安装额外软件：
+
+| 源格式 | 可转换为 |
+|--------|---------|
+| PNG、JPG、GIF、SVG、ICO | PNG、JPG、GIF、ICO 互转 |
+| CSV | JSON |
+| JSON | CSV |
+
+### 文件标签
+
+标签系统让你突破文件夹的限制，用自己的方式组织文件：
+
+- 创建自定义标签，指定名称、分类和颜色
+- 为任意文件打上一个或多个标签
+- 通过搜索按标签筛选文件（支持 AND / OR 逻辑）
+- 标签数据同时存储在数据库和 NTFS 备用数据流中，随文件迁移不丢失
+
+### 文件备注
+
+为任何文件添加一段文字备注，方便日后回忆文件的用途或背景信息。备注显示在右侧预览面板中，搜索时也可以按备注内容检索。
+
+### 文件预览
+
+点击右侧面板的展开按钮，即可在不离开文件列表的情况下预览文件内容：
+
+| 文件类型 | 预览方式 |
+|---------|---------|
+| 图片 (PNG、JPG、GIF、WebP 等) | 图片预览 + 缩略图缓存 |
+| 视频 / 音频 | 内嵌媒体播放器 |
+| 代码文件 | 语法高亮显示 |
+| Markdown | 渲染后的富文本预览 |
+| PDF | 内嵌 PDF 阅读器 |
+| Word (.docx) | 文档内容提取预览 |
+| Excel (.xlsx) | 表格数据预览 |
+| 纯文本 | 文本内容预览 |
+
+### 全盘搜索
+
+搜索引擎基于 Windows NTFS 的 USN Journal（更新序列号日志），启动时快速加载全盘文件索引树到内存中，并实时监听文件系统变更保持索引同步。相比传统的逐目录遍历方式，搜索速度提升数个量级。
+
+### 内置终端
+
+按 `Ctrl + Enter` 快速呼出 / 隐藏底部终端面板。终端运行真正的 PowerShell 会话（通过 Windows ConPTY），支持自动定位到当前浏览的目录。
+
+---
+
+## ⌨️ 快捷键
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl + C` | 复制选中文件 |
+| `Ctrl + X` | 剪切选中文件 |
+| `Ctrl + V` | 粘贴 |
+| `Ctrl + Z` | 撤销上一步操作 |
+| `Ctrl + Shift + Z` / `Ctrl + Y` | 重做 |
+| `Ctrl + F` | 聚焦搜索框 |
+| `Ctrl + Enter` | 打开 / 关闭终端 |
+| `F2` | 重命名（多选时进入批量重命名） |
+| `Delete` | 删除到回收站 |
+| `←` / `→` | 后退 / 前进 |
+| `Alt + ←` / `Alt + →` | 后退 / 前进 |
+|  |  |
+
+---
+
+## 🛠️ 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| **桌面框架** | [Wails v2](https://wails.io) — Go + Web 技术构建原生桌面应用 |
+| **后端** | Go — 文件系统操作、USN Journal 引擎、Windows API 调用 |
+| **前端** | React 19 + TypeScript + Vite |
+| **UI 组件** | HeroUI + TailwindCSS |
+| **动画** | Framer Motion + Lottie |
+| **状态管理** | Zustand |
+| **终端** | xterm.js + Windows ConPTY |
+| **数据库** | SQLite (GORM) — 存储配置、标签、备注、收藏、缩略图缓存 |
+| **搜索引擎** | NTFS USN Journal — 通过 Windows DeviceIoControl API 直读 MFT |
+
+---
+
+## 💡 设计理念
+
+Super Folder 追求 **"干净而强大"** 的产品体验：
+
+- **不打扰** — 默认界面极简克制，高级功能按需展开
+- **原生感** — 完全无边框自绘窗口，拒绝任何 Web 感
+- **高效率** — 标签页、快捷键、侧键导航，尽量减少鼠标移动
+- **可扩展** — 批量重命名的 JS 脚本引擎让高级用户拥有无限可能
+
+---
+
+## 📄 开源协议
+
+本项目基于 MIT 协议开源。

@@ -221,6 +221,7 @@ export default function TopNav() {
     <div className="flex items-center h-14 bg-white rounded-2xl shadow-sm border border-gray-100 wails-draggable px-4 shrink-0">
       <div className="flex items-center gap-1 wails-no-drag">
         <button 
+          id="nav-back-button"
           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors"
           onClick={goBack} 
           disabled={!activeTab || activeTab.historyIndex <= 0}
@@ -228,6 +229,7 @@ export default function TopNav() {
           <AnimatedClickIcon animData={leftAnim} className="w-5 h-5 text-gray-700" />
         </button>
         <button 
+          id="nav-forward-button"
           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors"
           onClick={goForward} 
           disabled={!activeTab || activeTab.historyIndex >= activeTab.history.length - 1}
@@ -270,9 +272,13 @@ export default function TopNav() {
                   {isActive ? (
                     <div className="bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] rounded-full px-3 py-1 flex items-center shrink min-w-0 max-w-full font-medium text-gray-900 relative z-10">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
-                      <div className="text-sm tracking-wider flex items-center h-full shrink min-w-0">
-                        <DynamicBreadcrumb path={tab.currentPath || tab.title} />
-                      </div>
+                        <div className="text-sm tracking-wider flex items-center h-full shrink min-w-0">
+                          {tab.currentPath === 'batch-rename://' ? (
+                            <span className="truncate">{tab.title}</span>
+                          ) : (
+                            <DynamicBreadcrumb path={tab.currentPath || tab.title} />
+                          )}
+                        </div>
                       
                       {tabs.length > 1 && (
                         <button
@@ -289,15 +295,16 @@ export default function TopNav() {
                   ) : (
                     <div className="relative z-10 flex items-center">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
-                      <div className="text-sm tracking-wider flex items-center h-full flex-1 min-w-0">
-                        {(() => {
-                          const parts = tab.title.replace(/\\$/, '').split('\\')
-                          if (parts.length > 3) {
-                            return '... > ' + parts.slice(-2).join(' > ')
-                          }
-                          return tab.title.replace(/\\/g, ' > ').replace(/ > $/, '')
-                        })()}
-                      </div>
+                        <div className="text-sm tracking-wider flex items-center h-full flex-1 min-w-0">
+                          {(() => {
+                            if (tab.currentPath === 'batch-rename://') return <span className="truncate">{tab.title}</span>
+                            const parts = tab.title.replace(/\\$/, '').split('\\')
+                            if (parts.length > 3) {
+                              return '... > ' + parts.slice(-2).join(' > ')
+                            }
+                            return tab.title.replace(/\\/g, ' > ').replace(/ > $/, '')
+                          })()}
+                        </div>
                     </div>
                   )}
                   

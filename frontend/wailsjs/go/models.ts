@@ -64,3 +64,22 @@ export namespace models {
 
 }
 
+export namespace rename {
+	
+	export class Scheme {
+	    name: string;
+	    code: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Scheme(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.code = source["code"];
+	    }
+	}
+
+}
+

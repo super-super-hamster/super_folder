@@ -9,10 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"file-manager/internal/converter"
-	"file-manager/internal/database"
-	"file-manager/internal/fs"
-	"file-manager/internal/models"
+	"super_folder/internal/converter"
+	"super_folder/internal/database"
+	"super_folder/internal/fs"
+	"super_folder/internal/models"
+	"super_folder/internal/rename"
+	"super_folder/internal/terminal"
+	"super_folder/internal/undo"
 	"sort"
 	"strings"
 
@@ -25,11 +28,14 @@ import (
 type App struct {
 	ctx           context.Context
 	localHttpPort int
+	termService   *terminal.TerminalService
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	return &App{
+		termService: terminal.NewTerminalService(),
+	}
 }
 
 // GetLocalServerPort returns the dynamic port assigned for the local file server
@@ -41,6 +47,7 @@ func (a *App) GetLocalServerPort() int {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.termService.SetContext(ctx)
 
 	go func() {
 		mux := http.NewServeMux()
@@ -73,10 +80,12 @@ func (a *App) startup(ctx context.Context) {
 			}
 		}
 	}
+	rename.StartWatcher(ctx)
 }
 
 // beforeClose is called right before the application closes
 func (a *App) beforeClose(ctx context.Context) bool {
+	a.termService.Close()
 	width, height := runtime.WindowGetSize(ctx)
 	x, y := runtime.WindowGetPosition(ctx)
 	
@@ -122,6 +131,18 @@ func (a *App) GetDrives() []string {
 	return fs.GetDrives()
 }
 
+func (a *App) GetRenameSchemes() ([]rename.Scheme, error) {
+	return rename.GetRenameSchemes()
+}
+
+func (a *App) SaveRenameScheme(name string, code string) error {
+	return rename.SaveRenameScheme(name, code)
+}
+
+func (a *App) BatchRenameFiles(operations map[string]string) error {
+	return rename.BatchRenameFiles(operations)
+}
+
 func (a *App) GetDefaultPaths() map[string]string {
 	return fs.GetDefaultPaths()
 }
@@ -151,6 +172,13 @@ func (a *App) RenameFile(oldPath string, newPath string, overwrite bool) (bool, 
 	if err != nil {
 		return false, err
 	}
+	
+	undo.Push(undo.Operation{
+		Type:      undo.OpRename,
+		SrcPaths:  []string{oldPath},
+		DestPaths: []string{newPath},
+	})
+	
 	return true, nil
 }
 
@@ -197,6 +225,22 @@ func (a *App) CreateTag(tag models.Tag) error {
 
 func (a *App) UpdateTag(tag models.Tag) error {
 	return database.UpdateTag(&tag)
+}
+
+// Undo/Redo bindings
+
+func (a *App) UndoOperation() error {
+	_, err := undo.Undo()
+	return err
+}
+
+func (a *App) RedoOperation() error {
+	_, err := undo.Redo()
+	return err
+}
+
+func (a *App) ClearUndoStack() {
+	undo.Clear()
 }
 
 func (a *App) DeleteTag(tagID string) error {
@@ -369,7 +413,7 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 	if programData == "" {
 		programData = `C:\ProgramData`
 	}
-	portFile := filepath.Join(programData, "file-manager", "search_port.txt")
+	portFile := filepath.Join(programData, "super_folder", "search_port.txt")
 	portBytes, err := os.ReadFile(portFile)
 	if err != nil {
 		return nil, fmt.Errorf("search service is not ready (cannot read port file)")
@@ -437,6 +481,10 @@ func (a *App) OpenInTerminal(path string) error {
 	cmd := exec.Command("cmd", "/c", "start", "powershell")
 	cmd.Dir = path
 	return cmd.Start()
+}
+
+func (a *App) StartTerminal(dir string) error {
+	return a.termService.Start(dir)
 }
 
 func (a *App) ReadFileText(path string) (string, error) {

@@ -10,9 +10,14 @@ import { useUIStore } from './store/uiStore'
 import { useTabsStore } from './store/tabsStore'
 import SettingsSidebar from './components/settings/SettingsSidebar'
 import SettingsContent from './components/settings/SettingsContent'
+import { useUndoStore } from './store/undoStore'
+import TerminalPanel from './components/terminal/TerminalPanel'
+import FullFileEditor from './components/editor/FullFileEditor'
 
 function App() {
-  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen } = useUIStore()
+  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
+  const { tabs, activeTabId } = useTabsStore()
+  const activeTab = tabs.find(t => t.id === activeTabId)
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -44,6 +49,13 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        const state = useUIStore.getState();
+        state.setTerminalOpen(!state.isTerminalOpen);
+        return;
+      }
+      
       // 避免在输入框中触发快捷键
       if (e.target instanceof HTMLInputElement || 
           e.target instanceof HTMLTextAreaElement || 
@@ -51,22 +63,50 @@ function App() {
         return;
       }
       
-      if (e.key === 'ArrowLeft' || (e.altKey && e.key === 'ArrowLeft')) {
+      if (e.key === 'ArrowLeft' || (e.altKey && e.key === 'ArrowLeft') || e.key === 'BrowserBack') {
         e.preventDefault();
-        useTabsStore.getState().goBack();
-      } else if (e.key === 'ArrowRight' || (e.altKey && e.key === 'ArrowRight')) {
+        document.getElementById('nav-back-button')?.click();
+      } else if (e.key === 'ArrowRight' || (e.altKey && e.key === 'ArrowRight') || e.key === 'BrowserForward') {
         e.preventDefault();
-        useTabsStore.getState().goForward();
+        document.getElementById('nav-forward-button')?.click();
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          (window as any).go.main.App.RedoOperation().then(() => {
+            useUndoStore.getState().showMessage("已恢复");
+            useUIStore.getState().triggerRefresh();
+          }).catch((err: any) => {
+            useUndoStore.getState().showMessage(err || "恢复失败", true);
+            (window as any).go.main.App.ClearUndoStack();
+          });
+        } else {
+          (window as any).go.main.App.UndoOperation().then(() => {
+            useUndoStore.getState().showMessage("已撤销");
+            useUIStore.getState().triggerRefresh();
+          }).catch((err: any) => {
+            useUndoStore.getState().showMessage(err || "撤销失败", true);
+            (window as any).go.main.App.ClearUndoStack();
+          });
+        }
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        (window as any).go.main.App.RedoOperation().then(() => {
+          useUndoStore.getState().showMessage("已恢复");
+          useUIStore.getState().triggerRefresh();
+        }).catch((err: any) => {
+          useUndoStore.getState().showMessage(err || "恢复失败", true);
+          (window as any).go.main.App.ClearUndoStack();
+        });
       }
     };
 
     const handleMouseUp = (e: MouseEvent) => {
       if (e.button === 3) { // 鼠标侧键返回
         e.preventDefault();
-        useTabsStore.getState().goBack();
+        document.getElementById('nav-back-button')?.click();
       } else if (e.button === 4) { // 鼠标侧键前进
         e.preventDefault();
-        useTabsStore.getState().goForward();
+        document.getElementById('nav-forward-button')?.click();
       }
     };
 
@@ -107,13 +147,20 @@ function App() {
                   {isRightSidebarOpen && <RightSidebar />}
                 </AnimatePresence>
 
-                {/* FileList Island */}
+                {/* FileList Island or File Editor */}
                 <main className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
-                  <FileList />
+                  {activeTab && !activeTab.isDir ? (
+                    <FullFileEditor path={activeTab.currentPath} />
+                  ) : (
+                    <FileList />
+                  )}
                 </main>
               </>
             )}
           </div>
+
+          {/* Terminal Panel */}
+          <TerminalPanel onClose={() => useUIStore.getState().setTerminalOpen(false)} />
         </div>
       </div>
       <ModalManager />

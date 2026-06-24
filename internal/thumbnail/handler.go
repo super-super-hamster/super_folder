@@ -1,9 +1,9 @@
-package thumbnail
+﻿package thumbnail
 
 import (
 	"bytes"
-	"file-manager/internal/database"
-	"file-manager/internal/models"
+	"super_folder/internal/database"
+	"super_folder/internal/models"
 	"image"
 	_ "image/gif"
 	"image/png"
@@ -22,9 +22,9 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
+var thumbSem = make(chan struct{}, 8) // Max 8 concurrent decodes
+
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("[Thumbnail/File Handler] Received request:", r.URL.String())
-	
 	if r.URL.Path == "/file" {
 		path := r.URL.Query().Get("path")
 		if path == "" {
@@ -49,7 +49,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	info, err := os.Stat(path)
 	if err != nil || info.IsDir() {
-		fmt.Println("[Thumbnail Handler] Stat error or is dir:", err, path)
 		http.Error(w, "file not found or is dir", http.StatusNotFound)
 		return
 	}
@@ -63,6 +62,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Write(thumb.Data)
 		return
+	}
+
+	// Wait for an available decoding slot or client abort
+	select {
+	case thumbSem <- struct{}{}:
+		defer func() { <-thumbSem }()
+	case <-r.Context().Done():
+		return // Client disconnected while waiting
 	}
 
 	// Generate Thumbnail
@@ -117,3 +124,4 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	w.Write(data)
 }
+

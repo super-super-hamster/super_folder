@@ -1,4 +1,4 @@
-package usn
+﻿package usn
 
 const (
 	FSCTL_QUERY_USN_JOURNAL = 0x000900f4
@@ -59,3 +59,4 @@ type FileNode struct {
 	Name      string
 	IsFolder  bool
 }
+

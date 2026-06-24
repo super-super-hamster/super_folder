@@ -1,4 +1,4 @@
-package service
+﻿package service
 
 import (
 	"log"
@@ -52,3 +52,4 @@ func Run() error {
 
 	return svc.Run("file-manager-search", &myService{})
 }
+

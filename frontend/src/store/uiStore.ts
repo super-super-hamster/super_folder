@@ -65,6 +65,10 @@ interface UIState {
   setUnsavedEditorPath: (path: string | null) => void
   viewMode: ViewMode
   setViewMode: (mode: ViewMode) => void
+  isTerminalOpen: boolean
+  setTerminalOpen: (open: boolean) => void
+  terminalPanelHeight: number
+  setTerminalPanelHeight: (height: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -89,6 +93,10 @@ export const useUIStore = create<UIState>()(
       setSearchPanelOpen: (open) => set({ isSearchPanelOpen: open }),
       isSettingsOpen: false,
       setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+      isTerminalOpen: false,
+      setTerminalOpen: (open) => set({ isTerminalOpen: open }),
+      terminalPanelHeight: 250,
+      setTerminalPanelHeight: (height) => set({ terminalPanelHeight: height }),
       activeSettingsTab: 'folder',
       setActiveSettingsTab: (tab) => set({ activeSettingsTab: tab }),
       isRightSidebarOpen: false,

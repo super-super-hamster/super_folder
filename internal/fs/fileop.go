@@ -1,4 +1,4 @@
-package fs
+﻿package fs
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"super_folder/internal/undo"
 
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -33,6 +35,8 @@ type FileTask struct {
 	GlobalConflict string // "rename", "overwrite", "skip" or ""
 	TotalFiles     int
 	ProcessedFiles int
+	SuccessfulSrc  []string
+	SuccessfulDest []string
 }
 
 var (
@@ -93,6 +97,18 @@ func (t *FileTask) Run() {
 			"taskID":    t.ID,
 			"operation": t.Operation,
 		})
+		
+		if len(t.SuccessfulSrc) > 0 && t.Operation != "permanent_delete" {
+			opType := undo.OpCopy
+			if t.Operation == "cut" {
+				opType = undo.OpMove
+			}
+			undo.Push(undo.Operation{
+				Type:      opType,
+				SrcPaths:  t.SuccessfulSrc,
+				DestPaths: t.SuccessfulDest,
+			})
+		}
 	}()
 
 	// 1. Calculate total bytes
@@ -130,7 +146,7 @@ func (t *FileTask) Run() {
 				fmt.Println("Error deleting", src, ":", err)
 				runtime.EventsEmit(t.WailsCtx, "paste:error", map[string]interface{}{
 					"taskID":  t.ID,
-					"message": fmt.Sprintf("永久删除 '%s' 失败: %v", filepath.Base(src), err),
+					"message": fmt.Sprintf("姘镐箙鍒犻櫎 '%s' 澶辫触: %v", filepath.Base(src), err),
 				})
 			}
 			continue
@@ -143,17 +159,18 @@ func (t *FileTask) Run() {
 			continue
 		}
 
+		var finalDest string
 		if srcInfo.IsDir() {
-			err = t.copyDir(src, destPath)
+			finalDest, err = t.copyDir(src, destPath)
 		} else {
-			err = t.copyFile(src, destPath)
+			finalDest, err = t.copyFile(src, destPath)
 		}
 
 		if err != nil && err != context.Canceled {
 			fmt.Println("Error processing", src, ":", err)
 			runtime.EventsEmit(t.WailsCtx, "paste:error", map[string]interface{}{
 				"taskID":  t.ID,
-				"message": fmt.Sprintf("操作 '%s' 失败: %v", filepath.Base(src), err),
+				"message": fmt.Sprintf("鎿嶄綔 '%s' 澶辫触: %v", filepath.Base(src), err),
 			})
 			continue // Still continue with other files, but frontend might show a warning
 		}
@@ -161,6 +178,11 @@ func (t *FileTask) Run() {
 		// If cut, delete the original after successful copy
 		if t.Operation == "cut" && err == nil && t.Ctx.Err() == nil {
 			os.RemoveAll(src)
+		}
+
+		if finalDest != "" && err == nil && t.Ctx.Err() == nil {
+			t.SuccessfulSrc = append(t.SuccessfulSrc, src)
+			t.SuccessfulDest = append(t.SuccessfulDest, finalDest)
 		}
 	}
 }
@@ -265,39 +287,39 @@ func generateUniqueName(path string) string {
 	}
 }
 
-func (t *FileTask) copyDir(src string, dest string) error {
+func (t *FileTask) copyDir(src string, dest string) (string, error) {
 	dest = t.resolvePath(dest)
 	if dest == "" {
-		return nil
+		return "", nil
 	}
 
 	if err := os.MkdirAll(dest, 0755); err != nil {
-		return err
+		return "", err
 	}
 
 	entries, err := os.ReadDir(src)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	for _, entry := range entries {
 		if t.Ctx.Err() != nil {
-			return t.Ctx.Err()
+			return "", t.Ctx.Err()
 		}
 		srcPath := filepath.Join(src, entry.Name())
 		destPath := filepath.Join(dest, entry.Name())
 
 		if entry.IsDir() {
-			if err := t.copyDir(srcPath, destPath); err != nil {
-				return err
+			if _, err := t.copyDir(srcPath, destPath); err != nil {
+				return "", err
 			}
 		} else {
-			if err := t.copyFile(srcPath, destPath); err != nil {
-				return err
+			if _, err := t.copyFile(srcPath, destPath); err != nil {
+				return "", err
 			}
 		}
 	}
-	return nil
+	return dest, nil
 }
 
 type progressReader struct {
@@ -321,21 +343,21 @@ func (pr *progressReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func (t *FileTask) copyFile(src string, dest string) error {
+func (t *FileTask) copyFile(src string, dest string) (string, error) {
 	dest = t.resolvePath(dest)
 	if dest == "" {
-		return nil
+		return "", nil
 	}
 
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer srcFile.Close()
 
 	destFile, err := os.Create(dest)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	pr := &progressReader{
@@ -349,10 +371,11 @@ func (t *FileTask) copyFile(src string, dest string) error {
 
 	if err != nil {
 		os.Remove(dest)
-		return err
+		return "", err
 	}
 
 	t.ProcessedFiles++
 	t.emitProgress()
-	return nil
+	return dest, nil
 }
+

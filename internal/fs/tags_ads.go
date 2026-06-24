@@ -1,8 +1,8 @@
-package fs
+﻿package fs
 
 import (
 	"encoding/json"
-	"file-manager/internal/models"
+	"super_folder/internal/models"
 	"os"
 )
 
@@ -45,3 +45,4 @@ func ReadTagsFromADS(filePath string) ([]models.Tag, error) {
 
 	return tags, nil
 }
+

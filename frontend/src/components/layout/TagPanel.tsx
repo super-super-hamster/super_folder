@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ComboBox, Input, ListBox } from '@heroui/react'
 import { useSelectionStore } from '../../store/selectionStore'
 import { useTagStore } from '../../store/tagStore'
-import { GetFileTags, AddTagToFile, RemoveTagFromFile } from '../../../wailsjs/go/main/App'
+import { GetTagsForFiles, AddTagToFile, RemoveTagFromFile } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 
 export default function TagPanel() {
@@ -14,7 +14,6 @@ export default function TagPanel() {
   const [isAdding, setIsAdding] = useState(false)
   const [inputValue, setInputValue] = useState('')
 
-  const singleSelectedPath = selectedPaths.size === 1 ? Array.from(selectedPaths)[0] : null
   const addingTagsRef = useRef(new Set<string>())
 
   useEffect(() => {
@@ -22,23 +21,46 @@ export default function TagPanel() {
   }, [])
 
   useEffect(() => {
-    if (singleSelectedPath) {
-      GetFileTags(singleSelectedPath).then(tags => setFileTags(tags || []))
+    const paths = Array.from(selectedPaths)
+    if (paths.length > 0) {
+      GetTagsForFiles(paths).then(tagsMap => {
+        if (paths.length === 1) {
+          setFileTags(tagsMap[paths[0]] || [])
+        } else {
+          // Compute intersection
+          const counts = new Map<string, number>()
+          const tagCounts = new Map<string, models.Tag>()
+          paths.forEach(p => {
+            const tags = tagsMap[p] || []
+            tags.forEach(t => {
+              counts.set(t.id, (counts.get(t.id) || 0) + 1)
+              tagCounts.set(t.id, t)
+            })
+          })
+          
+          const commonTags: models.Tag[] = []
+          counts.forEach((count, tagId) => {
+            if (count === paths.length) {
+              commonTags.push(tagCounts.get(tagId)!)
+            }
+          })
+          setFileTags(commonTags)
+        }
+      })
     } else {
       setFileTags([])
     }
     setIsAdding(false)
-  }, [singleSelectedPath])
+  }, [selectedPaths])
 
   const handleAddTag = async (tagName: string) => {
-    if (!tagName.trim() || !singleSelectedPath) return
+    const paths = Array.from(selectedPaths)
+    if (!tagName.trim() || paths.length === 0) return
     
     if (addingTagsRef.current.has(tagName)) return
     addingTagsRef.current.add(tagName)
     
     try {
-      if (!tagName.trim() || !singleSelectedPath) return
-      
       let type = ''
       let name = tagName.trim()
       if (name.includes(':') || name.includes('：')) {
@@ -57,7 +79,7 @@ export default function TagPanel() {
       }
 
       if (!fileTags.find(t => t.id === tag!.id)) {
-        await AddTagToFile(singleSelectedPath, tag!)
+        await Promise.all(paths.map(p => AddTagToFile(p, tag!)))
         setFileTags(prev => [...prev, tag!])
         triggerTagRefresh()
       }
@@ -69,18 +91,20 @@ export default function TagPanel() {
   }
 
   const handleRemoveTag = async (tagId: string) => {
-    if (!singleSelectedPath) return
-    await RemoveTagFromFile(singleSelectedPath, tagId)
+    const paths = Array.from(selectedPaths)
+    if (paths.length === 0) return
+    await Promise.all(paths.map(p => RemoveTagFromFile(p, tagId)))
     setFileTags(prev => prev.filter(t => t.id !== tagId))
     triggerTagRefresh()
   }
 
   const handleRemoveGroup = async (type: string) => {
-    if (!singleSelectedPath) return
+    const paths = Array.from(selectedPaths)
+    if (paths.length === 0) return
     const tagsToRemove = fileTags.filter(t => t.type === type)
     if (tagsToRemove.length === 0) return
     
-    await Promise.all(tagsToRemove.map(t => RemoveTagFromFile(singleSelectedPath, t.id)))
+    await Promise.all(tagsToRemove.map(t => Promise.all(paths.map(p => RemoveTagFromFile(p, t.id)))))
     
     const idsToRemove = new Set(tagsToRemove.map(t => t.id))
     setFileTags(prev => prev.filter(t => !idsToRemove.has(t.id)))
@@ -141,8 +165,8 @@ export default function TagPanel() {
     return result
   }, [globalTags, inputValue])
 
-  if (selectedPaths.size !== 1) {
-    return <div className="text-gray-400 text-center mt-8 text-sm">请选择单个文件以管理标签</div>
+  if (selectedPaths.size === 0) {
+    return <div className="text-gray-400 text-center mt-8 text-sm">请选择至少一个文件以管理标签</div>
   }
 
   return (
@@ -203,9 +227,9 @@ export default function TagPanel() {
                   }
                 }}
               >
-                <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 border-none shadow-none rounded-lg overflow-hidden ring-0 outline-none tag-panel-combobox-group">
+                <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 border-none shadow-none rounded-lg overflow-hidden ring-0 outline-none tag-panel-combobox-group focus-within:!ring-0 focus-within:!ring-offset-0 focus-within:!border-none">
                   <Input 
-                    className="text-gray-800 bg-transparent border-none shadow-none outline-none tag-panel-combobox-input"
+                    className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-2 h-full"
                     placeholder="" 
                     autoFocus 
                     onKeyDown={(e: any) => {

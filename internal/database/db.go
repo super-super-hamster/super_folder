@@ -1,7 +1,7 @@
-package database
+﻿package database
 
 import (
-	"file-manager/internal/models"
+	"super_folder/internal/models"
 	"os"
 	"path/filepath"
 
@@ -194,8 +194,24 @@ func AddTagToFile(path string, tagID string) error {
 	return DB.Where(models.FileTag{Path: path, TagID: tagID}).FirstOrCreate(&ft).Error
 }
 
+func AddTagToFiles(paths []string, tagID string) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		for _, path := range paths {
+			ft := models.FileTag{Path: path, TagID: tagID}
+			if err := tx.Where(models.FileTag{Path: path, TagID: tagID}).FirstOrCreate(&ft).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func RemoveTagFromFile(path string, tagID string) error {
 	return DB.Where("path = ? AND tag_id = ?", path, tagID).Delete(&models.FileTag{}).Error
+}
+
+func RemoveTagFromFiles(paths []string, tagID string) error {
+	return DB.Where("path IN ? AND tag_id = ?", paths, tagID).Delete(&models.FileTag{}).Error
 }
 
 func SetTagsForFile(path string, tagIDs []string) error {
@@ -263,4 +279,5 @@ func IsFavorite(path string) (bool, error) {
 	err := DB.Model(&models.Favorite{}).Where("path = ?", path).Count(&count).Error
 	return count > 0, err
 }
+
 

@@ -1,7 +1,7 @@
-package fs
+﻿package fs
 
 import (
-	"file-manager/internal/models"
+	"super_folder/internal/models"
 	"os"
 	"path/filepath"
 )
@@ -59,3 +59,4 @@ func GetDefaultPaths() map[string]string {
 		"Music":     filepath.Join(userProfile, "Music"),
 	}
 }
+
