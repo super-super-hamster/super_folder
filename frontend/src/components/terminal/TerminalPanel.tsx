@@ -378,7 +378,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
       )}
       
       {/* Inner Box */}
-      <div className="w-full h-full bg-white rounded-xl sm:rounded-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border border-gray-200 flex flex-col overflow-hidden wails-no-drag">
+      <div className="w-full h-full bg-white rounded-2xl shadow-panel border border-gray-200 flex flex-col overflow-hidden wails-no-drag">
         {/* Terminal Container */}
         <div 
           ref={terminalRef} 

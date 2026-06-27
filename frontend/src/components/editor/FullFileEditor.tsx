@@ -82,14 +82,14 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
       return (
         <div className="w-full h-full flex flex-col relative">
           {content !== originalContent && (
-            <div className="absolute top-2 right-4 z-10 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full shadow-sm border border-yellow-200">
+            <div className="absolute top-2 right-4 z-panel px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full shadow-sm border border-yellow-200">
               未保存 (Ctrl+S)
             </div>
           )}
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 w-full p-6 resize-none outline-none font-mono text-sm bg-gray-50 text-gray-800 wails-no-drag"
+            className="flex-1 w-full p-4 resize-none outline-none font-mono text-sm bg-gray-50 text-gray-800 wails-no-drag"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             spellCheck={false}
           />

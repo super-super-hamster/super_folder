@@ -50,29 +50,29 @@ export default function RightSidebar() {
       >
       <div className="p-4">
         {/* Toggle Pill */}
-        <div className="flex items-center bg-[#e8e8e8] rounded-full p-1 w-full justify-between">
+        <div className="flex items-center bg-gray-100 rounded-full p-1 w-full justify-between">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`relative flex-1 py-1.5 text-xs rounded-full transition-colors z-10 ${
-                activeTab === tab ? 'font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'
+              className={`relative flex-1 py-1.5 text-xs rounded-full transition-colors z-base ${
+                activeTab === tab ? 'font-medium text-primary' : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTabRight"
-                  className="absolute inset-0 bg-white rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.04)] z-[-1]"
+                  className="absolute inset-0 bg-white rounded-full shadow-sm z-[-1]"
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
-              <span className="relative z-10">{tab}</span>
+              <span className="relative z-base">{tab}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full custom-scrollbar">
+      <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full no-scrollbar">
         {activeTab === '预览' && (
           <div className="w-full flex flex-col relative px-4 max-h-full min-h-0">
             <FilePreview />

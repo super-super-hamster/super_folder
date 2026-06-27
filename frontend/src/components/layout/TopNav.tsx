@@ -249,7 +249,7 @@ export default function TopNav() {
             }
           }}
           transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-          className={`flex items-center bg-[#e8e8e8] rounded-full p-1 overflow-x-auto overflow-y-hidden no-scrollbar transition-colors duration-200 ease-out group/tabs ${isSearchActive ? 'w-auto shrink-0' : 'flex-1 min-w-0'}`}
+          className={`flex items-center bg-gray-100 rounded-full p-1 overflow-x-auto overflow-y-hidden no-scrollbar transition-colors duration-200 ease-out group/tabs ${isSearchActive ? 'w-auto shrink-0' : 'flex-1 min-w-0'}`}
         >
           <AnimatePresence>
             {tabs.map((tab) => {
@@ -270,7 +270,7 @@ export default function TopNav() {
                   onClick={() => setActiveTab(tab.id)}
                 >
                   {isActive ? (
-                    <div className="bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] rounded-full px-3 py-1 flex items-center shrink min-w-0 max-w-full font-medium text-gray-900 relative z-10">
+                    <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink min-w-0 max-w-full font-medium text-primary relative z-panel">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full shrink min-w-0">
                           {tab.currentPath === 'batch-rename://' ? (
@@ -293,7 +293,7 @@ export default function TopNav() {
                       )}
                     </div>
                   ) : (
-                    <div className="relative z-10 flex items-center">
+                    <div className="relative z-panel flex items-center">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full flex-1 min-w-0">
                           {(() => {
@@ -327,7 +327,7 @@ export default function TopNav() {
           id="search-container"
           layout
           transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-          className={`relative flex items-center bg-[#e8e8e8] rounded-full focus-within:ring-2 ring-gray-200 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
+          className={`relative flex items-center bg-gray-100 rounded-full focus-within:ring-2 ring-gray-200 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
         >
           {isSearchActive && (
             <div 

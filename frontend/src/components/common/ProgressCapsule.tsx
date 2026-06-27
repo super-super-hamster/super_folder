@@ -11,7 +11,7 @@ export const ProgressCapsule = () => {
   
   const [showDone, setShowDone] = useState(false)
   
-  const [overrideMsg, setOverrideMsg] = useState<{ text: string, type: 'block' | 'clipboard' | 'undo' } | null>(null)
+  const [overrideMsg, setOverrideMsg] = useState<{ text: string, type: 'block' | 'undo' } | null>(null)
   
   const [isHovered, setIsHovered] = useState(false)
   const [isTemporarilyExpanded, setIsTemporarilyExpanded] = useState(true)
@@ -46,14 +46,10 @@ export const ProgressCapsule = () => {
   // Listen for clipboard changes (copy/cut)
   useEffect(() => {
     if (capsuleKey > prevCapsuleKey.current) {
-      setOverrideMsg({
-        text: `已${clipboardOp === 'cut' ? '剪切' : '复制'} ${clipboardItems.length} 项`,
-        type: 'clipboard'
-      })
       triggerExpand()
       prevCapsuleKey.current = capsuleKey
     }
-  }, [capsuleKey, clipboardOp, clipboardItems.length])
+  }, [capsuleKey])
 
   // Listen for undo messages
   const prevUndoKey = useRef(undoKey)
@@ -68,12 +64,7 @@ export const ProgressCapsule = () => {
     }
   }, [undoKey, undoMsg])
 
-  // If clipboard items become 0 (cleared), clear the clipboard override
-  useEffect(() => {
-    if (clipboardItems.length === 0 && overrideMsg?.type === 'clipboard') {
-      setOverrideMsg(null)
-    }
-  }, [clipboardItems.length, overrideMsg?.type])
+
 
   // Listen for blocked actions
   useEffect(() => {
@@ -85,18 +76,7 @@ export const ProgressCapsule = () => {
       triggerExpand()
       
       const timer = setTimeout(() => {
-        // Revert back to clipboard override if it existed, otherwise clear
-        if (useClipboardStore.getState().items.length > 0) {
-          const cop = useClipboardStore.getState().operation
-          const clen = useClipboardStore.getState().items.length
-          setOverrideMsg({
-            text: `已${cop === 'cut' ? '剪切' : '复制'} ${clen} 项`,
-            type: 'clipboard'
-          })
-          triggerExpand()
-        } else {
-          setOverrideMsg(null)
-        }
+        setOverrideMsg(null)
       }, 3000)
       return () => clearTimeout(timer)
     }
@@ -179,9 +159,9 @@ export const ProgressCapsule = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 50, scale: 0.9 }}
+          initial={{ y: 50, scale: 0.9 }}
+          animate={{ y: 0, scale: 1 }}
+          exit={{ y: 50, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="absolute bottom-6 left-6 z-40"
           onMouseEnter={() => setIsHovered(true)}

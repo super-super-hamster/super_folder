@@ -176,11 +176,11 @@ export default function TagPanel() {
           <div key={type} className="flex flex-col gap-1">
             <div className="peer flex items-center justify-between text-sm text-[#0F2039] font-semibold select-none hover:bg-gray-100 rounded py-1.5 px-2 transition-colors cursor-default">
               <div className="flex items-center gap-2">
-                <svg style={{ color: tags[0]?.colorHex || '#0F2039' }} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                {/* <svg style={{ color: tags[0]?.colorHex || '#0F2039' }} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> */}
                 {type}
               </div>
               <button onClick={() => handleRemoveGroup(type)} className="text-[#0F2039] hover:bg-gray-200 rounded p-0.5 transition-all">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> */}
               </button>
             </div>
             <div className="pl-6 flex flex-col gap-1 peer-hover:[&>div]:bg-gray-100">
@@ -227,7 +227,7 @@ export default function TagPanel() {
                   }
                 }}
               >
-                <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 border-none shadow-none rounded-lg overflow-hidden ring-0 outline-none tag-panel-combobox-group focus-within:!ring-0 focus-within:!ring-offset-0 focus-within:!border-none">
+                <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 rounded-lg overflow-hidden outline-none">
                   <Input 
                     className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-2 h-full"
                     placeholder="" 
@@ -263,13 +263,13 @@ export default function TagPanel() {
           onClick={() => setIsAdding(!isAdding)}
           className="p-2 rounded-full hover:bg-gray-100 transition-colors text-[#0F2039] mt-2"
         >
-          <motion.svg 
+          {/* <motion.svg 
             animate={{ rotate: isAdding ? 45 : 0 }} 
             width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
-          </motion.svg>
+          </motion.svg> */}
         </button>
       </div>
     </div>
@@ -280,15 +280,11 @@ function TagItem({ tag, onRemove, isNested }: { tag: models.Tag, onRemove: () =>
   return (
     <div className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors select-none hover:bg-gray-100 cursor-default">
       <div className="flex items-center gap-3">
-        {!isNested ? (
-            <svg style={{ color: tag.colorHex || '#0F2039' }} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-        ) : (
-            <svg style={{ color: tag.colorHex || '#0F2039' }} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-        )}
+        {/* SVG Icon Placeholder */}
         <span className="text-[14px] text-gray-800">{tag.name}</span>
       </div>
       <button onClick={onRemove} className="text-[#0F2039] hover:bg-gray-200 rounded p-0.5 transition-all">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> */}
       </button>
     </div>
   )

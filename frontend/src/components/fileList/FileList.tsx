@@ -194,67 +194,6 @@ const ThumbnailImage = ({ path, alt }: { path: string, alt: string }) => {
   )
 }
 
-const CapsuleNotification = ({ operation, count, onClear, capsuleKey }: { operation: 'copy'|'cut', count: number, onClear: () => void, capsuleKey: number }) => {
-  const [isHovered, setIsHovered] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  
-  useEffect(() => {
-    setIsCollapsed(false)
-    const timer = setTimeout(() => setIsCollapsed(true), 2000)
-    return () => clearTimeout(timer)
-  }, [capsuleKey])
-
-  const expanded = isHovered || !isCollapsed
-
-  return (
-    <motion.div
-      initial={{ x: -50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: -50, opacity: 0 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      className={`absolute bottom-4 left-4 z-20 h-8 rounded-full text-xs font-medium text-white ${operation === 'cut' ? 'bg-yellow-500' : 'bg-green-500'} flex items-center justify-center overflow-hidden cursor-default`}
-    >
-      <motion.div
-        animate={{ width: expanded ? 120 : 32 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex items-center justify-center whitespace-nowrap h-full relative"
-      >
-        <AnimatePresence mode="wait">
-        {expanded ? (
-          <motion.div
-            key="expanded"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex items-center justify-between w-full px-3"
-          >
-            <span>已{operation === 'cut' ? '剪切' : '复制'} {count} 项</span>
-            <div 
-              className="w-4 h-4 rounded-full hover:bg-white/30 flex items-center justify-center cursor-pointer flex-shrink-0 -mr-1"
-              onClick={(e) => { e.stopPropagation(); onClear() }}
-            >
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="collapsed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 flex items-center justify-center font-bold"
-          >
-            {count}
-          </motion.div>
-        )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
-  )
-}
 
 // Mock for pure browser testing
 if (!(window as any).go) {
@@ -1441,7 +1380,7 @@ export default function FileList() {
                       key={preset.id} 
                       id={preset.id} 
                       textValue={preset.name}
-                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-600 transition-colors cursor-pointer"
+                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-gray-200 data-[selected=true]:text-gray-800 transition-colors cursor-pointer"
                     >
                       {preset.name}
                     </ListBox.Item>

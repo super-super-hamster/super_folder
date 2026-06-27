@@ -1,1 +1,0 @@
-const match = file.name.match(/^(\\d+)/);\nif (!match) return file.name;\nconst numStr = match[1];\nlet maxLen = 0;\nfor (const f of files) {\n  const m = f.name.match(/^(\\d+)/);\n  if (m && m[1].length > maxLen) maxLen = m[1].length;\n}\nreturn numStr.padStart(maxLen, '0') + file.name.substring(numStr.length);

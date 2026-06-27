@@ -4,12 +4,10 @@ import { useModalStore } from '../../store/modalStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTaskStore } from '../../store/taskStore'
 import { CancelPaste, ResolvePasteConflict, RenameFile, PermanentDelete } from '../../../wailsjs/go/main/App'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ProgressBarRoot, ProgressBarTrack, ProgressBarFill, Checkbox } from '@heroui/react'
+import { Modal, Button, ProgressBar } from '@heroui/react'
 
-const ProgressModal = () => {
+const ProgressModalContent = () => {
   const { taskData, operation, progress } = useTaskStore()
-  const setModalVisible = useTaskStore(state => state.setModalVisible)
   
   const handleCancel = () => {
     if (taskData?.taskID) {
@@ -21,101 +19,93 @@ const ProgressModal = () => {
   const opName = operation === 'cut' ? '移动' : (operation === 'permanent_delete' ? '删除' : '复制')
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center relative">
-      <div 
-        className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-600"
-        onClick={() => setModalVisible(false)}
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </div>
-      <h2 className="text-xl font-bold mb-4">正在执行的操作: {opName}</h2>
-      <p className="text-gray-500 mb-6 text-sm truncate w-full text-center">
-        {taskData?.processedFiles || 0} / {taskData?.totalFiles || 0} 项
-      </p>
-      <ProgressBarRoot value={progress} className="w-full mb-6">
-        <ProgressBarTrack className="h-2.5 bg-gray-200 rounded-full w-full overflow-hidden">
-          <ProgressBarFill className="h-2.5 bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
-        </ProgressBarTrack>
-      </ProgressBarRoot>
-      
-      <div className="flex w-full gap-3">
-        <button 
-          onClick={handleCancel}
-          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+    <>
+      <Modal.Header className="flex flex-col gap-1 text-center items-center mt-2">
+        正在执行的操作: {opName}
+      </Modal.Header>
+      <Modal.Body>
+        <p className="text-gray-500 text-sm truncate w-full text-center">
+          {taskData?.processedFiles || 0} / {taskData?.totalFiles || 0} 项
+        </p>
+        <ProgressBar value={progress} className="w-full mb-2">
+          <ProgressBar.Track className="h-2.5 bg-gray-200 rounded-full w-full overflow-hidden">
+            <ProgressBar.Fill className="h-2.5 bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+          </ProgressBar.Track>
+        </ProgressBar>
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={handleCancel}>
           取消
-        </button>
-        <button 
-          disabled
-          className="flex-1 bg-gray-300 text-white font-medium py-2 px-4 rounded-lg cursor-not-allowed opacity-50"
-        >
+        </Button>
+        <Button className="flex-1 bg-green-500 hover:bg-green-600 text-white" isDisabled>
           确认
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Modal.Footer>
+    </>
   )
 }
 
-const ConflictModal = () => {
+const ConflictModalContent = () => {
   const { modalData, closeModal } = useModalStore()
   const [applyToAll, setApplyToAll] = useState(false)
+  const [isResolving, setIsResolving] = useState(false)
 
   const handleResolve = (action: string) => {
+    setIsResolving(true)
     if (modalData?.taskID) {
       ResolvePasteConflict(modalData.taskID, action, applyToAll)
     }
-    closeModal()
   }
 
-  return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-4 text-red-500">
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <h2 className="text-xl font-bold">文件冲突</h2>
-      </div>
-      <p className="text-gray-500 mb-6 text-sm text-center">
-        目标文件夹中已存在同名文件：<br/>
-        <span className="font-mono text-xs">{modalData?.destPath}</span>
-      </p>
-      
-      <div className="flex flex-col gap-3 w-full mb-6">
-        <button 
-          onClick={() => handleResolve('rename')}
-          className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
-          保留两者 (自动补充后缀)
-        </button>
-        <button 
-          onClick={() => handleResolve('overwrite')}
-          className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
-          覆盖目标文件
-        </button>
-        <button 
-          onClick={() => handleResolve('skip')}
-          className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
-          跳过该文件
-        </button>
-      </div>
+  // If a new conflict arrives, reset resolving state
+  useEffect(() => {
+    setIsResolving(false)
+  }, [modalData?.destPath])
 
-      <label className="flex items-center gap-2 cursor-pointer mb-2 text-sm text-gray-700">
-        <Checkbox 
-          isSelected={applyToAll} 
-          onChange={setApplyToAll as any} 
-          className="w-4 h-4 mr-2"
-        />
-        为之后的所有冲突执行相同操作
-      </label>
-    </div>
+  return (
+    <>
+      <Modal.Header className="flex items-center gap-2 text-red-500 justify-center mt-2">
+        {/* <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg> */}
+        文件冲突
+      </Modal.Header>
+      <Modal.Body className="items-center">
+        <p className="text-gray-500 text-sm text-center">
+          目标文件夹中已存在同名文件：<br/>
+          <span className="font-mono text-xs">{modalData?.destPath}</span>
+        </p>
+        
+        <div className="flex flex-col gap-3 w-full my-2">
+          <Button className="w-full bg-green-500 hover:bg-green-600 text-white" isDisabled={isResolving} onPress={() => handleResolve('rename')}>
+            保留两者 (自动补充后缀)
+          </Button>
+          <Button className="w-full bg-red-500 text-white hover:bg-red-600" isDisabled={isResolving} onPress={() => handleResolve('overwrite')}>
+            覆盖目标文件
+          </Button>
+          <Button className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300" isDisabled={isResolving} onPress={() => handleResolve('skip')}>
+            跳过该文件
+          </Button>
+        </div>
+
+        <div className="flex justify-center w-full mt-2">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 select-none">
+            <input 
+              type="checkbox" 
+              checked={applyToAll}
+              onChange={(e) => setApplyToAll(e.target.checked)}
+              className="w-4 h-4 text-green-500 rounded border-gray-300 focus:ring-green-500 cursor-pointer"
+            />
+            <span>为之后的所有冲突执行相同操作</span>
+          </label>
+        </div>
+      </Modal.Body>
+      <Modal.Footer />
+    </>
   )
 }
 
-const RenameConflictModal = () => {
+const RenameConflictModalContent = () => {
   const { modalData, closeModal } = useModalStore()
 
   const handleResolve = (action: string) => {
@@ -132,36 +122,31 @@ const RenameConflictModal = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-4 text-red-500">
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <>
+      <Modal.Header className="flex items-center gap-2 text-red-500 justify-center mt-2">
+        {/* <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <h2 className="text-xl font-bold">重命名冲突</h2>
-      </div>
-      <p className="text-gray-500 mb-6 text-sm text-center">
-        当前文件夹中已存在名为 <span className="font-mono font-bold">{modalData?.name}</span> 的文件。
-      </p>
-      
-      <div className="flex w-full gap-3">
-        <button 
-          onClick={closeModal}
-          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        </svg> */}
+        重命名冲突
+      </Modal.Header>
+      <Modal.Body className="items-center">
+        <p className="text-gray-500 text-sm text-center">
+          当前文件夹中已存在名为 <span className="font-mono font-bold">{modalData?.name}</span> 的文件。
+        </p>
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={closeModal}>
           取消
-        </button>
-        <button 
-          onClick={() => handleResolve('overwrite')}
-          className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        </Button>
+        <Button className="flex-1 bg-red-500 text-white hover:bg-red-600" onPress={() => handleResolve('overwrite')}>
           替换目标文件
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Modal.Footer>
+    </>
   )
 }
 
-const PermanentDeleteConfirmModal = () => {
+const PermanentDeleteConfirmModalContent = () => {
   const { modalData, closeModal } = useModalStore()
   
   const handleConfirm = () => {
@@ -172,34 +157,29 @@ const PermanentDeleteConfirmModal = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-4 text-red-500">
+    <>
+      <Modal.Header className="flex items-center gap-2 text-red-500 justify-center mt-2">
         <img src="/src/assets/icons/warning_line.svg" className="w-6 h-6" alt="Warning" />
-        <h2 className="text-xl font-bold">永久删除确认</h2>
-      </div>
-      <p className="text-gray-600 mb-6 text-sm text-center">
-        您即将永久删除选中的 {modalData?.paths?.length || 1} 项文件。<br/>此操作不可逆，无法从回收站恢复！
-      </p>
-      
-      <div className="flex w-full gap-3">
-        <button 
-          onClick={closeModal}
-          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        永久删除确认
+      </Modal.Header>
+      <Modal.Body className="items-center">
+        <p className="text-gray-600 text-sm text-center">
+          您即将永久删除选中的 {modalData?.paths?.length || 1} 项文件。<br/>此操作不可逆，无法从回收站恢复！
+        </p>
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={closeModal}>
           取消
-        </button>
-        <button 
-          onClick={handleConfirm}
-          className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        </Button>
+        <Button className="flex-1 bg-red-500 text-white hover:bg-red-600" onPress={handleConfirm}>
           确认删除
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Modal.Footer>
+    </>
   )
 }
 
-const WarningModal = () => {
+const WarningModalContent = () => {
   const { modalData, closeModal } = useModalStore()
   const [showDetails, setShowDetails] = useState(false)
   
@@ -222,45 +202,44 @@ const WarningModal = () => {
   }
   
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-4 text-red-500">
+    <>
+      <Modal.Header className="flex items-center gap-2 text-red-500 justify-center mt-2">
         <img src="/src/assets/icons/warning_line.svg" className="w-6 h-6" alt="Warning" />
-        <h2 className="text-xl font-bold">操作失败</h2>
-      </div>
-      
-      <p className="text-gray-700 mb-2 text-sm text-center">
-        {getFriendlyMessage(modalData?.message)}
-      </p>
+        操作失败
+      </Modal.Header>
+      <Modal.Body className="items-center w-full">
+        <p className="text-gray-700 text-sm text-center mb-2">
+          {getFriendlyMessage(modalData?.message)}
+        </p>
 
-      <div className="w-full flex justify-end mb-4">
-        <button 
-          onClick={() => setShowDetails(!showDetails)}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
-          title={showDetails ? '隐藏详情' : '查看详情'}
-        >
-          <img src="/src/assets/icons/information_line.svg" className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity" alt="Details" />
-        </button>
-      </div>
-
-      {showDetails && (
-        <div className="w-full bg-gray-50 rounded p-3 mb-6 max-h-32 overflow-y-auto border border-gray-200">
-          <p className="text-gray-600 text-xs font-mono break-all text-left">
-            {modalData?.message || '未知错误'}
-          </p>
+        <div className="w-full flex justify-end mb-2">
+          <button 
+            onClick={() => setShowDetails(!showDetails)}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+            title={showDetails ? '隐藏详情' : '查看详情'}
+          >
+            <img src="/src/assets/icons/information_line.svg" className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity" alt="Details" />
+          </button>
         </div>
-      )}
-      
-      <button 
-        onClick={closeModal}
-        className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-      >
-        确定
-      </button>
-    </div>
+
+        {showDetails && (
+          <div className="w-full bg-gray-50 rounded p-3 max-h-32 overflow-y-auto border border-gray-200">
+            <p className="text-gray-600 text-xs font-mono break-all text-left">
+              {modalData?.message || '未知错误'}
+            </p>
+          </div>
+        )}
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onPress={closeModal}>
+          确定
+        </Button>
+      </Modal.Footer>
+    </>
   )
 }
 
-const UnsavedWarningModal = () => {
+const UnsavedWarningModalContent = () => {
   const { modalData, closeModal } = useModalStore()
 
   const handleConfirm = () => {
@@ -271,30 +250,25 @@ const UnsavedWarningModal = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-2xl w-96 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-4 text-yellow-500">
+    <>
+      <Modal.Header className="flex items-center gap-2 text-yellow-500 justify-center mt-2">
         <img src="/src/assets/icons/warning_line.svg" className="w-6 h-6" alt="Warning" />
-        <h2 className="text-xl font-bold">未保存的更改</h2>
-      </div>
-      <p className="text-gray-600 mb-6 text-sm text-center">
-        您有未保存的修改，确认要离开吗？未保存的内容将会丢失。
-      </p>
-      
-      <div className="flex w-full gap-3">
-        <button 
-          onClick={closeModal}
-          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        未保存的更改
+      </Modal.Header>
+      <Modal.Body className="items-center">
+        <p className="text-gray-600 text-sm text-center">
+          您有未保存的修改，确认要离开吗？未保存的内容将会丢失。
+        </p>
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={closeModal}>
           取消
-        </button>
-        <button 
-          onClick={handleConfirm}
-          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-        >
+        </Button>
+        <Button className="flex-1 bg-orange-500 text-white" onPress={handleConfirm}>
           确认离开
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Modal.Footer>
+    </>
   )
 }
 
@@ -305,6 +279,10 @@ export const ModalManager = () => {
   useEffect(() => {
     EventsOn('paste:progress', (data: any) => {
       useTaskStore.getState().setTaskProgress(data)
+      const activeModal = useModalStore.getState().activeModal
+      if (activeModal === 'conflict') {
+        useModalStore.getState().closeModal()
+      }
     })
 
     EventsOn('paste:conflict', (data: any) => {
@@ -321,6 +299,10 @@ export const ModalManager = () => {
 
     EventsOn('paste:done', () => {
       useTaskStore.getState().clearTask()
+      const activeModal = useModalStore.getState().activeModal
+      if (activeModal === 'conflict') {
+        useModalStore.getState().closeModal()
+      }
       useUIStore.getState().triggerRefresh()
     })
 
@@ -332,34 +314,29 @@ export const ModalManager = () => {
     }
   }, [])
 
+  const isOpen = !!activeModal || isModalVisible
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      if (activeModal) closeModal()
+      if (isModalVisible) setModalVisible(false)
+    }
+  }
+
   return (
-    <AnimatePresence>
-      {(activeModal || isModalVisible) && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => {
-            if (activeModal) closeModal()
-            if (isModalVisible) setModalVisible(false)
-          }}
-          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {isModalVisible && !activeModal && <ProgressModal />}
-            {activeModal === 'conflict' && <ConflictModal />}
-            {activeModal === 'rename_conflict' && <RenameConflictModal />}
-            {activeModal === 'warning' && <WarningModal />}
-            {activeModal === 'unsaved_warning' && <UnsavedWarningModal />}
-            {activeModal === 'permanent_delete_confirm' && <PermanentDeleteConfirmModal />}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <Modal>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={handleOpenChange} variant="blur">
+        <Modal.Container placement="center">
+          <Modal.Dialog className="rounded-2xl shadow-panel">
+            {isModalVisible && !activeModal && <ProgressModalContent />}
+            {activeModal === 'conflict' && <ConflictModalContent />}
+            {activeModal === 'rename_conflict' && <RenameConflictModalContent />}
+            {activeModal === 'warning' && <WarningModalContent />}
+            {activeModal === 'unsaved_warning' && <UnsavedWarningModalContent />}
+            {activeModal === 'permanent_delete_confirm' && <PermanentDeleteConfirmModalContent />}
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   )
 }

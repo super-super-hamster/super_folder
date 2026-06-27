@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useState, useRef, useEffect } from 'react'
+import { Input } from '@heroui/react'
 
 export default function SearchPanel() {
   const { searchFilter, setSearchFilter, isSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
@@ -124,7 +125,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-start flex-col relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-800 font-medium">仅文件</span>
@@ -150,14 +151,14 @@ export default function SearchPanel() {
 
                 <div className="mt-2 flex items-center justify-start">
                   {isAddingExt ? (
-                    <input 
+                    <Input 
                       autoFocus
                       value={extInput} 
-                      onChange={e => setExtInput(e.target.value)} 
-                      onKeyDown={e => { if (e.key === 'Enter') submitExt() }}
+                      onChange={(e: any) => setExtInput(e.target.value)} 
+                      onKeyDown={(e: any) => { if (e.key === 'Enter') submitExt() }}
                       onBlur={submitExt}
-                      placeholder="请输入扩展名"
-                      className="w-24 text-xs px-2 py-1 rounded bg-white border border-gray-200 outline-none text-gray-700"
+                      placeholder="扩展名"
+                      className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
                     <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
@@ -173,7 +174,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
               >
                 <span className="text-sm text-gray-800">仅文件夹</span>
                 <button onClick={() => handleRemoveFilter('folder')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -187,7 +188,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-start flex-col relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-800 font-medium">排除文件夹</span>
@@ -213,14 +214,14 @@ export default function SearchPanel() {
 
                 <div className="mt-2 flex items-center justify-start">
                   {isAddingExclude ? (
-                    <input 
+                    <Input 
                       autoFocus
                       value={excludeInput} 
-                      onChange={e => setExcludeInput(e.target.value)} 
-                      onKeyDown={e => { if (e.key === 'Enter') submitExclude() }}
+                      onChange={(e: any) => setExcludeInput(e.target.value)} 
+                      onKeyDown={(e: any) => { if (e.key === 'Enter') submitExclude() }}
                       onBlur={submitExclude}
-                      placeholder="请输入文件夹名称"
-                      className="w-24 text-xs px-2 py-1 rounded bg-white border border-gray-200 outline-none text-gray-700"
+                      placeholder="文件夹名"
+                      className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
                     <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
@@ -236,7 +237,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
               >
                 <span className="text-sm text-gray-800">区分大小写</span>
                 <button onClick={() => handleRemoveFilter('case')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -250,7 +251,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
               >
                 <span className="text-sm text-gray-800">正则表达式</span>
                 <button onClick={() => handleRemoveFilter('regex')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">

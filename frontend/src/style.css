@@ -2,17 +2,6 @@
 @plugin "@tailwindcss/typography";
 @import "../node_modules/@heroui/react/dist/styles.css";
 
-
-
-@theme {
-  --font-sans: "JetBrains Mono", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --shadow-sm: 1px 3px 4px rgba(0, 0, 0, 0.20);
-  --shadow-md: 1px 4px 8px rgba(0, 0, 0, 0.16);
-  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 8px 20px rgba(0, 0, 0, 0.12);
-  --shadow-2xl: 1px 12px 28px rgba(0, 0, 0, 0.15);
-}
-
 /* Wails frameless window drag support */
 .wails-draggable {
   --wails-draggable: drag;
@@ -45,7 +34,7 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: transparent;
-  color: #fff;
+  color: #1f2937; /* Tailwind gray-800 */
   font-family: 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif !important;
 }
 
@@ -58,27 +47,4 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-}
-
-/* Override HeroUI ComboBox internal focus styles for the tag panel */
-.tag-panel-combobox-group [data-slot="input"],
-.tag-panel-combobox-input [data-slot="input"],
-.tag-panel-combobox-input {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-  color: #1f2937 !important; /* text-gray-800 */
-}
-.tag-panel-combobox-group [data-slot="input"]:focus,
-.tag-panel-combobox-input [data-slot="input"]:focus,
-.tag-panel-combobox-input:focus {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-.tag-panel-combobox-group {
-  border-radius: 0.5rem !important; /* rounded-lg */
-  overflow: hidden !important;
 }

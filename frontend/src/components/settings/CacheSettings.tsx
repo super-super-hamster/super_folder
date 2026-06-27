@@ -98,7 +98,7 @@ const CacheSettings = () => {
                       key={opt.value}
                       id={opt.value.toString()}
                       textValue={opt.label}
-                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-600 transition-colors cursor-pointer"
+                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-gray-200 data-[selected=true]:text-gray-800 transition-colors cursor-pointer"
                     >
                       {opt.label}
                     </ListBox.Item>

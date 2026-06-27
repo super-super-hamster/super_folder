@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore, SearchPreset } from '../../store/settingsStore'
+import { Button, Input } from '@heroui/react'
 
 const SearchPresetSettings = () => {
   const { searchPresets, setSearchPresets } = useSettingsStore()
@@ -161,12 +162,11 @@ const SearchPresetSettings = () => {
             >
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-gray-700">预设名称</span>
-                <input 
-                  type="text"
+                <Input 
                   autoFocus
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white rounded-lg outline-none focus:bg-gray-50 focus:ring-2 focus:ring-gray-200 transition-all placeholder-gray-400"
+                  placeholder="输入预设名称"
                 />
               </div>
 
@@ -179,7 +179,7 @@ const SearchPresetSettings = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-start flex-col relative group"
+                        className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="text-sm text-gray-800 font-medium">仅文件</span>
@@ -202,14 +202,14 @@ const SearchPresetSettings = () => {
                         )}
                         <div className="mt-2 flex items-center justify-start">
                           {isAddingExt ? (
-                            <input 
+                            <Input 
                               autoFocus
                               value={extInput} 
-                              onChange={e => setExtInput(e.target.value)} 
-                              onKeyDown={e => { if (e.key === 'Enter') submitExt() }}
+                              onChange={(e: any) => setExtInput(e.target.value)} 
+                              onKeyDown={(e: any) => { if (e.key === 'Enter') submitExt() }}
                               onBlur={submitExt}
-                              placeholder="请输入扩展名"
-                              className="w-24 text-xs px-2 py-1 rounded bg-white border border-gray-200 outline-none text-gray-700"
+                              placeholder="扩展名"
+                              className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                             />
                           ) : (
                             <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
@@ -225,7 +225,7 @@ const SearchPresetSettings = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                        className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
                       >
                         <span className="text-sm text-gray-800">仅文件夹</span>
                         <button onClick={() => handleRemoveFilter('folder')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -239,7 +239,7 @@ const SearchPresetSettings = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-start flex-col relative group"
+                        className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="text-sm text-gray-800 font-medium">排除文件夹</span>
@@ -262,13 +262,14 @@ const SearchPresetSettings = () => {
                         )}
                         <div className="mt-2 flex items-center justify-start">
                           {isAddingExclude ? (
-                            <input 
+                            <Input 
                               autoFocus
                               value={excludeInput} 
-                              onChange={e => setExcludeInput(e.target.value)} 
-                              onKeyDown={e => { if (e.key === 'Enter') submitExclude() }}
+                              onChange={(e: any) => setExcludeInput(e.target.value)} 
+                              onKeyDown={(e: any) => { if (e.key === 'Enter') submitExclude() }}
                               onBlur={submitExclude}
-                              className="w-24 text-xs px-2 py-1 rounded bg-white border border-gray-200 outline-none text-gray-700"
+                              placeholder="文件夹名"
+                              className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                             />
                           ) : (
                             <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
@@ -284,7 +285,7 @@ const SearchPresetSettings = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                        className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
                       >
                         <span className="text-sm text-gray-800">区分大小写</span>
                         <button onClick={() => handleRemoveFilter('case')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -298,7 +299,7 @@ const SearchPresetSettings = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-[#e4e4e4] rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                        className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
                       >
                         <span className="text-sm text-gray-800">正则表达式</span>
                         <button onClick={() => handleRemoveFilter('regex')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -346,19 +347,12 @@ const SearchPresetSettings = () => {
               </div>
 
               <div className="flex justify-end pt-2 gap-2 mt-2">
-                <button 
-                  onClick={() => setIsCreating(false)} 
-                  className="px-5 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-xl transition-colors hover:bg-gray-300"
-                >
+                <Button className="bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={() => setIsCreating(false)}>
                   取消
-                </button>
-                <button 
-                  onClick={handleSavePreset} 
-                  disabled={!presetName.trim()}
-                  className="px-5 py-2 bg-green-500 text-white text-sm font-medium rounded-xl transition-colors hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                </Button>
+                <Button className="bg-green-500 hover:bg-green-600 text-white" onPress={handleSavePreset} isDisabled={!presetName.trim()}>
                   保存预设
-                </button>
+                </Button>
               </div>
             </motion.div>
           ) : (
@@ -372,10 +366,11 @@ const SearchPresetSettings = () => {
                 onClick={() => setIsCreating(true)}
                 className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-[#1e3a8a] hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-[#1e3a8a]/50"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                </svg> */}
+                添加预设
               </button>
             </motion.div>
           )}

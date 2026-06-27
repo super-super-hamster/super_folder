@@ -120,12 +120,12 @@ function App() {
 
   return (
     <>
-      <div className="flex h-screen w-screen bg-[#dcdcdc] p-3 gap-3 overflow-hidden select-none font-sans text-gray-800 wails-draggable">
+      <div className="flex h-screen w-screen bg-gray-200 p-4 gap-4 overflow-hidden select-none font-sans text-gray-800 wails-draggable">
         {/* Sidebar Island */}
         {isSettingsOpen ? <SettingsSidebar /> : <Sidebar />}
 
         {/* Main Column */}
-        <div className="flex flex-col flex-1 gap-3 min-w-0">
+        <div className="flex flex-col flex-1 gap-4 min-w-0">
           {/* TopNav Island */}
           <TopNav />
 
@@ -137,7 +137,7 @@ function App() {
           )}
 
           {/* Content Area */}
-          <div className="flex flex-1 gap-3 min-h-0 relative">
+          <div className="flex flex-1 gap-4 min-h-0 relative">
             {isSettingsOpen ? (
               <SettingsContent />
             ) : (
