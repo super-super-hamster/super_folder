@@ -71,7 +71,11 @@ export const processFiles = (
   isGrouped: boolean
 ): VirtualListItem[] => {
   
-  const sortedFiles = [...files].sort((a, b) => {
+  const createFolderIndex = files.findIndex(f => f.path === '__create_smart_folder__')
+  const createFolderItem = createFolderIndex >= 0 ? files[createFolderIndex] : null
+  const regularFiles = createFolderIndex >= 0 ? [...files.slice(0, createFolderIndex), ...files.slice(createFolderIndex + 1)] : files
+
+  const sortedFiles = [...regularFiles].sort((a, b) => {
     // 文件夹始终在前
     if (a.isDir && !b.isDir) return -1
     if (!a.isDir && b.isDir) return 1
@@ -102,6 +106,14 @@ export const processFiles = (
         type: 'row',
         items: sortedFiles.slice(i, i + columns)
       })
+    }
+    if (createFolderItem) {
+      const lastItem = listItems.length > 0 ? listItems[listItems.length - 1] : null
+      if (lastItem && lastItem.type === 'row' && lastItem.items.length < columns) {
+        lastItem.items.push(createFolderItem)
+      } else {
+        listItems.push({ type: 'row', items: [createFolderItem] })
+      }
     }
     return listItems
   }
@@ -162,6 +174,11 @@ export const processFiles = (
       })
     }
   })
+
+  if (createFolderItem) {
+    listItems.push({ type: 'header', title: '创建' })
+    listItems.push({ type: 'row', items: [createFolderItem] })
+  }
 
   return listItems
 }

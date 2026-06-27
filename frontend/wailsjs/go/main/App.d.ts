@@ -11,6 +11,8 @@ export function BatchRenameFiles(arg1:Record<string, string>):Promise<void>;
 
 export function CancelPaste(arg1:string):Promise<void>;
 
+export function CheckBatchRenameConflicts(arg1:Record<string, string>):Promise<Array<string>>;
+
 export function ClearThumbnailCache():Promise<void>;
 
 export function ClearUndoStack():Promise<void>;
@@ -48,6 +50,8 @@ export function GetFileRemark(arg1:string):Promise<string>;
 export function GetFileTags(arg1:string):Promise<Array<models.Tag>>;
 
 export function GetGlobalTags():Promise<Array<models.Tag>>;
+
+export function GetLocalAuthToken():Promise<string>;
 
 export function GetLocalServerPort():Promise<number>;
 
@@ -88,6 +92,8 @@ export function ResolvePasteConflict(arg1:string,arg2:string,arg3:boolean):Promi
 export function SaveRenameScheme(arg1:string,arg2:string):Promise<void>;
 
 export function SearchFiles(arg1:Record<string, any>):Promise<Array<models.FileInfo>>;
+
+export function SelectDirectory():Promise<string>;
 
 export function SetConfig(arg1:string,arg2:string):Promise<void>;
 

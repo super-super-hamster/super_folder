@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -26,21 +28,34 @@ import (
 
 // App struct
 type App struct {
-	ctx           context.Context
-	localHttpPort int
-	termService   *terminal.TerminalService
+	ctx            context.Context
+	localHttpPort  int
+	localAuthToken string
+	termService    *terminal.TerminalService
+}
+
+func generateToken() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{
-		termService: terminal.NewTerminalService(),
+		localAuthToken: generateToken(),
+		termService:    terminal.NewTerminalService(),
 	}
 }
 
 // GetLocalServerPort returns the dynamic port assigned for the local file server
 func (a *App) GetLocalServerPort() int {
 	return a.localHttpPort
+}
+
+// GetLocalAuthToken returns the token required to access local HTTP endpoints
+func (a *App) GetLocalAuthToken() string {
+	return a.localAuthToken
 }
 
 // startup is called when the app starts. The context is saved
@@ -52,6 +67,11 @@ func (a *App) startup(ctx context.Context) {
 	go func() {
 		mux := http.NewServeMux()
 		mux.HandleFunc("/file", func(w http.ResponseWriter, r *http.Request) {
+			token := r.URL.Query().Get("token")
+			if token != a.localAuthToken {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
 			path := r.URL.Query().Get("path")
 			if path != "" {
 				http.ServeFile(w, r, path)
@@ -120,6 +140,17 @@ func (a *App) Maximize() {
 func (a *App) Close() {
 	runtime.Quit(a.ctx)
 }
+// Dialog bindings
+
+func (a *App) SelectDirectory() (string, error) {
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择文件夹",
+	})
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
+}
 
 // File system bindings
 
@@ -137,6 +168,10 @@ func (a *App) GetRenameSchemes() ([]rename.Scheme, error) {
 
 func (a *App) SaveRenameScheme(name string, code string) error {
 	return rename.SaveRenameScheme(name, code)
+}
+
+func (a *App) CheckBatchRenameConflicts(operations map[string]string) []string {
+	return rename.CheckBatchRenameConflicts(operations)
 }
 
 func (a *App) BatchRenameFiles(operations map[string]string) error {
@@ -166,7 +201,9 @@ func (a *App) RenameFile(oldPath string, newPath string, overwrite bool) (bool, 
 		}
 	} else {
 		// On Windows, os.Rename fails if the destination exists. We must remove it first.
-		_ = os.Remove(newPath)
+		if err := os.Remove(newPath); err != nil {
+			return false, fmt.Errorf("failed to overwrite existing file: %w", err)
+		}
 	}
 	err := os.Rename(oldPath, newPath)
 	if err != nil {
@@ -409,11 +446,11 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 		return nil, err
 	}
 
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		programData = `C:\ProgramData`
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = os.TempDir()
 	}
-	portFile := filepath.Join(programData, "super_folder", "search_port.txt")
+	portFile := filepath.Join(configDir, "super_folder", "search_port.txt")
 	portBytes, err := os.ReadFile(portFile)
 	if err != nil {
 		return nil, fmt.Errorf("search service is not ready (cannot read port file)")

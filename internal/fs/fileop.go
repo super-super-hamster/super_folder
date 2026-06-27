@@ -1,4 +1,4 @@
-﻿package fs
+package fs
 
 import (
 	"context"
@@ -82,7 +82,10 @@ func ResolveTaskConflict(taskID string, action string, applyToAll bool) {
 	defer taskMutex.Unlock()
 	if task, exists := tasks[taskID]; exists {
 		go func() {
-			task.ConflictChan <- ConflictResolution{Action: action, ApplyToAll: applyToAll}
+			select {
+			case task.ConflictChan <- ConflictResolution{Action: action, ApplyToAll: applyToAll}:
+			case <-task.Ctx.Done():
+			}
 		}()
 	}
 }
@@ -187,10 +190,43 @@ func (t *FileTask) Run() {
 	}
 }
 
+func (t *FileTask) handleDeleteError(err error, path string) error {
+	if err == nil { return nil }
+	if t.Ctx.Err() != nil { return err }
+	if t.GlobalConflict == "skip_all_deletes" { return nil }
+
+	// Emit conflict event to frontend
+	runtime.EventsEmit(t.WailsCtx, "paste:conflict", map[string]interface{}{
+		"taskID": t.ID,
+		"type":   "delete_error",
+		"path":   path,
+		"error":  err.Error(),
+	})
+
+	// Wait for resolution
+	select {
+	case <-t.Ctx.Done():
+		return t.Ctx.Err()
+	case res := <-t.ConflictChan:
+		if res.ApplyToAll && res.Action == "skip" {
+			t.GlobalConflict = "skip_all_deletes"
+			return nil
+		}
+		if res.Action == "skip" {
+			return nil
+		}
+		if res.Action == "abort" {
+			t.Cancel()
+			return fmt.Errorf("deletion aborted by user")
+		}
+		return err
+	}
+}
+
 func (t *FileTask) removeWithProgress(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
-		return err
+		return t.handleDeleteError(err, path)
 	}
 
 	if !info.IsDir() {
@@ -199,13 +235,15 @@ func (t *FileTask) removeWithProgress(path string) error {
 			t.CopiedBytes += info.Size()
 			t.ProcessedFiles++
 			t.emitProgress()
+		} else {
+			return t.handleDeleteError(err, path)
 		}
-		return err
+		return nil
 	}
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return err
+		return t.handleDeleteError(err, path)
 	}
 
 	for _, entry := range entries {
@@ -223,8 +261,15 @@ func (t *FileTask) removeWithProgress(path string) error {
 	if err == nil {
 		t.ProcessedFiles++
 		t.emitProgress()
+	} else {
+		// If directory deletion fails (e.g., because some children were skipped),
+		// we just silently return nil to avoid bothering the user again. 
+		// Or we can let handleDeleteError handle it. Let's handle it.
+		// Wait, if a child was skipped, the directory is not empty.
+		// If we use skip, we should return nil here.
+		return t.handleDeleteError(err, path)
 	}
-	return err
+	return nil
 }
 
 func (t *FileTask) emitProgress() {

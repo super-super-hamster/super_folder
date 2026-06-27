@@ -9,6 +9,10 @@ export interface HistoryEntry {
 export const getSpecialTitle = (path: string) => {
   if (path === 'favorite://') return '收藏'
   if (path === 'recent://') return '最近访问'
+  if (path === 'smartfolder://') return '虚拟文件夹'
+  if (path.startsWith('smartfolder://')) {
+    return '虚拟文件夹'
+  }
   return path.split('\\').pop() || path
 }
 

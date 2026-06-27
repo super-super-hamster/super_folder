@@ -18,6 +18,10 @@ export function CancelPaste(arg1) {
   return window['go']['main']['App']['CancelPaste'](arg1);
 }
 
+export function CheckBatchRenameConflicts(arg1) {
+  return window['go']['main']['App']['CheckBatchRenameConflicts'](arg1);
+}
+
 export function ClearThumbnailCache() {
   return window['go']['main']['App']['ClearThumbnailCache']();
 }
@@ -92,6 +96,10 @@ export function GetFileTags(arg1) {
 
 export function GetGlobalTags() {
   return window['go']['main']['App']['GetGlobalTags']();
+}
+
+export function GetLocalAuthToken() {
+  return window['go']['main']['App']['GetLocalAuthToken']();
 }
 
 export function GetLocalServerPort() {
@@ -172,6 +180,10 @@ export function SaveRenameScheme(arg1, arg2) {
 
 export function SearchFiles(arg1) {
   return window['go']['main']['App']['SearchFiles'](arg1);
+}
+
+export function SelectDirectory() {
+  return window['go']['main']['App']['SelectDirectory']();
 }
 
 export function SetConfig(arg1, arg2) {

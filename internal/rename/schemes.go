@@ -83,11 +83,11 @@ func InitSchemes() error {
 		defaults := map[string]string{
 			"添加日期后缀.js": `function rename(file, index, files) {
   const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
-  return file.name + '_' + dateStr + file.ext;
+  return file.name + '_' + dateStr;
 }`,
 			"添加日期前缀.js": `function rename(file, index, files) {
   const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
-  return dateStr + '_' + file.name + file.ext;
+  return dateStr + '_' + file.name;
 }`,
 			"后缀数字补零对齐.js": `function rename(file, index, files) {
   // 查找所有文件名的后缀数字，找出最大长度
@@ -98,7 +98,7 @@ func InitSchemes() error {
       maxLen = m[0].length;
     }
   }
-  return file.name.replace(/\d+$/, match => match.padStart(maxLen, '0')) + file.ext;
+  return file.name.replace(/\d+$/, match => match.padStart(maxLen, '0'));
 }`,
 			"前缀数字补零对齐.js": `function rename(file, index, files) {
   // 查找所有文件名的前缀数字，找出最大长度
@@ -109,7 +109,7 @@ func InitSchemes() error {
       maxLen = m[0].length;
     }
   }
-  return file.name.replace(/^\d+/, match => match.padStart(maxLen, '0')) + file.ext;
+  return file.name.replace(/^\d+/, match => match.padStart(maxLen, '0'));
 }`,
 		}
 
@@ -163,6 +163,32 @@ func SaveRenameScheme(name string, code string) error {
 	
 	path := filepath.Join(dir, filename)
 	return ioutil.WriteFile(path, []byte(code), 0644)
+}
+
+// CheckBatchRenameConflicts returns a list of target paths that already exist.
+func CheckBatchRenameConflicts(operations map[string]string) []string {
+	var conflicts []string
+	
+	// Create a map of destinations that will be created in this batch
+	// to avoid flagging conflicts within the batch itself.
+	// Wait, actually, if a file A is renamed to B, and B already exists on disk,
+	// but B is also being renamed to C in this batch, then B is not a conflict.
+	// We'll just build a set of files that will be renamed away.
+	renamedAway := make(map[string]bool)
+	for src := range operations {
+		renamedAway[src] = true
+	}
+
+	for _, dest := range operations {
+		// If the destination is one of the source files being renamed away, it's fine.
+		if renamedAway[dest] {
+			continue
+		}
+		if _, err := os.Stat(dest); err == nil {
+			conflicts = append(conflicts, dest)
+		}
+	}
+	return conflicts
 }
 
 func BatchRenameFiles(operations map[string]string) error {

@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { useState, useRef, useEffect } from 'react'
 
 export default function SearchPanel() {
   const { searchFilter, setSearchFilter, isSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
+  const { searchPresets } = useSettingsStore()
   const [isResizing, setIsResizing] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [isAddingExt, setIsAddingExt] = useState(false)
@@ -258,7 +260,7 @@ export default function SearchPanel() {
             )}
           </AnimatePresence>
 
-          {availableFilters.length > 0 && (
+          {(availableFilters.length > 0 || searchPresets.length > 0) && (
             <div className="relative flex justify-center mt-1" ref={menuRef}>
               <button 
                 onClick={() => setIsAdding(!isAdding)}
@@ -277,21 +279,35 @@ export default function SearchPanel() {
                     transition={{ duration: 0.15 }}
                     className="absolute left-full top-0 ml-4 w-40 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50"
                   >
-                    <div className="flex flex-col p-1">
-                      {availableFilters.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500 text-center">
-                          已添加所有条件
-                        </div>
-                      ) : (
-                        availableFilters.map(filter => (
-                          <button
-                            key={filter.id}
-                            onClick={() => handleAddFilter(filter.id)}
-                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
-                          >
-                            {filter.label}
-                          </button>
-                        ))
+                    <div className="flex flex-col p-1 max-h-48 overflow-y-auto">
+                      {availableFilters.map(filter => (
+                        <button
+                          key={filter.id}
+                          onClick={() => handleAddFilter(filter.id)}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
+                        >
+                          {filter.label}
+                        </button>
+                      ))}
+                      {searchPresets.length > 0 && (
+                        <>
+                          {availableFilters.length > 0 && (
+                            <div className="h-px bg-gray-200 mx-2 my-1" />
+                          )}
+                          <div className="px-3 py-1 text-[10px] text-gray-400 font-medium uppercase tracking-wider">预设</div>
+                          {searchPresets.map(preset => (
+                            <button
+                              key={preset.id}
+                              onClick={() => {
+                                setSearchFilter(preset.filter)
+                                setIsAdding(false)
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
+                            >
+                              {preset.name}
+                            </button>
+                          ))}
+                        </>
                       )}
                     </div>
                   </motion.div>

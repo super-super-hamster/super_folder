@@ -5,5 +5,9 @@ frontend/node_modules
 
 *.exe
 *.log
+*.db
+*.sqlite
+*.sqlite3
+.env
 .DS_Store
 build/windows/installer/tmp/

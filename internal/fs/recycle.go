@@ -1,6 +1,7 @@
-﻿package fs
+package fs
 
 import (
+	"fmt"
 	"syscall"
 	"unsafe"
 )
@@ -50,7 +51,7 @@ func DeleteToRecycleBin(paths []string) error {
 
 	ret, _, _ := shFileOperationW.Call(uintptr(unsafe.Pointer(&op)))
 	if ret != 0 {
-		return nil 
+		return fmt.Errorf("SHFileOperationW failed with code %d", ret)
 	}
 	return nil
 }

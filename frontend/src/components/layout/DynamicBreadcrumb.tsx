@@ -12,6 +12,9 @@ export default function DynamicBreadcrumb({ path }: Props) {
   if (path === 'recent://') {
     return <span className="truncate">最近访问</span>
   }
+  if (path === 'smartfolder://' || path.startsWith('smartfolder://')) {
+    return <span className="truncate">虚拟文件夹</span>
+  }
 
   const allSegments = path.replace(/\\$/, '').split('\\')
 

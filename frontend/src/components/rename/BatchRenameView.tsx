@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Select, ListBox, Input } from '@heroui/react'
 import { useBatchRenameStore } from '../../store/batchRenameStore'
-import { GetRenameSchemes, BatchRenameFiles } from '../../../wailsjs/go/main/App'
+import { GetRenameSchemes, BatchRenameFiles, CheckBatchRenameConflicts } from '../../../wailsjs/go/main/App'
 import { rename } from '../../../wailsjs/go/models'
 import { useUIStore } from '../../store/uiStore'
+import { useModalStore } from '../../store/modalStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { EventsOn } from '../../../wailsjs/runtime/runtime'
 
@@ -97,19 +98,35 @@ export default function BatchRenameView() {
           }
           const sandboxFunc = new Function('file', 'index', 'files', scriptToRun);
           
+          // Strip ext from file.name so scripts see pure stem
+          const cleanFiles = files.map(function(f) {
+            var stem = f.name;
+            if (f.ext && stem.endsWith(f.ext)) {
+              stem = stem.slice(0, -f.ext.length);
+            }
+            return { name: stem, ext: f.ext, path: f.path, isDir: f.isDir, size: f.size };
+          });
+
           const results = [];
-          for (let i = 0; i < files.length; i++) {
-            const f = files[i];
+          for (let i = 0; i < cleanFiles.length; i++) {
+            const f = cleanFiles[i];
             try {
-              const newName = sandboxFunc(f, i, files);
-              if (typeof newName !== 'string') {
+              const rawName = sandboxFunc(f, i, cleanFiles);
+              if (typeof rawName !== 'string') {
                 results.push({ error: '代码必须返回字符串' });
-              } else if (newName.trim() === '') {
+              } else if (rawName.trim() === '') {
                 results.push({ error: '新名称不能为空' });
-              } else if (/[\\\\/:*?"<>|]/.test(newName)) {
-                results.push({ error: '名称包含非法字符' });
               } else {
-                results.push({ newName });
+                // Auto-append ext if the script result doesn't already end with it
+                let newName = rawName;
+                if (f.ext && !rawName.endsWith(f.ext)) {
+                  newName = rawName + f.ext;
+                }
+                if (/[\\\\/:*?"<>|]/.test(newName)) {
+                  results.push({ error: '名称包含非法字符' });
+                } else {
+                  results.push({ newName });
+                }
               }
             } catch (err) {
               results.push({ error: '运行出错: ' + (err.message || String(err)) });
@@ -130,13 +147,13 @@ export default function BatchRenameView() {
       clearTimeout(timeoutId);
       const { type, results, error } = e.data;
       if (type === 'compile_error') {
-        setPreview(files.map(f => ({ oldName: f.name + f.ext, newName: '', path: f.path, error })));
+        setPreview(files.map(f => ({ oldName: f.name, newName: '', path: f.path, error })));
       } else if (type === 'success') {
         const newPreview = [];
         const newNames = new Set<string>();
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
-          const oldName = f.name + f.ext;
+          const oldName = f.name;
           let resError = results[i].error || '';
           let newName = results[i].newName || '';
 
@@ -156,7 +173,7 @@ export default function BatchRenameView() {
 
     timeoutId = window.setTimeout(() => {
       worker.terminate();
-      setPreview(files.map(f => ({ oldName: f.name + f.ext, newName: '', path: f.path, error: '执行超时(超过5秒)' })));
+      setPreview(files.map(f => ({ oldName: f.name, newName: '', path: f.path, error: '执行超时(超过5秒)' })));
     }, 5000);
 
     return () => {
@@ -185,8 +202,27 @@ export default function BatchRenameView() {
     }
 
     try {
-      await BatchRenameFiles(operations)
-      goBack()
+      const conflicts = await CheckBatchRenameConflicts(operations)
+      if (conflicts && conflicts.length > 0) {
+        useModalStore.getState().openModal('batch_rename_conflict', {
+          conflicts,
+          operations,
+          onConfirm: async () => {
+            setIsProcessing(true)
+            try {
+              await BatchRenameFiles(operations)
+              goBack()
+            } catch (e) {
+              alert('重命名失败: ' + e)
+            } finally {
+              setIsProcessing(false)
+            }
+          }
+        })
+      } else {
+        await BatchRenameFiles(operations)
+        goBack()
+      }
     } catch (e) {
       alert('重命名失败: ' + e)
     } finally {
@@ -206,7 +242,7 @@ export default function BatchRenameView() {
       <div className="w-[400px] h-[600px] bg-[#efefef] rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
         {files.map(f => (
           <div key={f.path} className="bg-[#e1e1e1] px-4 py-2 rounded-full flex items-center justify-between text-sm text-gray-800 transition-all hover:bg-[#d8d8d8]">
-            <span className="truncate flex-1 font-medium">{f.name}{f.ext}</span>
+            <span className="truncate flex-1 font-medium">{f.name}</span>
             <button 
               onClick={() => handleRemoveFile(f.path)}
               className="text-gray-500 hover:text-gray-900 shrink-0 ml-3 text-lg leading-none"
@@ -231,46 +267,37 @@ export default function BatchRenameView() {
           <img src="/src/assets/icons/large_arrow_right_fill.svg" className="w-16 h-16" alt="Apply" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <div className="relative w-[180px] rounded-full ring-0">
-            <Select 
-              aria-label="选择方案"
-              className="w-full"
-              selectedKey={selectedSchemeName}
-              onSelectionChange={(k) => {
-                if (k === '__ADD_NEW__') {
-                  handleAddScheme()
-                  setSelectedSchemeName(schemes[0]?.name || '')
-                } else if (k) {
-                  setSelectedSchemeName(k as string)
-                }
-              }}
-            >
-              <Select.Trigger className="bg-[#e8e8e8] hover:bg-[#dfdfdf] transition-colors rounded-full shadow-none border-none h-10 min-h-10 w-full flex items-center px-4 data-[hover=true]:bg-[#dfdfdf]">
-                <Select.Value className="text-gray-800 font-medium text-center bg-transparent w-full truncate" />
-              </Select.Trigger>
-              <Select.Popover className="border border-gray-200 shadow-lg rounded-xl">
-                <ListBox>
-                  {schemes.map(s => (
-                    <ListBox.Item key={s.name} id={s.name} textValue={s.name} className="text-gray-800">{s.name}</ListBox.Item>
-                  ))}
-                  <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-blue-600 font-bold">
-                    <div className="flex items-center justify-center gap-2">
-                      <img src="/src/assets/icons/add_line.svg" className="w-4 h-4" alt="Add" />
-                      新建方案...
-                    </div>
-                  </ListBox.Item>
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </div>
-          <button 
-            onClick={() => fetchSchemes()} 
-            title="刷新方案" 
-            className="p-2.5 bg-[#e8e8e8] hover:bg-[#dfdfdf] rounded-full transition-colors text-gray-600 flex-shrink-0"
+        <div className="relative w-[180px] rounded-full ring-0">
+          <Select 
+            aria-label="选择方案"
+            className="w-full"
+            selectedKey={selectedSchemeName}
+            onSelectionChange={(k) => {
+              if (k === '__ADD_NEW__') {
+                handleAddScheme()
+                setSelectedSchemeName(schemes[0]?.name || '')
+              } else if (k) {
+                setSelectedSchemeName(k as string)
+              }
+            }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
-          </button>
+            <Select.Trigger className="bg-[#e8e8e8] hover:bg-[#dfdfdf] transition-colors rounded-full shadow-none border-none h-10 min-h-10 w-full flex items-center px-4 data-[hover=true]:bg-[#dfdfdf]">
+              <Select.Value className="text-gray-800 font-medium text-center bg-transparent w-full truncate" />
+            </Select.Trigger>
+            <Select.Popover className="border border-gray-200 shadow-lg rounded-xl">
+              <ListBox>
+                {schemes.map(s => (
+                  <ListBox.Item key={s.name} id={s.name} textValue={s.name} className="text-gray-800">{s.name}</ListBox.Item>
+                ))}
+                <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-blue-600 font-bold">
+                  <div className="flex items-center justify-center gap-2">
+                    <img src="/src/assets/icons/add_line.svg" className="w-4 h-4" alt="Add" />
+                    新建方案...
+                  </div>
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
       </div>
 

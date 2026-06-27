@@ -1,12 +1,13 @@
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
+import { Select, ListBox } from '@heroui/react'
 import { useSelectionStore } from '../../store/selectionStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTagStore } from '../../store/tagStore'
 import { useSettingsStore } from '../../store/settingsStore'
-import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetTagsForFiles, SearchFiles, GetFavorites } from '../../../wailsjs/go/main/App'
+import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetLocalAuthToken, GetTagsForFiles, SearchFiles, GetFavorites, SelectDirectory } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Checkbox } from '@heroui/react'
@@ -288,7 +289,12 @@ export default function FileList() {
   const { openMenu } = useContextMenuStore()
   const { startRename } = useRenameStore()
   const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
-  const { searchPresets } = useSettingsStore()
+  const { searchPresets, smartFolders, setSmartFolders } = useSettingsStore()
+  
+  const [isCreatingSmartFolder, setIsCreatingSmartFolder] = useState(false)
+  const [sfName, setSfName] = useState('')
+  const [sfPaths, setSfPaths] = useState<string[]>([''])
+  const [sfPresetId, setSfPresetId] = useState('')
   
   const [files, setFiles] = useState<models.FileInfo[]>([])
   const [loading, setLoading] = useState(false)
@@ -319,8 +325,10 @@ export default function FileList() {
   }, [files])
   
   const [localPort, setLocalPort] = useState<number | null>(null)
+  const [localAuthToken, setLocalAuthToken] = useState<string>('')
   useEffect(() => {
     GetLocalServerPort().then(setLocalPort).catch(console.error)
+    GetLocalAuthToken().then(setLocalAuthToken).catch(console.error)
   }, [])
 
   const [fileTagColors, setFileTagColors] = useState<Record<string, string>>({})
@@ -400,10 +408,17 @@ export default function FileList() {
           if (e.shiftKey) {
             useModalStore.getState().openModal('permanent_delete_confirm', { paths: selectedFiles })
           } else {
+            // Optimistic update
+            setFiles(prev => prev.filter(f => !selectedPaths.has(f.path)))
+            
             DeleteToRecycleBin(selectedFiles).then(() => {
               clearSelection()
               useUIStore.getState().triggerRefresh()
-            }).catch(console.error)
+            }).catch(err => {
+              console.error(err)
+              useModalStore.getState().openModal('warning', { message: '删除失败: ' + err })
+              useUIStore.getState().triggerRefresh()
+            })
           }
         }
       } else if (e.key === 'F2') {
@@ -450,7 +465,11 @@ export default function FileList() {
 
   const listItems = useMemo(() => {
     const activeSortOption = currentPath === 'recent://' ? recentSortOption : sortOption
-    return processFiles(files, activeSortOption, effectiveColumns, isGrouped)
+    const items = processFiles(files, activeSortOption, effectiveColumns, isGrouped)
+    
+
+    
+    return items
   }, [files, sortOption, recentSortOption, effectiveColumns, isGrouped, currentPath])
 
   const flatFiles = useMemo(() => {
@@ -775,7 +794,55 @@ export default function FileList() {
       }
     }
 
-    if (currentPath && currentPath.startsWith('preset://')) {
+    if (currentPath === 'smartfolder://') {
+      // List all smart folders as virtual FileInfo items
+      const virtualItems: models.FileInfo[] = smartFolders.map(sf => ({
+        name: sf.name,
+        path: `smartfolder://${sf.id}`,
+        isDir: true,
+        size: 0,
+        modTime: '',
+        ext: ''
+      } as any))
+      virtualItems.push({
+        name: '创建',
+        path: '__create_smart_folder__',
+        isDir: false,
+        size: 0,
+        modTime: '',
+        ext: ''
+      } as any)
+      fetchPromise = Promise.resolve(virtualItems)
+    } else if (currentPath && currentPath.startsWith('smartfolder://') && currentPath !== 'smartfolder://') {
+      const sfId = currentPath.replace('smartfolder://', '')
+      const sf = smartFolders.find(f => f.id === sfId)
+      if (sf) {
+        const preset = searchPresets.find(p => p.id === sf.presetId)
+        if (preset) {
+          const req = {
+            keyword: '',
+            isRegex: preset.filter.isRegex || false,
+            caseSensitive: preset.filter.isCaseSensitive || false,
+            onlyFiles: preset.filter.type === 'file',
+            onlyFolders: preset.filter.type === 'folder',
+            extensions: preset.filter.extensions || [],
+            excludedFolders: preset.filter.excludedFolders || [],
+            tags: [],
+            tagLogic: 'OR',
+            maxDepth: 0,
+            rootPath: '',
+            rootPaths: sf.rootPaths,
+            limit: 2000
+          }
+          fetchPromise = SearchFiles(req)
+        } else {
+          // Preset was deleted - return empty
+          fetchPromise = Promise.resolve([])
+        }
+      } else {
+        fetchPromise = Promise.resolve([])
+      }
+    } else if (currentPath && currentPath.startsWith('preset://')) {
       const presetId = currentPath.replace('preset://', '')
       const preset = searchPresets.find(p => p.id === presetId)
       if (preset) {
@@ -903,7 +970,7 @@ export default function FileList() {
     
     // External drag data (DownloadURL trick for single file)
     if (pathsToDrag.length === 1 && !file.isDir && localPort) {
-      const fileUrl = `http://127.0.0.1:${localPort}/file?path=${encodeURIComponent(file.path)}`
+      const fileUrl = `http://127.0.0.1:${localPort}/file?path=${encodeURIComponent(file.path)}&token=${localAuthToken}`
       const downloadStr = `application/octet-stream:${file.name}:${fileUrl}`
       e.dataTransfer.setData('DownloadURL', downloadStr)
     }
@@ -950,10 +1017,31 @@ export default function FileList() {
   }
 
   const handleDoubleClick = (file: models.FileInfo) => {
+    if (file.path === '__create_smart_folder__') {
+      if (searchPresets.length === 0) {
+        useModalStore.getState().openModal('warning', { message: '请先在设置中创建一个搜索预设' })
+        return
+      }
+      setIsCreatingSmartFolder(true)
+      setSfName('')
+      setSfPaths([''])
+      setSfPresetId(searchPresets[0].id)
+      setTimeout(() => {
+        const panel = document.getElementById('smart-folder-create-panel')
+        if (panel) panel.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
+      return
+    }
+    if (file.path.startsWith('smartfolder://')) {
+      navigate(file.path, '虚拟文件夹', file.isDir)
+      return
+    }
     navigate(file.path, file.name, file.isDir)
   }
 
   const getFileIcon = (file: models.FileInfo) => {
+    if (file.path === '__create_smart_folder__') return 'add_line.svg'
+    if (file.path.startsWith('smartfolder://')) return 'folder_virtual.svg'
     if (file.isDir) return 'folder_3_line.svg'
     const ext = file.ext.toLowerCase()
     switch (ext) {
@@ -1079,7 +1167,10 @@ export default function FileList() {
         <div className="flex items-center justify-center h-36 text-gray-400">正在加载文件...</div>
       ) : files.length === 0 ? (
         <div className="flex justify-center text-gray-400 py-10">
-          此文件夹为空
+          {currentPath?.startsWith('smartfolder://') && currentPath !== 'smartfolder://' && 
+           !searchPresets.find(p => p.id === smartFolders.find(f => f.id === currentPath.replace('smartfolder://', ''))?.presetId)
+            ? '该智能文件夹关联的搜索预设已被删除，无法使用'
+            : '此文件夹为空'}
         </div>
       ) : (
         <div
@@ -1260,6 +1351,143 @@ export default function FileList() {
             </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Inline Smart Folder Creation Panel */}
+      {isCreatingSmartFolder && currentPath === 'smartfolder://' && (
+        <div id="smart-folder-create-panel" className="bg-gray-100/50 rounded-xl p-6 mt-6 border border-gray-200 max-w-2xl mx-auto mb-8">
+          <div className="mb-6">
+            <div className="text-sm font-semibold text-gray-700 mb-2">智能文件夹名称</div>
+            <input 
+              value={sfName} 
+              onChange={(e) => setSfName(e.target.value)} 
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          
+          <div className="mb-6">
+            <div className="text-sm font-semibold text-gray-700 mb-2">选择文件夹</div>
+            <div className="space-y-3">
+              {sfPaths.map((path, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <input 
+                      value={path} 
+                      onChange={(e) => {
+                        const newPaths = [...sfPaths]
+                        newPaths[idx] = e.target.value
+                        setSfPaths(newPaths)
+                      }} 
+                      className="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                    <button 
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                      onClick={async () => {
+                        const dir = await SelectDirectory()
+                        if (dir) {
+                          const newPaths = [...sfPaths]
+                          newPaths[idx] = dir
+                          setSfPaths(newPaths)
+                        }
+                      }}
+                    >
+                      <img src="/src/assets/icons/folder_3_line.svg" className="w-4 h-4 opacity-70" alt="select" />
+                    </button>
+                  </div>
+                  {sfPaths.length > 1 && (
+                    <button 
+                      onClick={() => {
+                        const newPaths = [...sfPaths]
+                        newPaths.splice(idx, 1)
+                        setSfPaths(newPaths)
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <img src="/src/assets/icons/close_line.svg" className="w-4 h-4" alt="delete" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button 
+                onClick={() => setSfPaths([...sfPaths, ''])}
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mt-2"
+              >
+                <img src="/src/assets/icons/add_line.svg" className="w-5 h-5 text-gray-600" alt="add" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="mb-8">
+            <div className="text-sm font-semibold text-gray-700 mb-2">选择搜索预设</div>
+            <Select
+              selectedKey={sfPresetId}
+              onSelectionChange={(key) => {
+                const selected = Array.from(key as any)[0] || key
+                setSfPresetId(selected as string)
+              }}
+              className="w-64"
+            >
+              <Select.Trigger className="bg-[#e4e4e4] border-0 hover:bg-gray-300 transition-colors px-4 h-10 rounded-xl flex items-center justify-between group outline-none focus:ring-2 focus:ring-blue-500">
+                <Select.Value className="text-sm text-gray-800" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-data-[open=true]:rotate-180 transition-transform">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </Select.Trigger>
+              <Select.Popover className="bg-white rounded-xl border border-gray-100 overflow-hidden w-64 p-1 shadow-lg">
+                <ListBox className="gap-1 p-0">
+                  {searchPresets.map(preset => (
+                    <ListBox.Item 
+                      key={preset.id} 
+                      id={preset.id} 
+                      textValue={preset.name}
+                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-600 transition-colors cursor-pointer"
+                    >
+                      {preset.name}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          </div>
+          
+          <div className="flex w-full gap-3 pt-4 border-t border-gray-200/60 mt-4">
+            <button 
+              onClick={() => setIsCreatingSmartFolder(false)}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              取消
+            </button>
+            <button 
+              onClick={() => {
+                if (!sfName.trim()) {
+                  useModalStore.getState().openModal('warning', { message: '请输入名称' })
+                  return
+                }
+                const validPaths = sfPaths.filter(p => p.trim() !== '')
+                if (validPaths.length === 0) {
+                  useModalStore.getState().openModal('warning', { message: '至少需要一个有效路径' })
+                  return
+                }
+                if (!sfPresetId) {
+                  useModalStore.getState().openModal('warning', { message: '请选择一个搜索预设' })
+                  return
+                }
+                
+                const newFolder = {
+                  id: Date.now().toString(),
+                  name: sfName,
+                  rootPaths: validPaths,
+                  presetId: sfPresetId
+                }
+                setSmartFolders([...smartFolders, newFolder])
+                setIsCreatingSmartFolder(false)
+              }}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              确认
+            </button>
+          </div>
         </div>
       )}
 

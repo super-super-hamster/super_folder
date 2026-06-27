@@ -23,12 +23,21 @@ export interface SearchPreset {
   }
 }
 
+export interface SmartFolder {
+  id: string
+  name: string
+  rootPaths: string[]
+  presetId: string
+}
+
 interface SettingsState {
   // Configs
   shortcuts: ShortcutItem[]
   setShortcuts: (items: ShortcutItem[]) => void
   searchPresets: SearchPreset[]
   setSearchPresets: (presets: SearchPreset[]) => void
+  smartFolders: SmartFolder[]
+  setSmartFolders: (folders: SmartFolder[]) => void
   cacheLimitMB: number
   setCacheLimitMB: (limit: number) => void
   
@@ -36,6 +45,7 @@ interface SettingsState {
   loadFromBackend: () => Promise<void>
   saveShortcuts: () => Promise<void>
   saveSearchPresets: () => Promise<void>
+  saveSmartFolders: () => Promise<void>
 }
 
 const defaultShortcuts: ShortcutItem[] = [
@@ -60,6 +70,11 @@ export const useSettingsStore = create<SettingsState>()(
         set({ searchPresets: presets })
         get().saveSearchPresets()
       },
+      smartFolders: [],
+      setSmartFolders: (folders) => {
+        set({ smartFolders: folders })
+        get().saveSmartFolders()
+      },
       cacheLimitMB: 1024, // default 1GB
       setCacheLimitMB: (limit) => set({ cacheLimitMB: limit }),
       
@@ -77,6 +92,13 @@ export const useSettingsStore = create<SettingsState>()(
             set({ searchPresets: JSON.parse(spJSON) })
           }
         } catch (e) { console.error("Failed to load searchPresets", e) }
+
+        try {
+          const sfJSON = await GetConfig("smartFolders")
+          if (sfJSON) {
+            set({ smartFolders: JSON.parse(sfJSON) })
+          }
+        } catch (e) { console.error("Failed to load smartFolders", e) }
       },
       
       saveShortcuts: async () => {
@@ -89,6 +111,12 @@ export const useSettingsStore = create<SettingsState>()(
         try {
           await SetConfig("searchPresets", JSON.stringify(get().searchPresets))
         } catch (e) { console.error("Failed to save searchPresets", e) }
+      },
+      
+      saveSmartFolders: async () => {
+        try {
+          await SetConfig("smartFolders", JSON.stringify(get().smartFolders))
+        } catch (e) { console.error("Failed to save smartFolders", e) }
       }
     }),
     {

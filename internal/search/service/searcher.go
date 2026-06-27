@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"encoding/json"
@@ -90,12 +90,11 @@ func (s *Searcher) serveHTTP() {
 	SearchPort = listener.Addr().(*net.TCPAddr).Port
 	log.Printf("Starting Search RPC Server on 127.0.0.1:%d...", SearchPort)
 
-	// Write port to file so the UI process can read it
-	programData := os.Getenv("ProgramData")
-	if programData == "" {
-		programData = `C:\ProgramData`
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = os.TempDir()
 	}
-	portFile := filepath.Join(programData, "file-manager", "search_port.txt")
+	portFile := filepath.Join(configDir, "super_folder", "search_port.txt")
 	os.MkdirAll(filepath.Dir(portFile), 0777)
 	os.WriteFile(portFile, []byte(fmt.Sprintf("%d", SearchPort)), 0666)
 
@@ -116,6 +115,7 @@ type SearchRequest struct {
 	TagLogic        string   `json:"tagLogic"`
 	MaxDepth        int      `json:"maxDepth"`
 	RootPath        string   `json:"rootPath"`
+	RootPaths       []string `json:"rootPaths"`
 	Limit           int      `json:"limit"`
 }
 
@@ -137,6 +137,11 @@ func (s *Searcher) handleSearch(w http.ResponseWriter, r *http.Request) {
 
 	if req.Limit == 0 {
 		req.Limit = 1000
+	}
+
+	// Normalize: merge RootPath into RootPaths for unified handling
+	if req.RootPath != "" && len(req.RootPaths) == 0 {
+		req.RootPaths = []string{req.RootPath}
 	}
 
 	paths := s.executeSearch(&req)
@@ -287,8 +292,17 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 	}
 
 	for driveLetter, engine := range s.engines {
-		if req.RootPath != "" && !strings.HasPrefix(strings.ToUpper(req.RootPath), driveLetter+":") {
-			continue
+		if len(req.RootPaths) > 0 {
+			driveRelevant := false
+			for _, rp := range req.RootPaths {
+				if strings.HasPrefix(strings.ToUpper(rp), driveLetter+":") {
+					driveRelevant = true
+					break
+				}
+			}
+			if !driveRelevant {
+				continue
+			}
 		}
 
 		engine.Mu.RLock()
@@ -372,18 +386,28 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				}
 			}
 
-			if req.RootPath != "" {
-				if !strings.HasPrefix(strings.ToLower(fullPath), strings.ToLower(req.RootPath)) {
-					continue
-				}
-
-				if req.MaxDepth > 0 {
-					relPath := strings.TrimPrefix(strings.ToLower(fullPath), strings.ToLower(req.RootPath))
-					relPath = strings.TrimPrefix(relPath, `\`)
-					depth := strings.Count(relPath, `\`) + 1
-					if depth > req.MaxDepth {
-						continue
+			if len(req.RootPaths) > 0 {
+				pathMatched := false
+				fullPathLower := strings.ToLower(fullPath)
+				for _, rp := range req.RootPaths {
+					rpLower := strings.ToLower(rp)
+					if strings.HasPrefix(fullPathLower, rpLower) {
+						if req.MaxDepth > 0 {
+							relPath := strings.TrimPrefix(fullPathLower, rpLower)
+							relPath = strings.TrimPrefix(relPath, `\`)
+							depth := strings.Count(relPath, `\`) + 1
+							if depth <= req.MaxDepth {
+								pathMatched = true
+								break
+							}
+						} else {
+							pathMatched = true
+							break
+						}
 					}
+				}
+				if !pathMatched {
+					continue
 				}
 			}
 

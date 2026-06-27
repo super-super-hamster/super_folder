@@ -10,6 +10,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTaskStore } from '../../store/taskStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
 import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInTerminal } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
@@ -27,6 +28,7 @@ export default function ContextMenu() {
   const { favorites, toggleFavorite } = useFavoriteStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
+  const { smartFolders, setSmartFolders } = useSettingsStore()
   const isRunning = useTaskStore(state => state.isRunning)
   const copyLottieRef = useRef<LottieRefCurrentProps>(null)
   const trashLottieRef = useRef<LottieRefCurrentProps>(null)
@@ -144,6 +146,13 @@ export default function ContextMenu() {
         }
         DeleteToRecycleBin(targets).then(() => triggerRefresh()).catch(console.error)
         break
+      case 'delete_smart_folder':
+        if (targetPath && targetPath.startsWith('smartfolder://')) {
+          const sfId = targetPath.replace('smartfolder://', '')
+          setSmartFolders(smartFolders.filter(f => f.id !== sfId))
+          triggerRefresh()
+        }
+        break
       case 'rename':
         if (targets.length === 1) {
           const el = document.getElementById(`file-${targetPath}`)
@@ -251,7 +260,18 @@ export default function ContextMenu() {
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}
       >
-        {targetPath ? (
+        {targetPath === '__create_smart_folder__' ? null : targetPath ? (
+          targetPath.startsWith('smartfolder://') ? (
+            <button 
+              onClick={() => handleAction('delete_smart_folder')} 
+              className="flex items-center w-full px-4 py-2 hover:bg-red-50 text-red-600 transition-colors text-left"
+            >
+              <div className="flex items-center">
+                <img src="/src/assets/icons/delete_bin_line.svg" className="w-4 h-4 mr-3" alt="delete" />
+                删除
+              </div>
+            </button>
+          ) : (
           <>
             <button 
               onClick={() => handleAction('copy')} 
@@ -354,37 +374,42 @@ export default function ContextMenu() {
               使用默认程序打开
             </button>
           </>
+          )
         ) : (
           <>
             <button onClick={() => handleAction('refresh')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
               {renderIcon("M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15")}
               刷新
             </button>
-            <button onClick={() => handleAction('paste')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
-              <div className="flex items-center">
-                {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
-                粘贴
-              </div>
-              <span className="text-gray-400 text-xs tracking-wider">Ctrl+V</span>
-            </button>
-            <div className="h-px bg-gray-200 my-1 mx-2" />
-            <button onClick={() => handleCreate('folder')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/new_folder_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new folder" />
-              新建文件夹
-            </button>
-            <button onClick={() => handleCreate('file')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/file_new_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new file" />
-              新建文件
-            </button>
-            <div className="h-px bg-gray-200 my-1 mx-2" />
-            <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
-              复制当前路径
-            </button>
-            <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
-              在终端中打开
-            </button>
+            {currentPath && !currentPath.startsWith('favorite://') && !currentPath.startsWith('recent://') && !currentPath.startsWith('smartfolder://') && !currentPath.startsWith('preset://') && (
+              <>
+                <button onClick={() => handleAction('paste')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed" disabled={clipboardItems.length === 0}>
+                  <div className="flex items-center">
+                    {renderIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2")}
+                    粘贴
+                  </div>
+                  <span className="text-gray-400 text-xs tracking-wider">Ctrl+V</span>
+                </button>
+                <div className="h-px bg-gray-200 my-1 mx-2" />
+                <button onClick={() => handleCreate('folder')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/new_folder_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new folder" />
+                  新建文件夹
+                </button>
+                <button onClick={() => handleCreate('file')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/file_new_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new file" />
+                  新建文件
+                </button>
+                <div className="h-px bg-gray-200 my-1 mx-2" />
+                <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
+                  复制当前路径
+                </button>
+                <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
+                  在终端中打开
+                </button>
+              </>
+            )}
           </>
         )}
       </motion.div>

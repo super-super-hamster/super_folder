@@ -1,7 +1,8 @@
-﻿package database
+package database
 
 import (
 	"super_folder/internal/models"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -39,6 +40,9 @@ func GetConfig(key string) (string, error) {
 	var cfg models.Config
 	err := DB.Where("key = ?", key).First(&cfg).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
 		return "", err
 	}
 	return cfg.ValueJSON, nil
