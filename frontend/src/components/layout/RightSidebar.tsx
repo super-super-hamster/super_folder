@@ -46,7 +46,7 @@ export default function RightSidebar() {
         animate={{ opacity: 1, width: rightSidebarWidth, marginLeft: 0 }}
         exit={{ opacity: 0, width: 0, marginLeft: -12 }}
         transition={{ type: 'tween', duration: isResizing ? 0 : 0.2, ease: 'easeOut' }}
-        className="h-full bg-white rounded-2xl shadow-sm flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-text"
+        className="h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-text"
       >
       <div className="p-4">
         {/* Toggle Pill */}

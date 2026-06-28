@@ -13,6 +13,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/wailsapp/wails/v2 v2.11.0
 	golang.org/x/image v0.42.0
+	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
 	gorm.io/gorm v1.31.1
 )

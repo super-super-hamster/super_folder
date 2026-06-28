@@ -12,7 +12,7 @@ module.exports = {
       },
       colors: {
         primary: {
-          DEFAULT: '#1e3a8a',
+          DEFAULT: '#000000',
         }
       },
       boxShadow: {
@@ -21,7 +21,7 @@ module.exports = {
         lg: '0 6px 16px rgba(0, 0, 0, 0.1)',
         xl: '0 8px 20px rgba(0, 0, 0, 0.12)',
         '2xl': '1px 12px 28px rgba(0, 0, 0, 0.15)',
-        panel: '0 4px 20px rgba(0, 0, 0, 0.05)',
+        panel: '1px 4px 3px rgba(0, 0, 0, 0.25)',
       },
       zIndex: {
         base: '0',

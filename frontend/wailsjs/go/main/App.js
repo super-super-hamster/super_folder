@@ -154,6 +154,10 @@ export function ReadDir(arg1) {
   return window['go']['main']['App']['ReadDir'](arg1);
 }
 
+export function ReadDirChunked(arg1, arg2) {
+  return window['go']['main']['App']['ReadDirChunked'](arg1, arg2);
+}
+
 export function ReadFileText(arg1) {
   return window['go']['main']['App']['ReadFileText'](arg1);
 }

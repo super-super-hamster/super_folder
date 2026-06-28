@@ -325,7 +325,7 @@ export const ModalManager = () => {
 
   return (
     <Modal>
-      <Modal.Backdrop isOpen={isOpen} onOpenChange={handleOpenChange} variant="blur">
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={handleOpenChange} variant="blur" className="bg-transparent">
         <Modal.Container placement="center">
           <Modal.Dialog className="rounded-2xl shadow-panel">
             {isModalVisible && !activeModal && <ProgressModalContent />}

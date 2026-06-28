@@ -56,6 +56,22 @@ function App() {
         return;
       }
       
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault();
+        const state = useTabsStore.getState();
+        const activeIndex = state.tabs.findIndex(t => t.id === state.activeTabId);
+        if (activeIndex !== -1 && state.tabs.length > 1) {
+          if (e.shiftKey) {
+            const prevIndex = (activeIndex - 1 + state.tabs.length) % state.tabs.length;
+            state.setActiveTab(state.tabs[prevIndex].id);
+          } else {
+            const nextIndex = (activeIndex + 1) % state.tabs.length;
+            state.setActiveTab(state.tabs[nextIndex].id);
+          }
+        }
+        return;
+      }
+      
       // 避免在输入框中触发快捷键
       if (e.target instanceof HTMLInputElement || 
           e.target instanceof HTMLTextAreaElement || 
@@ -148,7 +164,7 @@ function App() {
                 </AnimatePresence>
 
                 {/* FileList Island or File Editor */}
-                <main className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
+                <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
                   {activeTab && !activeTab.isDir ? (
                     <FullFileEditor path={activeTab.currentPath} />
                   ) : (

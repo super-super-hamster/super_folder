@@ -18,7 +18,7 @@ export interface AutocompleteSuggestion {
   matchedPrefix: string
 }
 
-export type ViewMode = 'grid' | 'list'
+export type ViewMode = 'grid' | 'list' | 'album'
 
 interface UIState {
   isSearchFocused: boolean

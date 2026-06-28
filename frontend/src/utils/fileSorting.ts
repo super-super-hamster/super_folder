@@ -1,10 +1,16 @@
 import { pinyin } from 'pinyin-pro'
 import { models } from '../../wailsjs/go/models'
-import { SortOption } from '../store/uiStore'
+import { SortOption, ViewMode } from '../store/uiStore'
+import { isImage } from './previewHelper'
 
 export type VirtualListItem = 
   | { type: 'header', title: string }
   | { type: 'row', items: models.FileInfo[] }
+
+const getExt = (path: string) => {
+  const parts = path.split('.')
+  return parts.length > 1 ? '.' + parts[parts.length - 1] : ''
+}
 
 const getInitial = (name: string): string => {
   if (!name) return '#'
@@ -68,12 +74,17 @@ export const processFiles = (
   files: models.FileInfo[], 
   sortOption: SortOption, 
   columns: number,
-  isGrouped: boolean
+  isGrouped: boolean,
+  viewMode: ViewMode
 ): VirtualListItem[] => {
   
   const createFolderIndex = files.findIndex(f => f.path === '__create_smart_folder__')
   const createFolderItem = createFolderIndex >= 0 ? files[createFolderIndex] : null
-  const regularFiles = createFolderIndex >= 0 ? [...files.slice(0, createFolderIndex), ...files.slice(createFolderIndex + 1)] : files
+  let regularFiles = createFolderIndex >= 0 ? [...files.slice(0, createFolderIndex), ...files.slice(createFolderIndex + 1)] : files
+
+  if (viewMode === 'album') {
+    regularFiles = regularFiles.filter(f => f.isDir || isImage(getExt(f.path)))
+  }
 
   const sortedFiles = [...regularFiles].sort((a, b) => {
     // 文件夹始终在前
@@ -98,6 +109,54 @@ export const processFiles = (
       return tb - ta
     }
   })
+
+  if (viewMode === 'album') {
+    const listItems: VirtualListItem[] = []
+    const folderFiles = sortedFiles.filter(f => f.isDir)
+    const imageFiles = sortedFiles.filter(f => !f.isDir)
+
+    if (folderFiles.length > 0) {
+      listItems.push({ type: 'header', title: '文件夹' })
+      for (let i = 0; i < folderFiles.length; i += columns) {
+        listItems.push({ type: 'row', items: folderFiles.slice(i, i + columns) })
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      listItems.push({ type: 'header', title: '图片' })
+      for (let i = 0; i < imageFiles.length; i += columns) {
+        listItems.push({ type: 'row', items: imageFiles.slice(i, i + columns) })
+      }
+    }
+
+    // append smart folder create item at the end of folders if it exists
+    if (createFolderItem) {
+      // Find the last folder row
+      let lastFolderRowIdx = -1
+      for (let i = listItems.length - 1; i >= 0; i--) {
+        if (listItems[i].type === 'row' && (listItems[i] as any).items[0]?.isDir) {
+          lastFolderRowIdx = i
+          break
+        }
+      }
+      
+      if (lastFolderRowIdx >= 0) {
+        const lastRow = listItems[lastFolderRowIdx] as { type: 'row', items: models.FileInfo[] }
+        if (lastRow.items.length < columns) {
+          lastRow.items.push(createFolderItem)
+        } else {
+          listItems.splice(lastFolderRowIdx + 1, 0, { type: 'row', items: [createFolderItem] })
+        }
+      } else {
+        // If no folder exists, just add a folder header and row
+        if (folderFiles.length === 0) {
+          listItems.unshift({ type: 'header', title: '文件夹' }, { type: 'row', items: [createFolderItem] })
+        }
+      }
+    }
+
+    return listItems
+  }
 
   if (!isGrouped) {
     const listItems: VirtualListItem[] = []

@@ -79,6 +79,8 @@ export function PermanentDelete(arg1:Array<string>):Promise<string>;
 
 export function ReadDir(arg1:string):Promise<Array<models.FileInfo>>;
 
+export function ReadDirChunked(arg1:string,arg2:string):Promise<Array<models.FileInfo>>;
+
 export function ReadFileText(arg1:string):Promise<string>;
 
 export function RedoOperation():Promise<void>;

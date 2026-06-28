@@ -1,4 +1,4 @@
-﻿package thumbnail
+package thumbnail
 
 import (
 	"bytes"
@@ -6,23 +6,30 @@ import (
 	"super_folder/internal/models"
 	"image"
 	_ "image/gif"
-	"image/png"
+	"image/jpeg"
+	_ "image/png"
 	_ "golang.org/x/image/webp"
 	"net/http"
 	"os"
 	"fmt"
+	"runtime/debug"
+	"sync/atomic"
 
 	"github.com/nfnt/resize"
+	"golang.org/x/sync/semaphore"
 )
 
 // Handler serves image thumbnails
 type Handler struct{}
 
+var activeDecoders int32
+
 func NewHandler() *Handler {
 	return &Handler{}
 }
 
-var thumbSem = make(chan struct{}, 8) // Max 8 concurrent decodes
+const maxThumbBudget int64 = 50 * 1024 * 1024 // 50MB budget
+var thumbSem = semaphore.NewWeighted(maxThumbBudget)
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/file" {
@@ -58,19 +65,32 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check DB cache
 	thumb, err := database.GetThumbnail(path)
 	if err == nil && thumb != nil && thumb.ModTime == modTime {
-		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Content-Type", "image/jpeg")
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Write(thumb.Data)
 		return
 	}
 
+	// Determine weight based on file size
+	weight := info.Size()
+	if weight < 100*1024 {
+		weight = 100 * 1024 // Min 100KB cost
+	}
+	if weight > maxThumbBudget {
+		weight = maxThumbBudget // Cap to max budget so it doesn't block forever
+	}
+
 	// Wait for an available decoding slot or client abort
-	select {
-	case thumbSem <- struct{}{}:
-		defer func() { <-thumbSem }()
-	case <-r.Context().Done():
+	if err := thumbSem.Acquire(r.Context(), weight); err != nil {
 		return // Client disconnected while waiting
 	}
+	atomic.AddInt32(&activeDecoders, 1)
+	defer func() {
+		thumbSem.Release(weight)
+		if atomic.AddInt32(&activeDecoders, -1) == 0 {
+			debug.FreeOSMemory()
+		}
+	}()
 
 	// Generate Thumbnail
 	file, err := os.Open(path)
@@ -81,30 +101,35 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	type decodeResult struct {
+		img image.Image
+		err error
+	}
+	resultCh := make(chan decodeResult, 1)
+
+	go func() {
+		img, _, err := image.Decode(file)
+		resultCh <- decodeResult{img, err}
+	}()
+
+	var img image.Image
 	select {
 	case <-r.Context().Done():
 		return // Client disconnected
-	default:
-	}
-
-	img, _, err := image.Decode(file)
-	if err != nil {
-		fmt.Println("[Thumbnail Handler] Decode error for path", path, ":", err)
-		http.Error(w, "cannot decode image", http.StatusInternalServerError)
-		return
-	}
-
-	select {
-	case <-r.Context().Done():
-		return // Client disconnected
-	default:
+	case res := <-resultCh:
+		if res.err != nil {
+			fmt.Println("[Thumbnail Handler] Decode error for path", path, ":", res.err)
+			http.Error(w, "cannot decode image", http.StatusInternalServerError)
+			return
+		}
+		img = res.img
 	}
 
 	// Resize to 128x128 max preserving aspect ratio (Bilinear for extreme speed)
 	m := resize.Thumbnail(128, 128, img, resize.Bilinear)
 
 	var buf bytes.Buffer
-	err = png.Encode(&buf, m)
+	err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: 85})
 	if err != nil {
 		fmt.Println("[Thumbnail Handler] Encode error:", err)
 		http.Error(w, "cannot encode thumbnail", http.StatusInternalServerError)
@@ -120,7 +145,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Data:    data,
 	})
 
-	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	w.Write(data)
 }

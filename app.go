@@ -20,6 +20,7 @@ import (
 	"super_folder/internal/undo"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
@@ -158,6 +159,68 @@ func (a *App) ReadDir(path string) ([]models.FileInfo, error) {
 	return fs.ReadDir(path)
 }
 
+func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var firstChunk []models.FileInfo
+	chunkSize := 50
+	
+	processEntry := func(entry os.DirEntry) *models.FileInfo {
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+		fullPath := filepath.Join(path, entry.Name())
+		return &models.FileInfo{
+			Name:    entry.Name(),
+			Path:    fullPath,
+			IsDir:   entry.IsDir(),
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
+			Ext:     filepath.Ext(entry.Name()),
+		}
+	}
+
+	// Process first chunk synchronously
+	for i := 0; i < len(entries) && i < chunkSize; i++ {
+		if fi := processEntry(entries[i]); fi != nil {
+			firstChunk = append(firstChunk, *fi)
+		}
+	}
+
+	// Process the rest asynchronously
+	if len(entries) > chunkSize {
+		go func() {
+			var currentChunk []models.FileInfo
+			for i := chunkSize; i < len(entries); i++ {
+				if fi := processEntry(entries[i]); fi != nil {
+					currentChunk = append(currentChunk, *fi)
+				}
+				
+				if len(currentChunk) >= 200 {
+					runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, currentChunk)
+					currentChunk = nil
+					time.Sleep(5 * time.Millisecond)
+				}
+			}
+			if len(currentChunk) > 0 {
+				runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, currentChunk)
+			}
+			runtime.EventsEmit(a.ctx, "directory:done:"+reqId, nil)
+		}()
+	} else {
+		// Immediately done
+		go func() {
+			runtime.EventsEmit(a.ctx, "directory:done:"+reqId, nil)
+		}()
+	}
+
+	return firstChunk, nil
+}
+
 func (a *App) GetDrives() []string {
 	return fs.GetDrives()
 }
@@ -232,7 +295,7 @@ func (a *App) CreateFolder(path string) error {
 }
 
 func (a *App) CreateFile(path string) error {
-	f, err := os.Create(path)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		return err
 	}

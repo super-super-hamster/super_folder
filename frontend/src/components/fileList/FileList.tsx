@@ -7,7 +7,8 @@ import { useClipboardStore } from '../../store/clipboardStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTagStore } from '../../store/tagStore'
 import { useSettingsStore } from '../../store/settingsStore'
-import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetLocalAuthToken, GetTagsForFiles, SearchFiles, GetFavorites, SelectDirectory } from '../../../wailsjs/go/main/App'
+import { ReadDir, PasteFiles, DeleteToRecycleBin, GetRecentItems, GetLocalServerPort, GetLocalAuthToken, GetTagsForFiles, SearchFiles, GetFavorites, SelectDirectory, ReadDirChunked } from '../../../wailsjs/go/main/App'
+import { EventsOn, EventsOff } from '../../../wailsjs/runtime/runtime'
 import { models } from '../../../wailsjs/go/models'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Checkbox } from '@heroui/react'
@@ -134,14 +135,19 @@ const AnimatedDocumentIcon = ({ className = "w-16 h-16" }: { className?: string 
   )
 }
 
-const ThumbnailImage = ({ path, alt }: { path: string, alt: string }) => {
+const ThumbnailImage = ({ path, alt, className }: { path: string, alt: string, className?: string }) => {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
   const [srcUrl, setSrcUrl] = useState<string | null>(null)
   
   useEffect(() => {
+    setLoaded(false)
+    setError(false)
+    setSrcUrl(null)
+    
     const abortController = new AbortController()
     let objectUrl: string | null = null;
+
     
     const timer = setTimeout(() => {
       fetch(`/thumb?path=${encodeURIComponent(path)}`, { signal: abortController.signal })
@@ -150,6 +156,7 @@ const ThumbnailImage = ({ path, alt }: { path: string, alt: string }) => {
           return res.blob()
         })
         .then(blob => {
+          if (abortController.signal.aborted) return
           objectUrl = URL.createObjectURL(blob)
           setSrcUrl(objectUrl)
         })
@@ -170,20 +177,21 @@ const ThumbnailImage = ({ path, alt }: { path: string, alt: string }) => {
   }, [path])
   
   return (
-    <div className="w-16 h-16 relative overflow-hidden rounded-xl">
+    <div className={`relative overflow-hidden rounded-xl ${className || 'w-16 h-16'}`}>
       {!loaded && !error && (
         <div className="absolute inset-0 w-full h-full bg-gray-200 animate-pulse rounded-xl" />
       )}
       {!error && srcUrl ? (
         <img
           src={srcUrl}
+          className="w-full h-full object-cover transition-opacity duration-300 rounded-xl"
           alt={alt}
           onLoad={() => setLoaded(true)}
           onError={() => {
             setError(true)
             setLoaded(true)
           }}
-          className={`absolute inset-0 w-16 h-16 object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{ opacity: loaded ? 1 : 0 }}
         />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100">
@@ -393,23 +401,22 @@ export default function FileList() {
     if (!scrollRef.current) return
     const observer = new ResizeObserver((entries) => {
       const width = entries[0].contentRect.width
-      const cols = Math.max(1, Math.floor((width - 48) / 120))
+      const itemWidth = viewMode === 'album' ? 80 : 112
+      const cols = Math.max(1, Math.floor((width - 48) / itemWidth))
       setColumns(cols)
     })
     observer.observe(scrollRef.current)
     return () => observer.disconnect()
-  }, [currentPath])
+  }, [currentPath, viewMode])
 
   const effectiveColumns = viewMode === 'list' ? 1 : columns
 
   const listItems = useMemo(() => {
     const activeSortOption = currentPath === 'recent://' ? recentSortOption : sortOption
-    const items = processFiles(files, activeSortOption, effectiveColumns, isGrouped)
-    
-
+    const items = processFiles(files, activeSortOption, effectiveColumns, isGrouped, viewMode)
     
     return items
-  }, [files, sortOption, recentSortOption, effectiveColumns, isGrouped, currentPath])
+  }, [files, sortOption, recentSortOption, effectiveColumns, isGrouped, currentPath, viewMode])
 
   const flatFiles = useMemo(() => {
     const result: models.FileInfo[] = []
@@ -450,7 +457,7 @@ export default function FileList() {
     const newSelected = new Set<string>()
     let currentYOffset = 0
     const C_W = scrollRef.current?.clientWidth ? scrollRef.current.clientWidth - 48 : 0
-    const cw = C_W > 0 ? (C_W - (columns - 1) * 8) / columns : 0
+    const cw = C_W > 0 ? (C_W - (columns - 1) * 16) / columns : 0
 
     for (let index = 0; index < listItems.length; index++) {
       const item = listItems[index]
@@ -463,7 +470,7 @@ export default function FileList() {
           for (let col = 0; col < columns; col++) {
             const file = item.items[col]
             if (!file) continue
-            const itemLeft = col * (cw + 8)
+            const itemLeft = col * (cw + 16)
             const itemRight = itemLeft + cw
             if (itemRight >= boxLeft && itemLeft <= boxRight) {
               newSelected.add(file.path)
@@ -573,7 +580,12 @@ export default function FileList() {
     estimateSize: (index) => {
       if (!listItems[index]) return 40
       if (listItems[index].type === 'header') return 45
-      return viewMode === 'list' ? 40 : 144
+      if (viewMode === 'list') return 40
+      if (viewMode === 'album') {
+        const rowItems = (listItems[index] as any).items as models.FileInfo[]
+        return rowItems[0]?.isDir ? 116 : 80
+      }
+      return 160
     },
     getItemKey: (index) => {
       const item = listItems[index]
@@ -824,12 +836,41 @@ export default function FileList() {
     } else if (currentPath?.endsWith('\\转换') || currentPath?.endsWith('\\批量重命名')) {
       fetchPromise = Promise.resolve([])
     } else {
-      fetchPromise = ReadDir(currentPath)
+      const reqId = Date.now().toString() + Math.random().toString()
+      let isFirstUpdate = true
+      EventsOn('directory:chunk:' + reqId, (chunk: models.FileInfo[]) => {
+        if (isMounted) {
+          setFiles(prev => {
+            if (isFirstUpdate) {
+              isFirstUpdate = false
+              return [...(chunk || [])]
+            }
+            return [...prev, ...(chunk || [])]
+          })
+        }
+      })
+      EventsOn('directory:done:' + reqId, () => {
+        EventsOff('directory:chunk:' + reqId)
+        EventsOff('directory:done:' + reqId)
+      })
+      
+      fetchPromise = ReadDirChunked(currentPath, reqId).then(res => {
+        if (isMounted) {
+          setFiles(prev => {
+            if (isFirstUpdate) {
+              isFirstUpdate = false
+              return [...(res || [])]
+            }
+            return [...(res || []), ...prev]
+          })
+        }
+        return null as unknown as models.FileInfo[]
+      })
     }
 
     fetchPromise
       .then((res) => {
-        if (isMounted) setFiles(res || [])
+        if (isMounted && res !== null) setFiles(res || [])
       })
       .catch((err) => {
         console.error('Failed to fetch items:', err)
@@ -971,6 +1012,11 @@ export default function FileList() {
       }, 50)
       return
     }
+    
+    if (file.isDir) {
+      useSelectionStore.getState().clearSelection()
+    }
+
     if (file.path.startsWith('smartfolder://')) {
       navigate(file.path, '虚拟文件夹', file.isDir)
       return
@@ -1172,7 +1218,7 @@ export default function FileList() {
                 transform: `translateY(${virtualRow.start}px)`,
                 display: 'grid',
                 gridTemplateColumns: `repeat(${effectiveColumns}, minmax(0, 1fr))`,
-                gap: '0.5rem',
+                gap: viewMode === 'album' ? '0.25rem' : '1rem',
               }}
             >
               {Array.from({ length: effectiveColumns }).map((_, colIndex) => {
@@ -1200,6 +1246,8 @@ export default function FileList() {
                     className={
                         viewMode === 'list' 
                         ? `grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md transition-colors cursor-pointer group select-none relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100/60'}`
+                        : viewMode === 'album'
+                        ? `flex flex-col items-center justify-center p-0.5 rounded-xl transition-colors cursor-pointer group select-none w-full mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100/60'} ${file.isDir ? 'h-28' : 'h-20'}`
                         : `flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'}`
                       }
                   >
@@ -1240,9 +1288,9 @@ export default function FileList() {
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center mb-2 text-blue-900 transition-transform relative">
+                          <div className={`${viewMode === 'album' && !file.isDir ? 'w-full h-full p-0' : 'w-16 h-16 mb-2'} flex-shrink-0 flex items-center justify-center text-blue-900 transition-transform relative`}>
                             {isImage(file.ext) ? (
-                              <ThumbnailImage path={file.path} alt={file.name} />
+                              <ThumbnailImage path={file.path} alt={file.name} className={viewMode === 'album' && !file.isDir ? 'w-full h-full object-cover' : 'w-16 h-16'} />
                             ) : file.isDir ? (
                               <AnimatedFolderIcon />
                             ) : getFileIcon(file) === 'document_line.svg' ? (
@@ -1262,11 +1310,13 @@ export default function FileList() {
                               </div>
                             )}
                           </div>
-                          <div className="h-10 w-full flex flex-col items-center justify-start overflow-hidden relative">
-                            <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all" title={file.name}>
-                              {file.name}
-                            </span>
-                          </div>
+                          {!(viewMode === 'album' && !file.isDir) && (
+                            <div className="h-10 w-full flex flex-col items-center justify-start overflow-hidden relative">
+                              <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all" title={file.name}>
+                                {file.name}
+                              </span>
+                            </div>
+                          )}
       
                           {isSelectionMode && (
                             <div className="absolute bottom-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
@@ -1297,7 +1347,7 @@ export default function FileList() {
       {isCreatingSmartFolder && currentPath === 'smartfolder://' && (
         <div id="smart-folder-create-panel" className="bg-gray-100/50 rounded-xl p-6 mt-6 border border-gray-200 max-w-2xl mx-auto mb-8">
           <div className="mb-6">
-            <div className="text-sm font-semibold text-gray-700 mb-2">智能文件夹名称</div>
+            <div className="text-sm font-semibold text-gray-700 mb-2">名称</div>
             <input 
               value={sfName} 
               onChange={(e) => setSfName(e.target.value)} 

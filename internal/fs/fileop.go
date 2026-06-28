@@ -163,6 +163,30 @@ func (t *FileTask) Run() {
 		}
 
 		var finalDest string
+
+		if t.Operation == "cut" {
+			if _, err := os.Stat(destPath); os.IsNotExist(err) {
+				renameErr := os.Rename(src, destPath)
+				if renameErr == nil {
+					var dirBytes int64
+					var dirFiles int
+					filepath.Walk(destPath, func(_ string, i os.FileInfo, e error) error {
+						if e == nil {
+							dirBytes += i.Size()
+							dirFiles++
+						}
+						return nil
+					})
+					t.CopiedBytes += dirBytes
+					t.ProcessedFiles += dirFiles
+					t.SuccessfulSrc = append(t.SuccessfulSrc, src)
+					t.SuccessfulDest = append(t.SuccessfulDest, destPath)
+					t.emitProgress()
+					continue
+				}
+			}
+		}
+
 		if srcInfo.IsDir() {
 			finalDest, err = t.copyDir(src, destPath)
 		} else {
@@ -173,14 +197,15 @@ func (t *FileTask) Run() {
 			fmt.Println("Error processing", src, ":", err)
 			runtime.EventsEmit(t.WailsCtx, "paste:error", map[string]interface{}{
 				"taskID":  t.ID,
-				"message": fmt.Sprintf("鎿嶄綔 '%s' 澶辫触: %v", filepath.Base(src), err),
+				"message": fmt.Sprintf("操作 '%s' 失败: %v", filepath.Base(src), err),
 			})
 			continue // Still continue with other files, but frontend might show a warning
 		}
 		
 		// If cut, delete the original after successful copy
 		if t.Operation == "cut" && err == nil && t.Ctx.Err() == nil {
-			os.RemoveAll(src)
+			// Use os.Remove instead of os.RemoveAll to only delete if empty
+			os.Remove(src)
 		}
 
 		if finalDest != "" && err == nil && t.Ctx.Err() == nil {
@@ -325,10 +350,20 @@ func generateUniqueName(path string) string {
 	counter := 1
 	for {
 		newPath := fmt.Sprintf("%s(%d)%s", base, counter, ext)
-		if _, err := os.Stat(newPath); os.IsNotExist(err) {
-			return newPath
+		_, err := os.Stat(newPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return newPath
+			}
+			// If we get an error other than NotExist (e.g., Permission Denied),
+			// trying to loop further will just infinite loop. Break out and return.
+			return fmt.Sprintf("%s_conflict_%d%s", base, time.Now().UnixNano()%10000, ext)
 		}
 		counter++
+		if counter > 10000 {
+			// Circuit breaker to prevent infinite loop under any unforeseen circumstances
+			return fmt.Sprintf("%s_conflict_%d%s", base, time.Now().UnixNano()%10000, ext)
+		}
 	}
 }
 
@@ -347,6 +382,8 @@ func (t *FileTask) copyDir(src string, dest string) (string, error) {
 		return "", err
 	}
 
+	hasError := false
+
 	for _, entry := range entries {
 		if t.Ctx.Err() != nil {
 			return "", t.Ctx.Err()
@@ -356,14 +393,29 @@ func (t *FileTask) copyDir(src string, dest string) (string, error) {
 
 		if entry.IsDir() {
 			if _, err := t.copyDir(srcPath, destPath); err != nil {
-				return "", err
+				runtime.EventsEmit(t.WailsCtx, "paste:error", map[string]interface{}{
+					"taskID":  t.ID,
+					"message": fmt.Sprintf("目录 '%s' 处理失败: %v", entry.Name(), err),
+				})
+				hasError = true
+				continue
 			}
 		} else {
 			if _, err := t.copyFile(srcPath, destPath); err != nil {
-				return "", err
+				runtime.EventsEmit(t.WailsCtx, "paste:error", map[string]interface{}{
+					"taskID":  t.ID,
+					"message": fmt.Sprintf("文件 '%s' 处理失败: %v", entry.Name(), err),
+				})
+				hasError = true
+				continue
 			}
 		}
 	}
+
+	if t.Operation == "cut" && !hasError {
+		os.Remove(src)
+	}
+
 	return dest, nil
 }
 
@@ -413,10 +465,15 @@ func (t *FileTask) copyFile(src string, dest string) (string, error) {
 
 	_, err = io.Copy(destFile, pr)
 	destFile.Close()
+	srcFile.Close()
 
 	if err != nil {
 		os.Remove(dest)
 		return "", err
+	}
+
+	if t.Operation == "cut" {
+		os.Remove(src)
 	}
 
 	t.ProcessedFiles++

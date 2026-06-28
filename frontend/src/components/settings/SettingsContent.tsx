@@ -10,7 +10,7 @@ export default function SettingsContent() {
   const { activeSettingsTab } = useUIStore()
 
   return (
-    <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden relative">
+    <div className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 flex flex-col overflow-hidden relative">
       <div className="flex-1 overflow-y-auto wails-no-drag p-8">
         <AnimatePresence mode="wait">
           <motion.div

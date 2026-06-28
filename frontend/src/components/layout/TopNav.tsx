@@ -218,7 +218,7 @@ export default function TopNav() {
   const isSearchActive = isSearchFocused || isSearchPanelOpen || searchQuery !== ''
 
   return (
-    <div className="flex items-center h-14 bg-white rounded-2xl shadow-sm border border-gray-100 wails-draggable px-4 shrink-0">
+    <div className="flex items-center h-14 bg-white rounded-2xl shadow-panel border border-gray-100 wails-draggable px-4 shrink-0">
       <div className="flex items-center gap-1 wails-no-drag">
         <button 
           id="nav-back-button"
@@ -327,7 +327,7 @@ export default function TopNav() {
           id="search-container"
           layout
           transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-          className={`relative flex items-center bg-gray-100 rounded-full focus-within:ring-2 ring-gray-200 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
+          className={`relative flex items-center bg-gray-100 rounded-full focus-within:bg-gray-200/80 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
         >
           {isSearchActive && (
             <div 
@@ -400,10 +400,13 @@ export default function TopNav() {
               >
                 <div className="py-1">
                   <button onClick={() => { setViewMode('grid'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'grid' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
-                    <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" /> 网格显示
+                    <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" /> 网格模式
                   </button>
                   <button onClick={() => { setViewMode('list'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'list' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
-                    <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" /> 列表显示
+                    <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" /> 列表模式
+                  </button>
+                  <button onClick={() => { setViewMode('album'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'album' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                    <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3" /> 相册模式
                   </button>
                   <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
                   <div className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => { setIsGrouped(!isGrouped); setIsViewMenuOpen(false); }}>

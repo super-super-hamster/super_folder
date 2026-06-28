@@ -15,6 +15,7 @@ type TerminalService struct {
 	ctx    context.Context
 	cpty   *conpty.ConPty
 	mu     sync.Mutex
+	currentDir string
 }
 
 func NewTerminalService() *TerminalService {
@@ -30,20 +31,19 @@ func (s *TerminalService) Start(dir string) error {
 	defer s.mu.Unlock()
 
 	if s.cpty != nil {
-		if dir != "" {
-			s.cpty.Write([]byte(fmt.Sprintf("Set-Location -LiteralPath '%s'\r", strings.ReplaceAll(dir, "'", "''"))))
-		}
 		return nil
 	}
 
 	// Escape quotes for powershell -Command
-	promptFunc := `function prompt { '@cmd ' + (Get-Location).Path + '> ' }`
+	promptFunc := `function prompt { '{0}[38;2;255;108;2m@cmd{0}[0m ' -f [char]27 + (Get-Location).Path + '> ' }`
 	
 	initCmd := promptFunc
 	if dir != "" {
 		initCmd += fmt.Sprintf("; Set-Location -LiteralPath '%s'", strings.ReplaceAll(dir, "'", "''"))
 	}
 	initCmd += "; Clear-Host"
+
+	s.currentDir = dir
 
 	cpty, err := conpty.Start(fmt.Sprintf(`powershell.exe -NoLogo -NoExit -Command "%s"`, initCmd), conpty.ConPtyDimensions(80, 24))
 	if err != nil {

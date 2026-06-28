@@ -79,6 +79,13 @@ export const useTabsStore = create<TabsState>((set) => ({
     guardUnsaved(() => set((state) => {
       const tabs = state.tabs.map((tab) => {
         if (tab.id === state.activeTabId) {
+          if (tab.currentPath === path) {
+            return {
+              ...tab,
+              isDir,
+              title: title || getSpecialTitle(path),
+            }
+          }
           // Add to history and truncate future history
           const newHistory = tab.history.slice(0, tab.historyIndex + 1)
           newHistory.push({ path, isDir })

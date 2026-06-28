@@ -96,6 +96,9 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     let sfLineCount = 0
     let syncingConpty = false
     let syncBuffer = ""
+    let sfHistory: string[] = []
+    let sfHistoryIndex = 0
+    let sfCursorOffset = 0
 
     term.attachCustomKeyEventHandler((e) => {
       // Handle Ctrl+Enter directly to close terminal without bubbling to App.tsx
@@ -127,12 +130,12 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               sfState = 'cmd'
               sfBuffer = ""
               sfLineCount += sfRenameCode.split('\n').length + 2
-              term.write(`@sf ${currentSfPath}> `)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             }).catch(e => {
               term.write(`\r\n\x1b[31m[Error] ${e}\x1b[0m\r\n`)
               sfState = 'cmd'
               sfBuffer = ""
-              term.write(`@sf ${currentSfPath}> `)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             })
             return
           } else if (data === '\r') {
@@ -152,10 +155,27 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           }
         }
 
+        const redrawLine = () => {
+          const prompt = sfState === 'rename_name' ? 'name: ' : `\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `
+          term.write(`\x1b[2K\r${prompt}${sfBuffer}`)
+          if (sfCursorOffset > 0) {
+            term.write(`\x1b[${sfCursorOffset}D`)
+          }
+        }
+
         // Simple line editor for SF Mode
         if (data === '\r') { // Enter
           term.write('\r\n')
           const cmd = sfBuffer.trim()
+          
+          if (sfState === 'cmd' && cmd !== '') {
+            if (sfHistory.length === 0 || sfHistory[sfHistory.length - 1] !== cmd) {
+              sfHistory.push(cmd)
+            }
+          }
+          sfHistoryIndex = sfHistory.length
+          sfCursorOffset = 0
+
           if (sfState === 'rename_name') {
             sfRenameName = cmd
             sfState = 'rename_code'
@@ -173,9 +193,9 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             syncBuffer = ""
             term.write('\x1b[0m') // Reset ANSI
             EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
-            // Sync ConPTY cursor down to match xterm by sending empty lines in a comment block!
-            const newlines = '\r'.repeat(sfLineCount)
-            EventsEmit('terminal:input', `<#${newlines}#>\r`)
+            // Sync ConPTY cursor down to match xterm by sending empty enters. Empty enters don't go into history!
+            const newlines = '\r'.repeat(Math.max(1, sfLineCount))
+            EventsEmit('terminal:input', newlines)
             sfLineCount = 0
           } else if (cmd === 'rename add') {
             sfState = 'rename_name'
@@ -190,23 +210,86 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             }
             sfBuffer = ""
             sfLineCount++
-            term.write(`@sf ${currentSfPath}> `)
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          }
+        } else if (data === '\x1b[A') { // Up arrow
+          if (sfState === 'cmd' && sfHistoryIndex > 0) {
+            sfHistoryIndex--
+            sfBuffer = sfHistory[sfHistoryIndex]
+            sfCursorOffset = 0
+            redrawLine()
+          }
+        } else if (data === '\x1b[B') { // Down arrow
+          if (sfState === 'cmd' && sfHistoryIndex < sfHistory.length) {
+            sfHistoryIndex++
+            if (sfHistoryIndex === sfHistory.length) {
+              sfBuffer = ""
+            } else {
+              sfBuffer = sfHistory[sfHistoryIndex]
+            }
+            sfCursorOffset = 0
+            redrawLine()
+          }
+        } else if (data === '\x1b[D') { // Left arrow
+          if (sfCursorOffset < sfBuffer.length) {
+            sfCursorOffset++
+            term.write('\x1b[D')
+          }
+        } else if (data === '\x1b[C') { // Right arrow
+          if (sfCursorOffset > 0) {
+            sfCursorOffset--
+            term.write('\x1b[C')
           }
         } else if (data === '\x7f') { // Backspace
-          if (sfBuffer.length > 0) {
-            sfBuffer = sfBuffer.slice(0, -1)
-            term.write('\b \b')
+          if (sfBuffer.length > sfCursorOffset) {
+            const pos = sfBuffer.length - sfCursorOffset
+            sfBuffer = sfBuffer.slice(0, pos - 1) + sfBuffer.slice(pos)
+            redrawLine()
           }
         } else if (data === '\x03') { // Ctrl+C
           sfBuffer = ""
+          sfCursorOffset = 0
+          sfHistoryIndex = sfHistory.length
           sfLineCount++
-          term.write(`^C\r\n@sf ${currentSfPath}> `)
+          term.write(`^C\r\n\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+        } else if (data === '\t') { // Tab
+          const pos = sfBuffer.length - sfCursorOffset
+          if (sfBuffer.slice(0, pos).endsWith('@here')) {
+            const tabsState = useTabsStore.getState()
+            const activeTab = tabsState.tabs.find(t => t.id === tabsState.activeTabId)
+            let cp = activeTab?.currentPath || ''
+            cp = cp.startsWith('favorite://') || cp.startsWith('recent://') ? '' : cp
+            
+            if (cp) {
+              const toInsert = `"${cp}"`
+              sfBuffer = sfBuffer.slice(0, pos - 5) + toInsert + sfBuffer.slice(pos)
+              redrawLine()
+            }
+          }
         } else {
-          sfBuffer += data
-          term.write(data) // Local echo
+          if (data.startsWith('\x1b')) return // ignore other ansi
+          const pos = sfBuffer.length - sfCursorOffset
+          sfBuffer = sfBuffer.slice(0, pos) + data + sfBuffer.slice(pos)
+          redrawLine()
         }
       } else {
         // CMD Mode
+        if (data === '\t' && cmdRawBuffer.endsWith('@here')) {
+          const tabsState = useTabsStore.getState()
+          const activeTab = tabsState.tabs.find(t => t.id === tabsState.activeTabId)
+          let cp = activeTab?.currentPath || ''
+          cp = cp.startsWith('favorite://') || cp.startsWith('recent://') ? '' : cp
+          
+          if (cp) {
+            EventsEmit('terminal:input', '\x7f\x7f\x7f\x7f\x7f')
+            cmdRawBuffer = cmdRawBuffer.slice(0, -5)
+            const toInsert = `"${cp}"`
+            EventsEmit('terminal:input', toInsert)
+            cmdRawBuffer += toInsert
+            return
+          }
+        }
+        
         if (data.includes('\r')) {
           const parts = data.split('\r')
           if ((cmdRawBuffer + parts[0]).trim() === '@sf') {
@@ -234,7 +317,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             term.write('\x1b[0m') // Reset ANSI to prevent color bleeding
             // Send Escape to PowerShell to clear whatever was typed
             EventsEmit('terminal:input', '\x1b')
-            term.write(`\r\n@sf ${currentSfPath}> `)
+            term.write(`\r\n\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             return // Do NOT send this input to powershell
           }
           cmdRawBuffer = "" // Reset on enter
@@ -304,11 +387,11 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         sfLineCount = 1
         term.write('\x1b[0m') // Reset ANSI
         EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
-        term.write(`\r\n@sf ${currentSfPath}> rename add`)
+        term.write(`\r\n\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> rename add`)
       } else {
         sfState = 'cmd'
         sfBuffer = 'rename add'
-        term.write(`\x1b[2K\r@sf ${currentSfPath}> rename add`)
+        term.write(`\x1b[2K\r\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> rename add`)
       }
     }
     window.addEventListener('sf:triggerRenameAdd', handleTriggerRenameAdd)
@@ -391,3 +474,5 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     </motion.div>
   )
 }
+
+

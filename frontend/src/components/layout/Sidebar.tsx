@@ -55,7 +55,7 @@ export default function Sidebar() {
 
   return (
     <motion.div
-      className="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-100 wails-draggable py-4 overflow-hidden shrink-0"
+      className="flex flex-col h-full bg-white rounded-2xl shadow-panel border border-gray-100 wails-draggable py-4 overflow-hidden shrink-0"
       initial={false}
       animate={{ width: isSidebarExpanded ? 220 : 64 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
