@@ -308,7 +308,7 @@ const TagSettings = () => {
                         }
                       }}
                     >
-                      <ComboBox.InputGroup className="bg-white rounded-lg overflow-hidden outline-none h-10 transition-all focus-within:!ring-0">
+                      <ComboBox.InputGroup className="bg-sf-input hover:bg-sf-input-hover rounded-full overflow-hidden outline-none h-10 transition-all focus-within:!ring-0">
                         <Input 
                           className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-3 h-full"
                           placeholder="" 
@@ -321,14 +321,14 @@ const TagSettings = () => {
                         />
                         <ComboBox.Trigger className="text-gray-500 bg-transparent" />
                       </ComboBox.InputGroup>
-                      <ComboBox.Popover className="text-gray-800">
+                      <ComboBox.Popover className="border border-gray-200 shadow-lg rounded-xl">
                         <ListBox className="text-gray-800">
                           {displayTags.map(item => (
                             <ListBox.Item 
                               key={item.id} 
                               id={item.id} 
                               textValue={item.textValue} 
-                              className="text-gray-800 data-[hover=true]:text-gray-900"
+                              className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer"
                             >
                               {item.display}
                             </ListBox.Item>
@@ -363,7 +363,7 @@ const TagSettings = () => {
               >
                 <button 
                   onClick={() => setIsAdding(true)}
-                  className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-[#1e3a8a] hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-[#1e3a8a]/50"
+                  className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>

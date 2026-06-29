@@ -44,15 +44,15 @@ export default function DynamicBreadcrumb({ path }: Props) {
               navigate(targetPath, allSegments[selectedIdx], isLast && activeTab ? activeTab.isDir : true)
             }}
           >
-            <Select.Trigger className="bg-transparent shadow-none border-0 hover:bg-gray-200/50 px-1 min-h-0 h-6 w-8 rounded data-[hover=true]:bg-gray-200/80 cursor-pointer flex items-center justify-center">
-              <span className="text-gray-500 font-bold tracking-widest leading-none block pb-1">...</span>
+            <Select.Trigger className="px-1 rounded hover:bg-gray-200 cursor-pointer transition-colors text-sm bg-transparent shadow-none border-none h-6 min-h-0 flex items-center justify-center">
+              <span className="font-bold tracking-widest leading-none block pb-1">...</span>
             </Select.Trigger>
-            <Select.Popover>
+            <Select.Popover className="border border-gray-200 shadow-lg rounded-xl">
               <ListBox>
                 {hiddenSegments.map((hiddenSeg, hiddenIdx) => {
                   const actualIdx = hiddenStartIndex + hiddenIdx
                   return (
-                    <ListBox.Item key={actualIdx.toString()} id={actualIdx.toString()} textValue={hiddenSeg} className="text-gray-800">
+                    <ListBox.Item key={actualIdx.toString()} id={actualIdx.toString()} textValue={hiddenSeg} className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
                       {hiddenSeg}
                     </ListBox.Item>
                   )

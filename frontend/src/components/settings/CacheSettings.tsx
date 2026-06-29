@@ -85,20 +85,20 @@ const CacheSettings = () => {
               onSelectionChange={(key) => setCacheLimitMB(Number(key))}
               className="w-32"
             >
-              <Select.Trigger className="bg-white border border-gray-200 hover:bg-gray-50 transition-colors px-3 h-9 rounded-lg flex items-center justify-between group">
-                <Select.Value className="text-sm font-medium text-gray-700" />
+              <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-9 min-h-9 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
+                <Select.Value className="text-sm font-medium text-gray-800 bg-transparent w-full truncate" />
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-data-[open=true]:rotate-180 transition-transform">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </Select.Trigger>
-              <Select.Popover className="bg-white rounded-xl border border-gray-100 overflow-hidden w-32 p-1">
+              <Select.Popover className="border border-gray-200 shadow-lg rounded-xl w-32 p-1">
                 <ListBox className="gap-1 p-0">
                   {limitOptions.map((opt) => (
                     <ListBox.Item 
                       key={opt.value}
                       id={opt.value.toString()}
                       textValue={opt.label}
-                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-gray-200 data-[selected=true]:text-gray-800 transition-colors cursor-pointer"
+                      className="rounded-lg text-sm font-medium text-gray-800 px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer"
                     >
                       {opt.label}
                     </ListBox.Item>

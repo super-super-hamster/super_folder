@@ -13,6 +13,19 @@ module.exports = {
       colors: {
         primary: {
           DEFAULT: '#000000',
+        },
+        sf: {
+          page: '#ffffff',
+          panel: '#efefef',
+          item: '#e1e1e1',
+          'item-hover': '#d8d8d8',
+          selected: '#D9D9D9',
+          input: '#e8e8e8',
+          'input-hover': '#dfdfdf',
+          border: '#e5e5e5',
+          text: '#1f2937',
+          'text-secondary': '#6b7280',
+          'text-muted': '#9ca3af',
         }
       },
       boxShadow: {

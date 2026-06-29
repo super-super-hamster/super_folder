@@ -212,7 +212,7 @@ const SearchPresetSettings = () => {
                               className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                             />
                           ) : (
-                            <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
+                            <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
                               +
                             </button>
                           )}
@@ -272,7 +272,7 @@ const SearchPresetSettings = () => {
                               className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                             />
                           ) : (
-                            <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
+                            <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
                               +
                             </button>
                           )}
@@ -325,14 +325,14 @@ const SearchPresetSettings = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50"
+                            className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50"
                           >
-                            <div className="flex flex-col p-1">
+                            <div className="flex flex-col gap-1 p-1">
                               {availableFilters.map(filter => (
                                 <button
                                   key={filter.id}
                                   onClick={() => handleAddFilter(filter.id)}
-                                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
+                                  className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                   {filter.label}
                                 </button>
@@ -364,7 +364,7 @@ const SearchPresetSettings = () => {
             >
               <button 
                 onClick={() => setIsCreating(true)}
-                className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-[#1e3a8a] hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-[#1e3a8a]/50"
+                className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
               >
                 {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>

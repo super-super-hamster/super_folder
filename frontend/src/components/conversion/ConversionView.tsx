@@ -106,13 +106,13 @@ export default function ConversionView() {
               className="w-full"
               aria-label="Target Format"
             >
-              <Select.Trigger className="bg-transparent shadow-none border-0 hover:bg-gray-100/50 transition-colors px-2 min-h-0 h-14 rounded-2xl data-[hover=true]:bg-gray-100/80">
-                <Select.Value className="text-4xl font-medium text-gray-900 tracking-wide group-data-[has-value=true]:text-gray-900" />
+              <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-14 min-h-0 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
+                <Select.Value className="text-4xl font-medium text-gray-800 tracking-wide bg-transparent w-full truncate" />
               </Select.Trigger>
-              <Select.Popover>
+              <Select.Popover className="border border-gray-200 shadow-lg rounded-xl">
                 <ListBox>
                   {availableFormats.map(fmt => (
-                    <ListBox.Item key={fmt} id={fmt} textValue={fmt.replace('.', '')} className="text-lg text-gray-900">
+                    <ListBox.Item key={fmt} id={fmt} textValue={fmt.replace('.', '')} className="text-lg text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
                       {fmt.replace('.', '')}
                     </ListBox.Item>
                   ))}
@@ -123,7 +123,7 @@ export default function ConversionView() {
         </div>
 
         {/* File List */}
-        <div className="flex-1 bg-[#e5e5e5] rounded-3xl p-6 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-sf-panel rounded-3xl p-6 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-2">
             <AnimatePresence>
               {files.map(file => (
@@ -179,7 +179,7 @@ export default function ConversionView() {
           {(!isProcessing || allDone) && (
             <button 
               onClick={handleCancel}
-              className="flex-1 py-3 bg-[#f0f0f0] hover:bg-[#e8e8e8] text-gray-700 text-[15px] font-medium rounded-full transition-colors flex items-center justify-center"
+              className="flex-1 py-3 bg-sf-input hover:bg-sf-input-hover text-gray-700 text-[15px] font-medium rounded-full transition-colors flex items-center justify-center"
             >
               {allDone ? '完成' : '取消'}
             </button>

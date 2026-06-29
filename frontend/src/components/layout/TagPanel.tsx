@@ -174,12 +174,12 @@ export default function TagPanel() {
       <div className="flex flex-col gap-2">
         {Object.entries(typeGroups).map(([type, tags]) => (
           <div key={type} className="flex flex-col gap-1">
-            <div className="peer flex items-center justify-between text-sm text-[#0F2039] font-semibold select-none hover:bg-gray-100 rounded py-1.5 px-2 transition-colors cursor-default">
+            <div className="peer flex items-center justify-between text-sm text-sf-text font-semibold select-none hover:bg-gray-100 rounded py-1.5 px-2 transition-colors cursor-default">
               <div className="flex items-center gap-2">
                 {/* <svg style={{ color: tags[0]?.colorHex || '#0F2039' }} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> */}
                 {type}
               </div>
-              <button onClick={() => handleRemoveGroup(type)} className="text-[#0F2039] hover:bg-gray-200 rounded p-0.5 transition-all">
+              <button onClick={() => handleRemoveGroup(type)} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all">
                 {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> */}
               </button>
             </div>
@@ -227,7 +227,7 @@ export default function TagPanel() {
                   }
                 }}
               >
-                <ComboBox.InputGroup className="bg-gray-100 hover:bg-gray-200 rounded-lg overflow-hidden outline-none">
+                <ComboBox.InputGroup className="bg-sf-input hover:bg-sf-input-hover rounded-full overflow-hidden outline-none transition-colors">
                   <Input 
                     className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-2 h-full"
                     placeholder="" 
@@ -240,14 +240,14 @@ export default function TagPanel() {
                   />
                   <ComboBox.Trigger className="text-gray-500 bg-transparent" />
                 </ComboBox.InputGroup>
-                <ComboBox.Popover className="text-gray-800">
+                <ComboBox.Popover className="border border-gray-200 shadow-lg rounded-xl">
                   <ListBox className="text-gray-800">
                     {displayTags.map(item => (
                       <ListBox.Item 
                         key={item.id} 
                         id={item.id} 
                         textValue={item.textValue} 
-                        className="text-gray-800 data-[hover=true]:text-gray-900"
+                        className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer"
                       >
                         {item.display}
                       </ListBox.Item>
@@ -261,7 +261,7 @@ export default function TagPanel() {
 
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors text-[#0F2039] mt-2"
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors text-sf-text mt-2"
         >
           {/* <motion.svg 
             animate={{ rotate: isAdding ? 45 : 0 }} 
@@ -283,7 +283,7 @@ function TagItem({ tag, onRemove, isNested }: { tag: models.Tag, onRemove: () =>
         {/* SVG Icon Placeholder */}
         <span className="text-[14px] text-gray-800">{tag.name}</span>
       </div>
-      <button onClick={onRemove} className="text-[#0F2039] hover:bg-gray-200 rounded p-0.5 transition-all">
+      <button onClick={onRemove} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all">
         {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> */}
       </button>
     </div>

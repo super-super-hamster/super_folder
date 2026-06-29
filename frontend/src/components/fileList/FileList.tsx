@@ -194,7 +194,7 @@ const ThumbnailImage = ({ path, alt, className }: { path: string, alt: string, c
           style={{ opacity: loaded ? 1 : 0 }}
         />
       ) : (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-sf-panel">
           <img src="/src/assets/icons/pic_2_fill.svg" className="w-8 h-8 opacity-40" />
         </div>
       )}
@@ -456,21 +456,32 @@ export default function FileList() {
 
     const newSelected = new Set<string>()
     let currentYOffset = 0
+    const gap = viewMode === 'album' ? 4 : 16
     const C_W = scrollRef.current?.clientWidth ? scrollRef.current.clientWidth - 48 : 0
-    const cw = C_W > 0 ? (C_W - (columns - 1) * 16) / columns : 0
+    const cols = viewMode === 'list' ? 1 : columns
+    const cw = C_W > 0 ? (C_W - (cols - 1) * gap) / cols : 0
 
     for (let index = 0; index < listItems.length; index++) {
       const item = listItems[index]
-      const size = item.type === 'header' ? 45 : 144
+      let size: number
+      if (item.type === 'header') {
+        size = 45
+      } else if (viewMode === 'list') {
+        size = 40
+      } else if (viewMode === 'album') {
+        size = item.items[0]?.isDir ? 116 : 80
+      } else {
+        size = 160
+      }
       const start = currentYOffset
       const end = start + size
 
       if (end >= boxTop && start <= boxBottom) {
         if (item.type === 'row') {
-          for (let col = 0; col < columns; col++) {
+          for (let col = 0; col < cols; col++) {
             const file = item.items[col]
             if (!file) continue
-            const itemLeft = col * (cw + 16)
+            const itemLeft = col * (cw + gap)
             const itemRight = itemLeft + cw
             if (itemRight >= boxLeft && itemLeft <= boxRight) {
               newSelected.add(file.path)
@@ -481,7 +492,7 @@ export default function FileList() {
       currentYOffset += size
     }
     setDragSelectedPaths(newSelected)
-  }, [listItems, columns])
+  }, [listItems, columns, viewMode])
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return // Only left click
@@ -1112,7 +1123,7 @@ export default function FileList() {
         请从左侧选择一个目录开始
         <button 
           onClick={() => setRightSidebarOpen(!isRightSidebarOpen)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer w-10 h-10 rounded-xl bg-transparent flex items-center justify-center text-gray-600 hover:bg-gray-200/50 transition-colors"
+          className="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer w-10 h-10 rounded-xl bg-transparent flex items-center justify-center text-gray-600 hover:bg-sf-item-hover/50 transition-colors"
         >
           <img 
             src={isRightSidebarOpen ? "/src/assets/icons/left_line.svg" : "/src/assets/icons/right_line.svg"} 
@@ -1135,7 +1146,7 @@ export default function FileList() {
       }}
     >
       {viewMode === 'list' && (
-        <div className={`grid ${isSelectionMode ? 'grid-cols-[20px_1fr_96px_128px]' : 'grid-cols-[1fr_96px_128px]'} items-center gap-4 pl-[40px] pr-10 py-2 border-b border-gray-200 bg-gray-50/80 backdrop-blur shrink-0 text-xs font-semibold text-gray-500 wails-no-drag`}>
+        <div className={`grid ${isSelectionMode ? 'grid-cols-[20px_1fr_96px_128px]' : 'grid-cols-[1fr_96px_128px]'} items-center gap-4 pl-[40px] pr-10 py-2 border-b border-gray-200 bg-sf-panel/80 backdrop-blur shrink-0 text-xs font-semibold text-gray-500 wails-no-drag`}>
           {isSelectionMode && <div></div>}
           <div className="text-left">名称</div>
           <div className="text-right">大小</div>
@@ -1245,10 +1256,10 @@ export default function FileList() {
                     onDoubleClick={() => handleDoubleClick(file)}
                     className={
                         viewMode === 'list' 
-                        ? `grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md transition-colors cursor-pointer group select-none relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100/60'}`
+                        ? `grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md transition-colors cursor-pointer group select-none relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover/60'}`
                         : viewMode === 'album'
-                        ? `flex flex-col items-center justify-center p-0.5 rounded-xl transition-colors cursor-pointer group select-none w-full mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100/60'} ${file.isDir ? 'h-28' : 'h-20'}`
-                        : `flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-gray-200 hover:bg-gray-300' : 'hover:bg-gray-100'}`
+                        ? `flex flex-col items-center justify-center p-0.5 rounded-xl transition-colors cursor-pointer group select-none w-full mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover/60'} ${file.isDir ? 'h-28' : 'h-20'}`
+                        : `flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${dragOverPath === file.path ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover'}`
                       }
                   >
                     {viewMode === 'list' ? (
@@ -1345,7 +1356,7 @@ export default function FileList() {
 
       {/* Inline Smart Folder Creation Panel */}
       {isCreatingSmartFolder && currentPath === 'smartfolder://' && (
-        <div id="smart-folder-create-panel" className="bg-gray-100/50 rounded-xl p-6 mt-6 border border-gray-200 max-w-2xl mx-auto mb-8">
+        <div id="smart-folder-create-panel" className="bg-sf-panel/50 rounded-xl p-6 mt-6 border border-sf-border max-w-2xl mx-auto mb-8">
           <div className="mb-6">
             <div className="text-sm font-semibold text-gray-700 mb-2">名称</div>
             <input 
@@ -1400,7 +1411,7 @@ export default function FileList() {
               ))}
               <button 
                 onClick={() => setSfPaths([...sfPaths, ''])}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors mt-2"
+                className="w-8 h-8 flex items-center justify-center bg-sf-input hover:bg-sf-input-hover rounded-lg transition-colors mt-2"
               >
                 <img src="/src/assets/icons/add_line.svg" className="w-5 h-5 text-gray-600" alt="add" />
               </button>
@@ -1417,20 +1428,20 @@ export default function FileList() {
               }}
               className="w-64"
             >
-              <Select.Trigger className="bg-[#e4e4e4] border-0 hover:bg-gray-300 transition-colors px-4 h-10 rounded-xl flex items-center justify-between group outline-none focus:ring-2 focus:ring-blue-500">
-                <Select.Value className="text-sm text-gray-800" />
+              <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-10 min-h-10 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
+                <Select.Value className="text-sm font-medium text-gray-800 bg-transparent w-full truncate" />
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-data-[open=true]:rotate-180 transition-transform">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </Select.Trigger>
-              <Select.Popover className="bg-white rounded-xl border border-gray-100 overflow-hidden w-64 p-1 shadow-lg">
+              <Select.Popover className="border border-gray-200 shadow-lg rounded-xl w-64 p-1">
                 <ListBox className="gap-1 p-0">
                   {searchPresets.map(preset => (
                     <ListBox.Item 
                       key={preset.id} 
                       id={preset.id} 
                       textValue={preset.name}
-                      className="rounded-lg text-sm font-medium text-gray-700 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-gray-200 data-[selected=true]:text-gray-800 transition-colors cursor-pointer"
+                      className="rounded-lg text-sm font-medium text-gray-800 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer"
                     >
                       {preset.name}
                     </ListBox.Item>
@@ -1443,7 +1454,7 @@ export default function FileList() {
           <div className="flex w-full gap-3 pt-4 border-t border-gray-200/60 mt-4">
             <button 
               onClick={() => setIsCreatingSmartFolder(false)}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
+              className="flex-1 bg-sf-input hover:bg-sf-input-hover text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
             >
               取消
             </button>
@@ -1483,7 +1494,7 @@ export default function FileList() {
       </div>
 
       <div 
-        className="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer p-1 py-4 bg-transparent hover:bg-gray-200/50 rounded-r-md transition-colors z-10"
+        className="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer p-1 py-4 bg-transparent hover:bg-sf-item-hover/50 rounded-r-md transition-colors z-10"
         onClick={() => setRightSidebarOpen(!isRightSidebarOpen)}
       >
         <img 
@@ -1518,7 +1529,7 @@ export default function FileList() {
                   return (
                     <div 
                       key={g.index}
-                      className={`flex items-center justify-center transition-all duration-200 ${isCenter ? 'w-10 h-10 bg-gray-200 rounded-full font-bold text-gray-900 text-xl' : 'w-10 h-8 font-medium text-gray-700 text-lg'}`}
+                      className={`flex items-center justify-center transition-all duration-200 ${isCenter ? 'w-10 h-10 bg-sf-selected rounded-full font-bold text-gray-900 text-xl' : 'w-10 h-8 font-medium text-gray-700 text-lg'}`}
                       style={{ opacity, transform: `scale(${scale})` }}
                     >
                       {g.title.length > 2 ? g.title.substring(0, 2) : g.title}

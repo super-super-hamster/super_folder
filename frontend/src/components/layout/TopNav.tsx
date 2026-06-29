@@ -344,7 +344,7 @@ export default function TopNav() {
               {t}
               <button 
                 onClick={() => handleRemoveTag(index)} 
-                className="ml-1 opacity-70 hover:opacity-100 outline-none flex items-center justify-center p-0.5 rounded-full hover:bg-gray-600 transition-colors"
+                className="ml-1 opacity-70 hover:opacity-100 outline-none flex items-center justify-center p-0.5 rounded-full hover:bg-sf-selected/90 transition-colors"
               >
                 <img src="/src/assets/icons/close_line.svg" className="w-2.5 h-2.5 brightness-0 invert" />
               </button>
@@ -396,20 +396,20 @@ export default function TopNav() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-2 w-32 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-xl shadow-lg z-50 overflow-hidden"
+                className="absolute right-0 top-full mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
               >
-                <div className="py-1">
-                  <button onClick={() => { setViewMode('grid'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'grid' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                <div className="flex flex-col gap-1 p-1">
+                  <button onClick={() => { setViewMode('grid'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'grid' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                     <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" /> 网格模式
                   </button>
-                  <button onClick={() => { setViewMode('list'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'list' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                  <button onClick={() => { setViewMode('list'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'list' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                     <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" /> 列表模式
                   </button>
-                  <button onClick={() => { setViewMode('album'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${viewMode === 'album' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                  <button onClick={() => { setViewMode('album'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'album' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                     <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3" /> 相册模式
                   </button>
                   <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                  <div className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => { setIsGrouped(!isGrouped); setIsViewMenuOpen(false); }}>
+                  <div className="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => { setIsGrouped(!isGrouped); setIsViewMenuOpen(false); }}>
                     <Checkbox 
                       isSelected={isGrouped} 
                       onChange={(val) => { setIsGrouped(val); setIsViewMenuOpen(false); }} 
@@ -418,7 +418,7 @@ export default function TopNav() {
                         <Checkbox.Control className="w-[18px] h-[18px] shadow-none border-2 border-gray-400 data-[selected=true]:border-blue-500 rounded-full">
                           <Checkbox.Indicator />
                         </Checkbox.Control>
-                        <span className="text-sm text-gray-700 select-none">启用分组</span>
+                        <span className="text-sm text-gray-800 select-none">启用分组</span>
                       </Checkbox.Content>
                     </Checkbox>
                   </div>
@@ -452,9 +452,9 @@ export default function TopNav() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-2 w-48 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-xl shadow-lg z-50 overflow-hidden"
+                className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
               >
-                <div className="py-1">
+                <div className="flex flex-col gap-1 p-1">
                   {(() => {
                     const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
                     const handleSetSortOption = (opt: any) => {
@@ -467,24 +467,24 @@ export default function TopNav() {
                     }
                     return (
                       <>
-                        <button onClick={() => handleSetSortOption('name_asc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'name_asc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('name_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'name_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (A-Z)
                         </button>
-                        <button onClick={() => handleSetSortOption('name_desc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'name_desc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('name_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'name_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (Z-A)
                         </button>
                         <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                        <button onClick={() => handleSetSortOption('time_desc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'time_desc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('time_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'time_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 mr-3" /> 按时间 (从新到旧)
                         </button>
-                        <button onClick={() => handleSetSortOption('time_asc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'time_asc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('time_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'time_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 mr-3" /> 按时间 (从旧到新)
                         </button>
                         <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                        <button onClick={() => handleSetSortOption('size_desc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'size_desc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('size_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'size_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从大到小)
                         </button>
-                        <button onClick={() => handleSetSortOption('size_asc')} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${currentSortOption === 'size_asc' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>
+                        <button onClick={() => handleSetSortOption('size_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'size_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
                           <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从小到大)
                         </button>
                       </>

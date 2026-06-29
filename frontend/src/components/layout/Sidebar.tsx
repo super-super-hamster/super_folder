@@ -39,7 +39,7 @@ export default function Sidebar() {
       icon: s.id === 'documents' ? 'document_line.svg' : s.id === 'pictures' ? 'pic_2_fill.svg' : s.icon,
       path: defaultPaths[shortcutMapping[s.id]]
     })),
-    { name: '收藏', icon: 'star_fill.svg', path: 'favorite://' }, // Star icon
+    { name: '收藏', icon: 'star_line.svg', path: 'favorite://' }, // Star icon
     { name: '最近访问', icon: 'history_anticlockwise_line.svg', path: 'recent://' },
     { name: '虚拟文件夹', icon: 'folder_virtual.svg', path: 'smartfolder://' },
   ]

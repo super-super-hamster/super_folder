@@ -161,7 +161,7 @@ export default function SearchPanel() {
                       className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
-                    <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
+                    <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
                       +
                     </button>
                   )}
@@ -224,7 +224,7 @@ export default function SearchPanel() {
                       className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
-                    <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-[#1e3a8a] text-lg leading-none transition-colors">
+                    <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
                       +
                     </button>
                   )}
@@ -265,7 +265,7 @@ export default function SearchPanel() {
             <div className="relative flex justify-center mt-1" ref={menuRef}>
               <button 
                 onClick={() => setIsAdding(!isAdding)}
-                className="w-full flex items-center justify-center py-1 text-[#1e3a8a] text-xl hover:bg-gray-50 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center py-1 text-sf-text-secondary text-xl hover:bg-gray-50 rounded-lg transition-colors"
               >
                 +
               </button>
@@ -278,14 +278,14 @@ export default function SearchPanel() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-full top-0 ml-4 w-40 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50"
+                    className="absolute left-full top-0 ml-4 w-40 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50"
                   >
-                    <div className="flex flex-col p-1 max-h-48 overflow-y-auto">
+                    <div className="flex flex-col gap-1 p-1 max-h-48 overflow-y-auto">
                       {availableFilters.map(filter => (
                         <button
                           key={filter.id}
                           onClick={() => handleAddFilter(filter.id)}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                           {filter.label}
                         </button>
@@ -303,7 +303,7 @@ export default function SearchPanel() {
                                 setSearchFilter(preset.filter)
                                 setIsAdding(false)
                               }}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#f0f4f8] hover:text-[#1e3a8a] rounded-lg transition-colors"
+                              className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                               {preset.name}
                             </button>

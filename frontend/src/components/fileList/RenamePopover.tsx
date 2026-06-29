@@ -112,10 +112,10 @@ export default function RenamePopover() {
           transition={{ duration: 0.15 }}
           style={{ top, left, width: popoverWidth }}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bg-gray-50 rounded-xl shadow-md border border-gray-200 p-5 flex flex-col"
+          className="absolute bg-sf-panel rounded-xl shadow-md border border-sf-border p-5 flex flex-col"
         >
           <div 
-            className={`absolute w-4 h-4 bg-gray-50 border-gray-200 transform rotate-45 ${showAbove ? 'bottom-[-9px] border-b border-r' : 'top-[-9px] border-t border-l'}`} 
+            className={`absolute w-4 h-4 bg-sf-panel border-sf-border transform rotate-45 ${showAbove ? 'bottom-[-9px] border-b border-r' : 'top-[-9px] border-t border-l'}`} 
             style={{ left: arrowLeft - 8 }}
           />
           
@@ -131,7 +131,7 @@ export default function RenamePopover() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={`w-full bg-gray-200 text-gray-800 px-3 py-2 rounded-lg outline-none border-2 transition-colors ${err ? 'border-red-500' : 'border-blue-400 focus:border-blue-500'}`}
+              className={`w-full bg-sf-input text-gray-800 px-3 py-2 rounded-lg outline-none border-2 transition-colors ${err ? 'border-red-500' : 'border-blue-400 focus:border-blue-500'}`}
             />
           </div>
 

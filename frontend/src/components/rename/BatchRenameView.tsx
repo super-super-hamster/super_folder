@@ -239,9 +239,9 @@ export default function BatchRenameView() {
   return (
     <div className="flex w-full h-full bg-white relative items-center justify-center p-8 gap-8">
       {/* Left Container */}
-      <div className="w-[400px] h-[600px] bg-[#efefef] rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
+      <div className="w-[400px] h-[600px] bg-sf-panel rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
         {files.map(f => (
-          <div key={f.path} className="bg-[#e1e1e1] px-4 py-2 rounded-full flex items-center justify-between text-sm text-gray-800 transition-all hover:bg-[#d8d8d8]">
+          <div key={f.path} className="bg-sf-item px-4 py-2 rounded-full flex items-center justify-between text-sm text-gray-800 transition-all hover:bg-sf-item-hover">
             <span className="truncate flex-1 font-medium">{f.name}</span>
             <button 
               onClick={() => handleRemoveFile(f.path)}
@@ -281,15 +281,15 @@ export default function BatchRenameView() {
               }
             }}
           >
-            <Select.Trigger className="bg-[#e8e8e8] hover:bg-[#dfdfdf] transition-colors rounded-full shadow-none border-none h-10 min-h-10 w-full flex items-center px-4 data-[hover=true]:bg-[#dfdfdf]">
+            <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-10 min-h-10 w-full flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
               <Select.Value className="text-gray-800 font-medium text-center bg-transparent w-full truncate" />
             </Select.Trigger>
             <Select.Popover className="border border-gray-200 shadow-lg rounded-xl">
               <ListBox>
-                {schemes.map(s => (
-                  <ListBox.Item key={s.name} id={s.name} textValue={s.name} className="text-gray-800">{s.name}</ListBox.Item>
-                ))}
-                <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-blue-600 font-bold">
+                  {schemes.map(s => (
+                    <ListBox.Item key={s.name} id={s.name} textValue={s.name} className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">{s.name}</ListBox.Item>
+                  ))}
+                  <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-blue-600 font-bold data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
                   <div className="flex items-center justify-center gap-2">
                     <img src="/src/assets/icons/add_line.svg" className="w-4 h-4" alt="Add" />
                     新建方案...
@@ -302,12 +302,12 @@ export default function BatchRenameView() {
       </div>
 
       {/* Right Container */}
-      <div className="w-[400px] h-[600px] bg-[#efefef] rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
+      <div className="w-[400px] h-[600px] bg-sf-panel rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
         {preview.map((p, idx) => (
           <div 
             key={idx} 
             className={`px-4 py-2 rounded-full text-sm truncate flex items-center justify-between font-medium ${
-              p.error ? 'bg-red-200 text-red-800' : 'bg-[#e1e1e1] text-gray-800'
+              p.error ? 'bg-red-200 text-red-800' : 'bg-sf-item text-gray-800'
             }`}
             title={p.error || p.newName}
           >
