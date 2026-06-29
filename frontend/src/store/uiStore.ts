@@ -33,8 +33,8 @@ interface UIState {
   setSearchPanelOpen: (open: boolean) => void
   isSettingsOpen: boolean
   setSettingsOpen: (open: boolean) => void
-  activeSettingsTab: 'folder' | 'cache' | 'search' | 'tag'
-  setActiveSettingsTab: (tab: 'folder' | 'cache' | 'search' | 'tag') => void
+  activeSettingsTab: 'general' | 'cache' | 'search' | 'tag'
+  setActiveSettingsTab: (tab: 'general' | 'cache' | 'search' | 'tag') => void
   isRightSidebarOpen: boolean
   setRightSidebarOpen: (open: boolean) => void
   leftSidebarWidth: number
@@ -97,7 +97,7 @@ export const useUIStore = create<UIState>()(
       setTerminalOpen: (open) => set({ isTerminalOpen: open }),
       terminalPanelHeight: 250,
       setTerminalPanelHeight: (height) => set({ terminalPanelHeight: height }),
-      activeSettingsTab: 'folder',
+      activeSettingsTab: 'general',
       setActiveSettingsTab: (tab) => set({ activeSettingsTab: tab }),
       isRightSidebarOpen: false,
       setRightSidebarOpen: (open) => set({ isRightSidebarOpen: open }),

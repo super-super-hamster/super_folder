@@ -28,8 +28,21 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-const maxThumbBudget int64 = 50 * 1024 * 1024 // 50MB budget
+var maxThumbBudget int64 = 50 * 1024 * 1024 // 50MB default budget
 var thumbSem = semaphore.NewWeighted(maxThumbBudget)
+
+func GetBudgetLimitMB() int {
+	return int(maxThumbBudget / (1024 * 1024))
+}
+
+func SetBudgetLimitMB(limitMB int) {
+	newLimit := int64(limitMB) * 1024 * 1024
+	diff := newLimit - maxThumbBudget
+	if diff > 0 {
+		thumbSem.Release(diff)
+	}
+	maxThumbBudget = newLimit
+}
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/file" {

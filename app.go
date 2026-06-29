@@ -17,6 +17,7 @@ import (
 	"super_folder/internal/models"
 	"super_folder/internal/rename"
 	"super_folder/internal/terminal"
+	"super_folder/internal/thumbnail"
 	"super_folder/internal/undo"
 	"sort"
 	"strings"
@@ -577,10 +578,23 @@ func (a *App) OpenFileWithDefault(path string) error {
 	return cmd.Start()
 }
 
+func (a *App) OpenInExplorer(path string) error {
+	cmd := exec.Command("cmd", "/c", "start", "", "explorer", path)
+	return cmd.Start()
+}
+
 func (a *App) OpenInTerminal(path string) error {
 	cmd := exec.Command("cmd", "/c", "start", "powershell")
 	cmd.Dir = path
 	return cmd.Start()
+}
+
+func (a *App) GetThumbnailBudgetLimit() int {
+	return thumbnail.GetBudgetLimitMB()
+}
+
+func (a *App) SetThumbnailBudgetLimit(limitMB int) {
+	thumbnail.SetBudgetLimitMB(limitMB)
 }
 
 func (a *App) StartTerminal(dir string) error {

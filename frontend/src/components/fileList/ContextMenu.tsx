@@ -12,7 +12,7 @@ import { useModalStore } from '../../store/modalStore'
 import { useTaskStore } from '../../store/taskStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
-import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInTerminal } from '../../../wailsjs/go/main/App'
+import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
@@ -28,7 +28,7 @@ export default function ContextMenu() {
   const { favorites, toggleFavorite } = useFavoriteStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
-  const { smartFolders, setSmartFolders } = useSettingsStore()
+  const { smartFolders, setSmartFolders, doubleClickOpenMode } = useSettingsStore()
   const isRunning = useTaskStore(state => state.isRunning)
   const copyLottieRef = useRef<LottieRefCurrentProps>(null)
   const trashLottieRef = useRef<LottieRefCurrentProps>(null)
@@ -91,6 +91,16 @@ export default function ContextMenu() {
       case 'open_with_default':
         targets.forEach(path => {
           OpenFileWithDefault(path).catch(console.error)
+        })
+        break
+      case 'open_in_app':
+        targets.forEach(path => {
+          navigate(path, path.split('\\').pop() || path, false)
+        })
+        break
+      case 'open_in_explorer':
+        targets.forEach(path => {
+          OpenInExplorer(path).catch(console.error)
         })
         break
       case 'open_terminal':
@@ -363,16 +373,32 @@ export default function ContextMenu() {
               <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
               复制路径
             </button>
-            {isDir && (
-              <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-                <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
-                在终端中打开
-              </button>
+            {isDir ? (
+              <>
+                <button onClick={() => handleAction('open_in_explorer')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open explorer" />
+                  在文件资源管理器中打开
+                </button>
+                <button onClick={() => handleAction('open_terminal')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                  <img src="/src/assets/icons/terminal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open terminal" />
+                  在终端中打开
+                </button>
+              </>
+            ) : (
+              <>
+                {doubleClickOpenMode === 'defaultProgram' ? (
+                  <button onClick={() => handleAction('open_in_app')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                    <img src="/src/assets/icons/share_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open in app" />
+                    应用内打开
+                  </button>
+                ) : (
+                  <button onClick={() => handleAction('open_with_default')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                    <img src="/src/assets/icons/share_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open with default" />
+                    使用默认程序打开
+                  </button>
+                )}
+              </>
             )}
-            <button onClick={() => handleAction('open_with_default')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-              <img src="/src/assets/icons/share_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open" />
-              使用默认程序打开
-            </button>
           </>
           )
         ) : (

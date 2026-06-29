@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useUIStore } from '../../store/uiStore'
+import { useUIStore, type SortOption } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags } from '../../../wailsjs/go/main/App'
 import { WindowToggleMaximise, WindowIsMaximised } from '../../../wailsjs/runtime/runtime'
 import { useRef, useState, useEffect } from 'react'
-import { Checkbox } from '@heroui/react'
+import { Checkbox, Dropdown, Separator } from '@heroui/react'
 import DynamicBreadcrumb from './DynamicBreadcrumb'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
@@ -168,24 +168,7 @@ export default function TopNav() {
   }
 
   const [isMaximized, setIsMaximized] = useState(false)
-  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false)
-  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false)
-  const sortMenuRef = useRef<HTMLDivElement>(null)
-  const viewMenuRef = useRef<HTMLDivElement>(null)
   const tabsContainerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
-        setIsSortMenuOpen(false)
-      }
-      if (viewMenuRef.current && !viewMenuRef.current.contains(event.target as Node)) {
-        setIsViewMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     if (!(window as any).runtime) return;
@@ -381,121 +364,115 @@ export default function TopNav() {
 
       {/* Right Controls Area - NEVER CHANGES SIZE */}
       <div className="flex items-center gap-3 wails-no-drag shrink-0">
-        <div className="relative shrink-0" ref={viewMenuRef}>
-          <button 
-            onClick={() => setIsViewMenuOpen(!isViewMenuOpen)} 
-            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            title="视图选项"
-          >
-            <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
-          </button>
-          <AnimatePresence>
-            {isViewMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
-              >
-                <div className="flex flex-col gap-1 p-1">
-                  <button onClick={() => { setViewMode('grid'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'grid' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                    <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" /> 网格模式
-                  </button>
-                  <button onClick={() => { setViewMode('list'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'list' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                    <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" /> 列表模式
-                  </button>
-                  <button onClick={() => { setViewMode('album'); setIsViewMenuOpen(false) }} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${viewMode === 'album' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                    <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3" /> 相册模式
-                  </button>
-                  <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                  <div className="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => { setIsGrouped(!isGrouped); setIsViewMenuOpen(false); }}>
-                    <Checkbox 
-                      isSelected={isGrouped} 
-                      onChange={(val) => { setIsGrouped(val); setIsViewMenuOpen(false); }} 
-                    >
-                      <Checkbox.Content>
-                        <Checkbox.Control className="w-[18px] h-[18px] shadow-none border-2 border-gray-400 data-[selected=true]:border-blue-500 rounded-full">
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <span className="text-sm text-gray-800 select-none">启用分组</span>
-                      </Checkbox.Content>
-                    </Checkbox>
-                  </div>
+        <Dropdown>
+          <Dropdown.Trigger>
+            <button
+              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              title="视图选项"
+            >
+              <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
+            </button>
+          </Dropdown.Trigger>
+          <Dropdown.Popover className="w-24 p-1 rounded-xl border border-gray-200 shadow-lg" placement="bottom end">
+            <Dropdown.Menu
+              selectionMode="single"
+              selectedKeys={new Set([viewMode])}
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys as Set<string>)[0]
+                if (selected) setViewMode(selected as 'grid' | 'list' | 'album')
+              }}
+            >
+              <Dropdown.Item id="grid" textValue="网格模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" />
+                网格模式
+              </Dropdown.Item>
+              <Dropdown.Item id="list" textValue="列表模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" />
+                列表模式
+              </Dropdown.Item>
+              <Dropdown.Item id="album" textValue="相册模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3" />
+                相册模式
+              </Dropdown.Item>
+            </Dropdown.Menu>
+            <Separator className="my-1 bg-gray-200/50" />
+            <Dropdown.Menu
+              selectionMode="multiple"
+              selectedKeys={isGrouped ? new Set(['grouped']) : new Set()}
+              onSelectionChange={(keys) => {
+                const selected = keys as Set<string>
+                setIsGrouped(selected.has('grouped'))
+              }}
+            >
+              <Dropdown.Item id="grouped" textValue="启用分组" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <div className="w-4 h-4 mr-3 flex items-center justify-center">
+                  {isGrouped ? <img src="/src/assets/icons/check_line.svg" className="w-4 h-4" /> : <span className="w-4 h-4" />}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                启用分组
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
 
-        <div className="relative shrink-0" ref={sortMenuRef}>
-          <button 
-            onClick={() => setIsSortMenuOpen(!isSortMenuOpen)} 
-            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-          >
-            {(() => {
-              const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
-              if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
-              if (currentSortOption === 'name_desc') return <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 text-gray-700" />
-              if (currentSortOption === 'time_desc') return <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 text-gray-700" />
-              if (currentSortOption === 'time_asc') return <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 text-gray-700" />
-              if (currentSortOption === 'size_desc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
-              if (currentSortOption === 'size_asc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
-              return null
-            })()}
-          </button>
-          
-          <AnimatePresence>
-            {isSortMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
-              >
-                <div className="flex flex-col gap-1 p-1">
-                  {(() => {
-                    const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
-                    const handleSetSortOption = (opt: any) => {
-                      if (activeTab?.currentPath === 'recent://') {
-                        setRecentSortOption(opt)
-                      } else {
-                        setSortOption(opt)
-                      }
-                      setIsSortMenuOpen(false)
-                    }
-                    return (
-                      <>
-                        <button onClick={() => handleSetSortOption('name_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'name_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (A-Z)
-                        </button>
-                        <button onClick={() => handleSetSortOption('name_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'name_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (Z-A)
-                        </button>
-                        <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                        <button onClick={() => handleSetSortOption('time_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'time_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 mr-3" /> 按时间 (从新到旧)
-                        </button>
-                        <button onClick={() => handleSetSortOption('time_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'time_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 mr-3" /> 按时间 (从旧到新)
-                        </button>
-                        <div className="h-px bg-gray-200/50 my-1 mx-2"></div>
-                        <button onClick={() => handleSetSortOption('size_desc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'size_desc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从大到小)
-                        </button>
-                        <button onClick={() => handleSetSortOption('size_asc')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-gray-100 ${currentSortOption === 'size_asc' ? 'bg-sf-selected/75 text-black font-medium' : 'text-gray-800'}`}>
-                          <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从小到大)
-                        </button>
-                      </>
-                    )
-                  })()}
-
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <Dropdown>
+          <Dropdown.Trigger>
+            <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+              {(() => {
+                const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
+                if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
+                if (currentSortOption === 'name_desc') return <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 text-gray-700" />
+                if (currentSortOption === 'time_desc') return <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 text-gray-700" />
+                if (currentSortOption === 'time_asc') return <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 text-gray-700" />
+                if (currentSortOption === 'size_desc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
+                if (currentSortOption === 'size_asc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
+                return null
+              })()}
+            </button>
+          </Dropdown.Trigger>
+          <Dropdown.Popover className="w-48 p-1 rounded-xl border border-gray-200 shadow-lg" placement="bottom end">
+            <Dropdown.Menu
+              selectionMode="single"
+              selectedKeys={new Set([activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption])}
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys as Set<string>)[0]
+                if (!selected) return
+                const option = selected as SortOption
+                if (activeTab?.currentPath === 'recent://') {
+                  setRecentSortOption(option)
+                } else {
+                  setSortOption(option)
+                }
+              }}
+            >
+              <Dropdown.Section>
+                <Dropdown.Item id="name_asc" textValue="按名称 (A-Z)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (A-Z)
+                </Dropdown.Item>
+                <Dropdown.Item id="name_desc" textValue="按名称 (Z-A)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (Z-A)
+                </Dropdown.Item>
+              </Dropdown.Section>
+              <Separator className="my-1 bg-gray-200/50" />
+              <Dropdown.Section>
+                <Dropdown.Item id="time_desc" textValue="按时间 (从新到旧)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 mr-3" /> 按时间 (从新到旧)
+                </Dropdown.Item>
+                <Dropdown.Item id="time_asc" textValue="按时间 (从旧到新)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 mr-3" /> 按时间 (从旧到新)
+                </Dropdown.Item>
+              </Dropdown.Section>
+              <Separator className="my-1 bg-gray-200/50" />
+              <Dropdown.Section>
+                <Dropdown.Item id="size_desc" textValue="按大小 (从大到小)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从大到小)
+                </Dropdown.Item>
+                <Dropdown.Item id="size_asc" textValue="按大小 (从小到大)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从小到大)
+                </Dropdown.Item>
+              </Dropdown.Section>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
 
         <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" />

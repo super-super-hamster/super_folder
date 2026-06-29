@@ -5,7 +5,7 @@ import { useSelectionStore } from '../../store/selectionStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useModalStore } from '../../store/modalStore'
 import { useSettingsStore } from '../../store/settingsStore'
-import { PasteFiles, DeleteToRecycleBin, GetLocalServerPort, GetLocalAuthToken } from '../../../wailsjs/go/main/App'
+import { PasteFiles, DeleteToRecycleBin, GetLocalServerPort, GetLocalAuthToken, OpenFileWithDefault } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import ContextMenu from './ContextMenu'
@@ -34,7 +34,7 @@ export default function FileList() {
   const { openMenu } = useContextMenuStore()
   const { startRename } = useRenameStore()
   const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
-  const { searchPresets, smartFolders, setSmartFolders } = useSettingsStore()
+  const { searchPresets, smartFolders, setSmartFolders, doubleClickOpenMode } = useSettingsStore()
   
   const [isCreatingSmartFolder, setIsCreatingSmartFolder] = useState(false)
 
@@ -325,15 +325,27 @@ export default function FileList() {
       }, 50)
       return
     }
-    
+
     if (file.isDir) {
       useSelectionStore.getState().clearSelection()
+      if (file.path.startsWith('smartfolder://')) {
+        navigate(file.path, '虚拟文件夹', file.isDir)
+        return
+      }
+      navigate(file.path, file.name, file.isDir)
+      return
     }
 
     if (file.path.startsWith('smartfolder://')) {
       navigate(file.path, '虚拟文件夹', file.isDir)
       return
     }
+
+    if (doubleClickOpenMode === 'defaultProgram') {
+      OpenFileWithDefault(file.path).catch(console.error)
+      return
+    }
+
     navigate(file.path, file.name, file.isDir)
   }
 

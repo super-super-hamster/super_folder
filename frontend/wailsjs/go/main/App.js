@@ -122,6 +122,10 @@ export function GetTagsForFiles(arg1) {
   return window['go']['main']['App']['GetTagsForFiles'](arg1);
 }
 
+export function GetThumbnailBudgetLimit() {
+  return window['go']['main']['App']['GetThumbnailBudgetLimit']();
+}
+
 export function GetThumbnailCacheSize() {
   return window['go']['main']['App']['GetThumbnailCacheSize']();
 }
@@ -136,6 +140,10 @@ export function Minimize() {
 
 export function OpenFileWithDefault(arg1) {
   return window['go']['main']['App']['OpenFileWithDefault'](arg1);
+}
+
+export function OpenInExplorer(arg1) {
+  return window['go']['main']['App']['OpenInExplorer'](arg1);
 }
 
 export function OpenInTerminal(arg1) {
@@ -196,6 +204,10 @@ export function SetConfig(arg1, arg2) {
 
 export function SetFileRemark(arg1, arg2) {
   return window['go']['main']['App']['SetFileRemark'](arg1, arg2);
+}
+
+export function SetThumbnailBudgetLimit(arg1) {
+  return window['go']['main']['App']['SetThumbnailBudgetLimit'](arg1);
 }
 
 export function StartTerminal(arg1) {

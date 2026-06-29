@@ -63,6 +63,8 @@ export function GetTagUsageCounts():Promise<Record<string, number>>;
 
 export function GetTagsForFiles(arg1:Array<string>):Promise<Record<string, Array<models.Tag>>>;
 
+export function GetThumbnailBudgetLimit():Promise<number>;
+
 export function GetThumbnailCacheSize():Promise<number>;
 
 export function Maximize():Promise<void>;
@@ -70,6 +72,8 @@ export function Maximize():Promise<void>;
 export function Minimize():Promise<void>;
 
 export function OpenFileWithDefault(arg1:string):Promise<void>;
+
+export function OpenInExplorer(arg1:string):Promise<void>;
 
 export function OpenInTerminal(arg1:string):Promise<void>;
 
@@ -100,6 +104,8 @@ export function SelectDirectory():Promise<string>;
 export function SetConfig(arg1:string,arg2:string):Promise<void>;
 
 export function SetFileRemark(arg1:string,arg2:string):Promise<void>;
+
+export function SetThumbnailBudgetLimit(arg1:number):Promise<void>;
 
 export function StartTerminal(arg1:string):Promise<void>;
 

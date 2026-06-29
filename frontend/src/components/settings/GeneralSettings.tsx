@@ -1,0 +1,189 @@
+import React, { useEffect, useState } from 'react'
+import { Reorder } from 'framer-motion'
+import { Select, Slider, ListBox, Label } from '@heroui/react'
+import { useSettingsStore, ShortcutItem } from '../../store/settingsStore'
+import { GetDefaultPaths, SelectDirectory, SetThumbnailBudgetLimit } from '../../../wailsjs/go/main/App'
+
+const SPECIAL_IDS = new Set(['favorite', 'recent', 'smartfolder'])
+
+const shortcutMapping: Record<string, string> = {
+  'desktop': 'Desktop',
+  'downloads': 'Downloads',
+  'documents': 'Documents',
+  'pictures': 'Pictures',
+  'music': 'Music',
+  'videos': 'Videos',
+}
+
+export default function GeneralSettings() {
+  const {
+    shortcuts, setShortcuts, loadFromBackend,
+    doubleClickOpenMode, setDoubleClickOpenMode,
+    thumbnailBudgetMB, setThumbnailBudgetMB
+  } = useSettingsStore()
+  const [items, setItems] = useState<ShortcutItem[]>([])
+  const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
+  const [dragId, setDragId] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadFromBackend()
+    GetDefaultPaths().then(setDefaultPaths)
+  }, [])
+
+  useEffect(() => {
+    if (!dragId) {
+      setItems(shortcuts)
+    }
+  }, [shortcuts, dragId])
+
+  const toggleVisibility = (id: string) => {
+    const newItems = items.map(item =>
+      item.id === id ? { ...item, visible: !item.visible } : item
+    )
+    setItems(newItems)
+    setShortcuts(newItems)
+  }
+
+  const handlePathClick = async (id: string) => {
+    const dir = await SelectDirectory()
+    if (!dir) return
+    const newItems = items.map(item =>
+      item.id === id ? { ...item, path: dir } : item
+    )
+    setItems(newItems)
+    setShortcuts(newItems)
+  }
+
+  const resolvePath = (item: ShortcutItem) => {
+    if (SPECIAL_IDS.has(item.id)) return ''
+    return item.path || defaultPaths[shortcutMapping[item.id]] || ''
+  }
+
+  return (
+    <div className="flex flex-col h-full space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-1">导航栏顺序</h2>
+      </div>
+
+      <Reorder.Group
+        axis="y"
+        values={items}
+        onReorder={setItems}
+        className="flex flex-col gap-2"
+      >
+        {items.map((item) => {
+          const iconName = item.id === 'documents' ? 'document_line.svg' : item.id === 'pictures' ? 'pic_2_fill.svg' : item.icon
+          const path = resolvePath(item)
+          const isSpecial = SPECIAL_IDS.has(item.id)
+
+          return (
+            <Reorder.Item
+              key={item.id}
+              value={item}
+              onDragStart={() => setDragId(item.id)}
+              onDragEnd={() => {
+                setDragId(null)
+                setShortcuts(items)
+              }}
+              animate={{
+                scale: dragId === item.id ? 1.02 : 1
+              }}
+              transition={{ type: 'spring', stiffness: 700, damping: 40 }}
+              className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl group relative"
+            >
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <img src={`/src/assets/icons/${iconName}`} className={`w-5 h-5 shrink-0 ${item.visible ? 'opacity-80' : 'opacity-40'}`} alt={item.name} />
+                <span className={`font-medium shrink-0 w-20 ${item.visible ? 'text-gray-700' : 'text-gray-400'}`}>
+                  {item.name}
+                </span>
+                {!isSpecial && (
+                  <button
+                    onClick={() => handlePathClick(item.id)}
+                    className={`text-sm truncate max-w-full text-left ${item.visible ? 'text-gray-500 hover:text-blue-600' : 'text-gray-400'} pointer-events-auto`}
+                    title={path}
+                  >
+                    {path}
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center ml-4 relative z-10">
+                <button
+                  onClick={() => toggleVisibility(item.id)}
+                  className="p-1.5 hover:bg-gray-200 rounded-md transition-colors flex items-center justify-center pointer-events-auto"
+                  title={item.visible ? '隐藏' : '显示'}
+                >
+                  <img
+                    src={`/src/assets/icons/${item.visible ? 'eye_line.svg' : 'eye_close_line.svg'}`}
+                    className={`w-5 h-5 ${item.visible ? 'opacity-70' : 'opacity-40'}`}
+                    alt={item.visible ? 'Visible' : 'Hidden'}
+                  />
+                </button>
+              </div>
+            </Reorder.Item>
+          )
+        })}
+      </Reorder.Group>
+
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">其他</h2>
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-xl p-5 flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-700">双击文件打开方式</span>
+            <Select
+              selectedKey={doubleClickOpenMode}
+              onSelectionChange={(key) => {
+                const selected = Array.from(key as any)[0] || key
+                setDoubleClickOpenMode(selected as 'inApp' | 'defaultProgram')
+              }}
+              className="w-64"
+            >
+              <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-10 min-h-10 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
+                <Select.Value className="text-sm font-medium text-gray-800 bg-transparent w-full truncate" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-data-[open=true]:rotate-180 transition-transform">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </Select.Trigger>
+              <Select.Popover className="border border-gray-200 shadow-lg rounded-xl w-64 p-1">
+                <ListBox className="gap-1 p-0">
+                  <ListBox.Item id="inApp" textValue="应用内打开" className="rounded-lg text-sm font-medium text-gray-800 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
+                    应用内打开
+                  </ListBox.Item>
+                  <ListBox.Item id="defaultProgram" textValue="使用默认程序打开" className="rounded-lg text-sm font-medium text-gray-800 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
+                    使用默认程序打开
+                  </ListBox.Item>
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-5">
+            <Slider
+              className="w-full max-w-md"
+              minValue={0}
+              maxValue={100}
+              step={1}
+              value={thumbnailBudgetMB}
+              onChange={(value) => {
+                const mb = Array.isArray(value) ? value[0] : value
+                setThumbnailBudgetMB(mb)
+                SetThumbnailBudgetLimit(mb).catch(console.error)
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-semibold text-gray-700">生成缩略图时内存额度上限</Label>
+                <Slider.Output className="text-sm text-gray-500">
+                  {({ state }) => `${state.getThumbValueLabel(0)}%`}
+                </Slider.Output>
+              </div>
+              <Slider.Track>
+                <Slider.Fill />
+                <Slider.Thumb />
+              </Slider.Track>
+            </Slider>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

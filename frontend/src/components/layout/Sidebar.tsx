@@ -33,16 +33,21 @@ export default function Sidebar() {
     'videos': 'Videos',
   }
 
-  const navItems = [
-    ...shortcuts.filter(s => s.visible).map(s => ({
-      name: s.name,
-      icon: s.id === 'documents' ? 'document_line.svg' : s.id === 'pictures' ? 'pic_2_fill.svg' : s.icon,
-      path: defaultPaths[shortcutMapping[s.id]]
-    })),
-    { name: '收藏', icon: 'star_line.svg', path: 'favorite://' }, // Star icon
-    { name: '最近访问', icon: 'history_anticlockwise_line.svg', path: 'recent://' },
-    { name: '虚拟文件夹', icon: 'folder_virtual.svg', path: 'smartfolder://' },
-  ]
+  const resolveIcon = (s: typeof shortcuts[0]) => {
+    if (s.id === 'documents') return 'document_line.svg'
+    if (s.id === 'pictures') return 'pic_2_fill.svg'
+    return s.icon
+  }
+
+  const resolvePath = (s: typeof shortcuts[0]) => {
+    return s.path || defaultPaths[shortcutMapping[s.id]]
+  }
+
+  const navItems = shortcuts.filter(s => s.visible).map(s => ({
+    name: s.name,
+    icon: resolveIcon(s),
+    path: resolvePath(s)
+  }))
 
   const handleNavigate = (path: string | undefined, name: string) => {
     if (path) {
