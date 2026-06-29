@@ -89,7 +89,7 @@ export default function GeneralSettings() {
                 scale: dragId === item.id ? 1.02 : 1
               }}
               transition={{ type: 'spring', stiffness: 700, damping: 40 }}
-              className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl group relative"
+              className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 hover:bg-sf-item rounded-xl group relative"
             >
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <img src={`/src/assets/icons/${iconName}`} className={`w-5 h-5 shrink-0 ${item.visible ? 'opacity-80' : 'opacity-40'}`} alt={item.name} />
@@ -128,7 +128,7 @@ export default function GeneralSettings() {
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-4">其他</h2>
         <div className="space-y-4">
-          <div className="bg-gray-50 rounded-xl p-5 flex items-center justify-between">
+          <div className="bg-sf-panel/80 rounded-xl p-5 flex items-center justify-between">
             <span className="text-sm font-semibold text-gray-700">双击文件打开方式</span>
             <Select
               selectedKey={doubleClickOpenMode}
@@ -157,7 +157,7 @@ export default function GeneralSettings() {
             </Select>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-5">
+          <div className="bg-sf-panel/80 rounded-xl p-5">
             <Slider
               className="w-full max-w-md"
               minValue={0}

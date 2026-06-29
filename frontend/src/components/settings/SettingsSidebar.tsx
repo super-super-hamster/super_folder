@@ -29,7 +29,7 @@ export default function SettingsSidebar() {
             className={`flex items-center py-2 rounded-xl cursor-pointer transition-colors ${
               isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
             } ${
-              activeSettingsTab === tab.id ? 'bg-sf-input text-gray-900 font-medium' : 'hover:bg-gray-100 text-gray-700'
+              activeSettingsTab === tab.id ? 'bg-sf-input text-gray-900 font-medium' : 'hover:bg-sf-panel text-gray-700'
             }`}
           >
             <img src={`/src/assets/icons/${tab.icon}`} alt={tab.name} className="w-6 h-6 shrink-0" />
@@ -51,7 +51,7 @@ export default function SettingsSidebar() {
       <div className="mt-auto wails-no-drag">
         <div 
           onClick={() => setSettingsOpen(false)}
-          className={`flex items-center py-2 rounded-xl hover:bg-gray-100 cursor-pointer text-gray-700 transition-colors ${
+          className={`flex items-center py-2 rounded-xl hover:bg-sf-item cursor-pointer text-gray-700 transition-colors ${
             isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
           }`}
         >

@@ -19,7 +19,7 @@ export interface UseMarqueeSelectionOptions {
 export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }: UseMarqueeSelectionOptions) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStartPos, setDragStartPos] = useState<{ x: number, y: number } | null>(null)
-  const [dragCurrentPos, setDragCurrentPos] = useState<{ x: number, y: number } | null>(null)
+  const [dragBox, setDragBox] = useState<DragBox | null>(null)
   const [dragSelectedPaths, setDragSelectedPaths] = useState<Set<string>>(new Set())
   const lastMousePosRef = useRef<{ x: number, y: number } | null>(null)
   const autoScrollRafRef = useRef<number | null>(null)
@@ -33,6 +33,15 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       y: clientY - rect.top + scrollRef.current.scrollTop - 16
     }
   }, [scrollRef])
+
+  const computeDragBox = useCallback((current: { x: number, y: number }, start: { x: number, y: number }): DragBox => {
+    return {
+      left: Math.min(start.x, current.x),
+      top: Math.min(start.y, current.y),
+      width: Math.abs(current.x - start.x),
+      height: Math.abs(current.y - start.y)
+    }
+  }, [])
 
   const updateDragSelection = useCallback((currentPos: { x: number, y: number }, startPos: { x: number, y: number }) => {
     const boxLeft = Math.min(startPos.x, currentPos.x)
@@ -55,9 +64,9 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       } else if (viewMode === 'list') {
         size = 40
       } else if (viewMode === 'album') {
-        size = item.items[0]?.isDir ? 116 : 80
+        size = item.items[0]?.isDir ? 112 : 80
       } else {
-        size = 160
+        size = 144
       }
       const start = currentYOffset
       const end = start + size
@@ -94,7 +103,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     const coords = getContainerCoords(e.clientX, e.clientY)
     setIsDragging(true)
     setDragStartPos(coords)
-    setDragCurrentPos(coords)
+    setDragBox({ left: coords.x, top: coords.y, width: 0, height: 0 })
     setDragSelectedPaths(new Set())
     isCtrlPressedRef.current = e.ctrlKey || e.metaKey
 
@@ -111,12 +120,13 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     const handlePointerMove = (e: PointerEvent) => {
       lastMousePosRef.current = { x: e.clientX, y: e.clientY }
       const coords = getContainerCoords(e.clientX, e.clientY)
-      setDragCurrentPos(coords)
+      setDragBox(computeDragBox(coords, dragStartPos))
       updateDragSelection(coords, dragStartPos)
     }
 
     const handlePointerUp = (e: PointerEvent) => {
       setIsDragging(false)
+      setDragBox(null)
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current)
 
       setDragSelectedPaths(prev => {
@@ -153,7 +163,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
 
       if (didScroll) {
         const coords = getContainerCoords(lastMousePosRef.current.x, lastMousePosRef.current.y)
-        setDragCurrentPos(coords)
+        setDragBox(computeDragBox(coords, dragStartPos))
         updateDragSelection(coords, dragStartPos)
       }
 
@@ -167,14 +177,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       window.removeEventListener('pointercancel', handlePointerUp)
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current)
     }
-  }, [isDragging, dragStartPos, getContainerCoords, updateDragSelection, scrollRef])
-
-  const dragBox: DragBox | null = isDragging && dragStartPos && dragCurrentPos ? {
-    left: Math.min(dragStartPos.x, dragCurrentPos.x),
-    top: Math.min(dragStartPos.y, dragCurrentPos.y),
-    width: Math.abs(dragCurrentPos.x - dragStartPos.x),
-    height: Math.abs(dragCurrentPos.y - dragCurrentPos.y)
-  } : null
+  }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef])
 
   return { isDragging, dragBox, dragSelectedPaths, onPointerDown: handlePointerDown }
 }

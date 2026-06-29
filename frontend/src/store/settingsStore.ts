@@ -40,6 +40,10 @@ interface SettingsState {
   setSmartFolders: (folders: SmartFolder[]) => void
   cacheLimitMB: number
   setCacheLimitMB: (limit: number) => void
+  cacheLimitEnabled: boolean
+  setCacheLimitEnabled: (enabled: boolean) => void
+  autoCleanPeriod: 'never' | 'daily' | 'weekly' | 'monthly'
+  setAutoCleanPeriod: (period: 'never' | 'daily' | 'weekly' | 'monthly') => void
   doubleClickOpenMode: 'inApp' | 'defaultProgram'
   setDoubleClickOpenMode: (mode: 'inApp' | 'defaultProgram') => void
   thumbnailBudgetMB: number
@@ -92,6 +96,10 @@ export const useSettingsStore = create<SettingsState>()(
       },
       cacheLimitMB: 1024, // default 1GB
       setCacheLimitMB: (limit) => set({ cacheLimitMB: limit }),
+      cacheLimitEnabled: false,
+      setCacheLimitEnabled: (enabled) => set({ cacheLimitEnabled: enabled }),
+      autoCleanPeriod: 'never',
+      setAutoCleanPeriod: (period) => set({ autoCleanPeriod: period }),
       doubleClickOpenMode: 'inApp',
       setDoubleClickOpenMode: (mode) => {
         set({ doubleClickOpenMode: mode })
@@ -187,7 +195,9 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'filege-settings-storage',
       partialize: (state) => ({ 
-        cacheLimitMB: state.cacheLimitMB 
+        cacheLimitMB: state.cacheLimitMB,
+        cacheLimitEnabled: state.cacheLimitEnabled,
+        autoCleanPeriod: state.autoCleanPeriod,
       }),
     }
   )

@@ -239,6 +239,36 @@ const WarningModalContent = () => {
   )
 }
 
+const ConfirmModalContent = () => {
+  const { modalData, closeModal } = useModalStore()
+
+  return (
+    <>
+      <Modal.Header className="flex items-center justify-center mt-2">
+        <img src="/src/assets/icons/warning_line.svg" className="w-6 h-6 mr-2" alt="confirm" />
+        确认操作
+      </Modal.Header>
+      <Modal.Body className="items-center text-center">
+        <p className="text-gray-600 text-sm">{modalData?.message}</p>
+      </Modal.Body>
+      <Modal.Footer className="w-full">
+        <Button className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300" onPress={closeModal}>
+          {modalData?.cancelButtonText || '取消'}
+        </Button>
+        <Button
+          className={`flex-1 text-white ${modalData?.confirmVariant === 'green' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+          onPress={() => {
+            modalData?.onConfirm?.()
+            closeModal()
+          }}
+        >
+          {modalData?.confirmButtonText || '确认'}
+        </Button>
+      </Modal.Footer>
+    </>
+  )
+}
+
 const UnsavedWarningModalContent = () => {
   const { modalData, closeModal } = useModalStore()
 
@@ -334,6 +364,7 @@ export const ModalManager = () => {
             {activeModal === 'warning' && <WarningModalContent />}
             {activeModal === 'unsaved_warning' && <UnsavedWarningModalContent />}
             {activeModal === 'permanent_delete_confirm' && <PermanentDeleteConfirmModalContent />}
+            {activeModal === 'confirm' && <ConfirmModalContent />}
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

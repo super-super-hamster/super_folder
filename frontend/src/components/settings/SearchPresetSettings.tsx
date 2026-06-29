@@ -134,13 +134,13 @@ const SearchPresetSettings = () => {
 
       <div className="flex flex-col gap-2">
         {searchPresets.length === 0 && !isCreating && (
-          <div className="text-sm text-gray-400 py-4 text-center bg-gray-50 rounded-xl">
+          <div className="text-sm text-gray-400 py-4 text-center bg-sf-panel/80 rounded-xl">
             暂无预设
           </div>
         )}
         
         {searchPresets.map(preset => (
-          <div key={preset.id} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl group">
+          <div key={preset.id} className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 rounded-xl group">
             <span className="text-sm font-medium text-gray-800">{preset.name}</span>
             <button 
               onClick={() => handleRemovePreset(preset.id)}
@@ -158,7 +158,7 @@ const SearchPresetSettings = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-2 bg-gray-50 rounded-xl p-5 flex flex-col gap-4"
+              className="mt-2 bg-sf-panel/80 rounded-xl p-5 flex flex-col gap-4"
             >
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-gray-700">预设名称</span>
@@ -332,7 +332,7 @@ const SearchPresetSettings = () => {
                                 <button
                                   key={filter.id}
                                   onClick={() => handleAddFilter(filter.id)}
-                                  className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                  className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-sf-item rounded-lg transition-colors"
                                 >
                                   {filter.label}
                                 </button>
@@ -364,7 +364,7 @@ const SearchPresetSettings = () => {
             >
               <button 
                 onClick={() => setIsCreating(true)}
-                className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
+                className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-sf-item/80 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
               >
                 {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>

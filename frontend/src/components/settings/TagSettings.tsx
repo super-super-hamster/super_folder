@@ -102,7 +102,7 @@ const TagSettings = () => {
     return (
       <div 
         key={tag.id}
-        className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl group transition-colors hover:bg-gray-100"
+        className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 rounded-xl group transition-colors hover:bg-sf-item"
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: tag.colorHex }} />
@@ -154,7 +154,7 @@ const TagSettings = () => {
       <div className="flex flex-col gap-2">
         <div 
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl group transition-colors hover:bg-gray-100 cursor-pointer"
+          className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 rounded-xl group transition-colors hover:bg-sf-item cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: colorHex }} />
@@ -269,7 +269,7 @@ const TagSettings = () => {
             <TypeGroup key={type} type={type} tags={tags} />
           ))}
           {globalTags.length === 0 && (
-            <div className="text-sm text-gray-400 py-8 text-center bg-gray-50 rounded-lg border border-gray-100 border-dashed">
+            <div className="text-sm text-gray-400 py-8 text-center bg-sf-panel/80 rounded-lg border border-gray-100 border-dashed">
               暂无标签
             </div>
           )}
@@ -284,7 +284,7 @@ const TagSettings = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="w-full overflow-hidden mt-2"
               >
-                <div className="bg-gray-50 rounded-xl p-5 flex flex-col gap-4">
+                <div className="bg-sf-panel/80 rounded-xl p-5 flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-gray-700">添加新标签</span>
                     <ComboBox 
@@ -363,7 +363,7 @@ const TagSettings = () => {
               >
                 <button 
                   onClick={() => setIsAdding(true)}
-                  className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-gray-50 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
+                  className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-sf-item/80 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>

@@ -176,9 +176,9 @@ export default function FileList() {
       if (viewMode === 'list') return 40
       if (viewMode === 'album') {
         const rowItems = (listItems[index] as any).items as models.FileInfo[]
-        return rowItems[0]?.isDir ? 116 : 80
+        return rowItems[0]?.isDir ? 112 : 80
       }
-      return 160
+      return 144
     },
     getItemKey: (index) => {
       const item = listItems[index]
