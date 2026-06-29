@@ -78,6 +78,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check DB cache
 	thumb, err := database.GetThumbnail(path)
 	if err == nil && thumb != nil && thumb.ModTime == modTime {
+		_ = database.TouchThumbnail(path)
 		w.Header().Set("Content-Type", "image/jpeg")
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Write(thumb.Data)

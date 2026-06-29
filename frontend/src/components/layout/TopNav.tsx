@@ -14,7 +14,7 @@ import leftAnim from '../../assets/anim/left.json'
 import rightAnim from '../../assets/anim/right.json'
 import refreshAnim from '../../assets/anim/refresh.json'
 
-const AnimatedClickIcon = ({ animData, className }: { animData: any, className?: string }) => {
+const AnimatedClickIcon = ({ animData, className, autoPlayCount }: { animData: any, className?: string, autoPlayCount?: number }) => {
   const lottieRef = useRef<LottieRefCurrentProps>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -29,6 +29,12 @@ const AnimatedClickIcon = ({ animData, className }: { animData: any, className?:
     parent.addEventListener('click', handleClick)
     return () => parent.removeEventListener('click', handleClick)
   }, [animData])
+
+  useEffect(() => {
+    if (autoPlayCount && autoPlayCount > 0) {
+      lottieRef.current?.goToAndPlay(0, true)
+    }
+  }, [autoPlayCount])
 
   return (
     <div ref={containerRef} className={className || "w-full h-full pointer-events-none flex items-center justify-center"}>
@@ -47,6 +53,7 @@ export default function TopNav() {
     isSearchFocused, setSearchFocused, 
     searchQuery, setSearchQuery, 
     triggerRefresh, 
+    refreshAnimationCount,
     sortOption, setSortOption, 
     recentSortOption, setRecentSortOption, 
     isGrouped, setIsGrouped, 
@@ -205,7 +212,7 @@ export default function TopNav() {
       <div className="flex items-center gap-1 wails-no-drag">
         <button 
           id="nav-back-button"
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus:outline-none"
           onClick={goBack} 
           disabled={!activeTab || activeTab.historyIndex <= 0}
         >
@@ -213,7 +220,7 @@ export default function TopNav() {
         </button>
         <button 
           id="nav-forward-button"
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus:outline-none"
           onClick={goForward} 
           disabled={!activeTab || activeTab.historyIndex >= activeTab.history.length - 1}
         >
@@ -265,7 +272,7 @@ export default function TopNav() {
                       
                       {tabs.length > 1 && (
                         <button
-                          className="ml-2 opacity-0 group-hover:opacity-50 hover:!opacity-100 rounded-full hover:bg-gray-100 p-0.5 transition-colors shrink-0"
+                          className="ml-2 opacity-0 group-hover:opacity-50 hover:!opacity-100 rounded-full hover:bg-gray-100 p-0.5 transition-colors shrink-0 focus:outline-none"
                           onClick={(e) => {
                             e.stopPropagation()
                             removeTab(tab.id)
@@ -297,7 +304,7 @@ export default function TopNav() {
           </AnimatePresence>
           {!isSearchActive && (
             <button 
-              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-300/50 ml-1 shrink-0 transition-colors opacity-0 group-hover/tabs:opacity-100"
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-300/50 ml-1 shrink-0 transition-colors opacity-0 group-hover/tabs:opacity-100 focus:outline-none"
               onClick={() => addTab('C:\\')}
             >
               <img src="/src/assets/icons/add_line.svg" className="w-4 h-4 opacity-70" />
@@ -367,7 +374,7 @@ export default function TopNav() {
         <Dropdown>
           <Dropdown.Trigger>
             <button
-              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors focus:outline-none"
               title="视图选项"
             >
               <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
@@ -416,7 +423,7 @@ export default function TopNav() {
 
         <Dropdown>
           <Dropdown.Trigger>
-            <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
               {(() => {
                 const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
                 if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
@@ -474,20 +481,20 @@ export default function TopNav() {
           </Dropdown.Popover>
         </Dropdown>
 
-        <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-          <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" />
+        <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
+          <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" autoPlayCount={refreshAnimationCount} />
         </button>
         
         <div className="w-[1px] h-4 bg-gray-300 mx-1 shrink-0"></div>
 
         <div className="flex items-center gap-1 text-gray-600 shrink-0">
-          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors" onClick={() => Minimize()}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors focus:outline-none" onClick={() => Minimize()}>
             <img src="/src/assets/icons/minimize_line.svg" className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors" onClick={handleMaximize}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors focus:outline-none" onClick={handleMaximize}>
             <img src={isMaximized ? "/src/assets/icons/fullscreen_exit_line.svg" : "/src/assets/icons/fullscreen_line.svg"} className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white transition-colors" onClick={() => Close()}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white transition-colors focus:outline-none" onClick={() => Close()}>
             <img src="/src/assets/icons/close_line.svg" className="w-4 h-4" />
           </button>
         </div>

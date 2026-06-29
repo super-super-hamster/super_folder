@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -69,7 +70,14 @@ func GetThumbnail(path string) (*models.Thumbnail, error) {
 }
 
 func SaveThumbnail(thumb *models.Thumbnail) error {
+	thumb.LastAccessed = time.Now().UnixMilli()
 	return DB.Save(thumb).Error
+}
+
+func TouchThumbnail(path string) error {
+	return DB.Model(&models.Thumbnail{}).
+		Where("path = ?", path).
+		UpdateColumn("last_accessed", time.Now().UnixMilli()).Error
 }
 
 func GetThumbnailCacheSize() (int64, error) {
@@ -92,10 +100,10 @@ func AutoCleanThumbnailCache(limitMB int) error {
 		return err
 	}
 
-	// Delete oldest 20% of thumbnails repeatedly until we're under limit
+	// Delete least-recently-used 20% of thumbnails repeatedly until we're under limit
 	for size > limitBytes {
 		err = DB.Exec(`DELETE FROM thumbnails WHERE path IN (
-			SELECT path FROM thumbnails ORDER BY mod_time ASC LIMIT (MAX(100, (SELECT COUNT(*)/5 FROM thumbnails)))
+			SELECT path FROM thumbnails ORDER BY last_accessed ASC NULLS FIRST LIMIT (MAX(100, (SELECT COUNT(*)/5 FROM thumbnails)))
 		)`).Error
 		if err != nil {
 			return err

@@ -21,9 +21,10 @@ type Config struct {
 
 // Thumbnail represents a cached image thumbnail
 type Thumbnail struct {
-	Path    string `gorm:"primaryKey"`
-	ModTime int64  // Unix timestamp of file modification time to invalidate cache
-	Data    []byte // The resized JPEG byte array
+	Path         string `gorm:"primaryKey"`
+	ModTime      int64  // Unix timestamp of file modification time to invalidate cache
+	LastAccessed int64  // Unix timestamp of last cache hit
+	Data         []byte // The resized JPEG byte array
 }
 
 // Tag represents a global file tag created by the user

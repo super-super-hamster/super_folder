@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
@@ -13,6 +13,7 @@ export default function Sidebar() {
   const { fetchFavorites } = useFavoriteStore()
   const [drives, setDrives] = useState<string[]>([])
   const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
+  const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     GetDrives().then(setDrives)
@@ -64,8 +65,14 @@ export default function Sidebar() {
       initial={false}
       animate={{ width: isSidebarExpanded ? 220 : 64 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      onMouseEnter={() => setSidebarExpanded(true)}
-      onMouseLeave={() => setSidebarExpanded(false)}
+      onMouseEnter={() => {
+        if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current)
+        expandTimeoutRef.current = setTimeout(() => setSidebarExpanded(true), 500)
+      }}
+      onMouseLeave={() => {
+        if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current)
+        setSidebarExpanded(false)
+      }}
     >
       <div className="flex-1 overflow-y-auto space-y-1 wails-no-drag no-scrollbar">
         {navItems.map((item) => (

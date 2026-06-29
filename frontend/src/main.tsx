@@ -5,6 +5,7 @@ import App from './App'
 import { HeroUIProvider } from '@heroui/system'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { installDevMocks } from './devMocks'
+import { useUIStore } from './store/uiStore'
 
 installDevMocks()
 
@@ -20,9 +21,15 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // F5 刷新
+  if (e.key === 'F5') {
+    e.preventDefault();
+    useUIStore.getState().triggerRefresh();
+    return;
+  }
+
   // 禁用其他原生快捷键
   if (
-    e.key === 'F5' ||
     (e.ctrlKey && ['r', 'p', 's', 'g', 'j', 'u', 'h', 'd'].includes(e.key.toLowerCase())) ||
     (e.ctrlKey && ['=', '-', '0'].includes(e.key)) // 禁用缩放快捷键
   ) {

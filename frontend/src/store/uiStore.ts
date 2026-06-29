@@ -44,6 +44,8 @@ interface UIState {
   searchPanelHeight: number
   setSearchPanelHeight: (height: number) => void
   refreshKey: number
+  lastRefreshTime: number
+  refreshAnimationCount: number
   triggerRefresh: () => void
   scrollPositions: Record<string, number>
   setScrollPosition: (path: string, position: number) => void
@@ -108,7 +110,17 @@ export const useUIStore = create<UIState>()(
       searchPanelHeight: 280,
       setSearchPanelHeight: (height) => set({ searchPanelHeight: height }),
       refreshKey: 0,
-      triggerRefresh: () => set((state) => ({ refreshKey: state.refreshKey + 1 })),
+      lastRefreshTime: 0,
+      refreshAnimationCount: 0,
+      triggerRefresh: () => set((state) => {
+        const now = Date.now()
+        if (now - state.lastRefreshTime < 500) return state
+        return {
+          refreshKey: state.refreshKey + 1,
+          lastRefreshTime: now,
+          refreshAnimationCount: state.refreshAnimationCount + 1
+        }
+      }),
       scrollPositions: {},
       setScrollPosition: (path, position) => set((state) => ({
         scrollPositions: { ...state.scrollPositions, [path]: position }
