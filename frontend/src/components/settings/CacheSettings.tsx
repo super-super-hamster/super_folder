@@ -2,14 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Select, ListBox } from '@heroui/react'
 import { useSettingsStore } from '../../store/settingsStore'
 import { GetThumbnailCacheSize, ClearThumbnailCache } from '../../../wailsjs/go/main/App'
-
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
+import { formatSize } from '../../utils/fileFormatting'
 
 const limitOptions = [
   { label: '128 MB', value: 128 },

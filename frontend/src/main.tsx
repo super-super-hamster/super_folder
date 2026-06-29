@@ -4,32 +4,9 @@ import './style.css'
 import App from './App'
 import { HeroUIProvider } from '@heroui/system'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { installDevMocks } from './devMocks'
 
-if (!(window as any).go) {
-  (window as any).go = {
-    main: {
-      App: {
-        GetLocalServerPort: async () => 0,
-        GetFileTags: async () => [],
-        AddTagToFile: async () => {},
-        RemoveTagFromFile: async () => {},
-        ReadDir: async () => [],
-        GetTagsForFiles: async () => ({}),
-        GetDrives: async () => [],
-        GetDriveUsage: async () => ({})
-      }
-    }
-  }
-}
-
-if (!(window as any).runtime) {
-  (window as any).runtime = {
-    EventsOnMultiple: () => {},
-    EventsOff: () => {},
-    EventsOn: () => {},
-    BrowserOpenURL: () => {}
-  }
-}
+installDevMocks()
 
 // 禁用浏览器快捷键和缩放
 document.addEventListener('keydown', (e) => {
