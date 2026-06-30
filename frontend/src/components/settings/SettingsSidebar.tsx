@@ -6,6 +6,7 @@ const SETTINGS_TABS = [
   { id: 'general', name: '通用', icon: 'settings_6_line.svg' },
   { id: 'search', name: '搜索', icon: 'search_line.svg' },
   { id: 'tag', name: '标签', icon: 'bookmark_line.svg' },
+  { id: 'advanced', name: '高级', icon: 'apps-2-line.svg' },
   { id: 'cache', name: '缓存', icon: 'database-2-line.svg' }
 ] as const
 

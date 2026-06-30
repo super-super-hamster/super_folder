@@ -33,8 +33,8 @@ interface UIState {
   setSearchPanelOpen: (open: boolean) => void
   isSettingsOpen: boolean
   setSettingsOpen: (open: boolean) => void
-  activeSettingsTab: 'general' | 'cache' | 'search' | 'tag'
-  setActiveSettingsTab: (tab: 'general' | 'cache' | 'search' | 'tag') => void
+  activeSettingsTab: 'general' | 'cache' | 'search' | 'tag' | 'advanced'
+  setActiveSettingsTab: (tab: 'general' | 'cache' | 'search' | 'tag' | 'advanced') => void
   isRightSidebarOpen: boolean
   setRightSidebarOpen: (open: boolean) => void
   leftSidebarWidth: number

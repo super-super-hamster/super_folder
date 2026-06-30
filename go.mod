@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/UserExistsError/conpty v0.1.4
+	github.com/corona10/goimagehash v1.1.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-ole/go-ole v1.3.0

@@ -13,6 +13,9 @@ export const getSpecialTitle = (path: string) => {
   if (path.startsWith('smartfolder://')) {
     return '虚拟文件夹'
   }
+  if (path.startsWith('similar://')) {
+    return '相似图片'
+  }
   return path.split('\\').pop() || path
 }
 

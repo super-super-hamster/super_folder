@@ -13,6 +13,8 @@ export function CancelPaste(arg1:string):Promise<void>;
 
 export function CheckBatchRenameConflicts(arg1:Record<string, string>):Promise<Array<string>>;
 
+export function CheckSimilarImagesNeedReindex(arg1:string,arg2:boolean,arg3:number):Promise<boolean>;
+
 export function ClearThumbnailCache():Promise<void>;
 
 export function ClearUndoStack():Promise<void>;
@@ -32,6 +34,8 @@ export function DeleteFileRemark(arg1:string):Promise<void>;
 export function DeleteTag(arg1:string):Promise<void>;
 
 export function DeleteToRecycleBin(arg1:Array<string>):Promise<void>;
+
+export function FindSimilarImageGroups(arg1:string,arg2:boolean,arg3:number):Promise<Array<any>>;
 
 export function GetConfig(arg1:string):Promise<string>;
 
@@ -58,6 +62,12 @@ export function GetLocalServerPort():Promise<number>;
 export function GetRecentItems():Promise<Array<models.FileInfo>>;
 
 export function GetRenameSchemes():Promise<Array<rename.Scheme>>;
+
+export function GetSimilarImageGroups(arg1:string):Promise<Array<any>>;
+
+export function GetSimilarImageState(arg1:string):Promise<models.SimilarFolderState>;
+
+export function GetSimilarImageThresholds():Promise<Record<string, number>>;
 
 export function GetTagUsageCounts():Promise<Record<string, number>>;
 

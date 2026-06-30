@@ -16,6 +16,7 @@ This directory contains frontend-specific coding conventions and patterns. These
 |-------|-------------|--------|
 | [Virtual List & Marquee Selection](./virtual-list-guidelines.md) | Row height matching, marquee selection state management | Filled |
 | [Settings & UI Conventions](./settings-ui-guidelines.md) | Card backgrounds, HeroUI patterns, cache settings, confirm modal | Filled |
+| [Similar Image Detection](./similar-images.md) | Perceptual hashing, virtual paths, progress events | Filled |
 
 ---
 

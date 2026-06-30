@@ -16,6 +16,7 @@ import (
 	"super_folder/internal/fs"
 	"super_folder/internal/models"
 	"super_folder/internal/rename"
+	"super_folder/internal/similarity"
 	"super_folder/internal/terminal"
 	"super_folder/internal/thumbnail"
 	"super_folder/internal/undo"
@@ -625,6 +626,38 @@ func (a *App) ClearThumbnailCache() error {
 
 func (a *App) AutoCleanThumbnailCache(limitMB int) error {
 	return database.AutoCleanThumbnailCache(limitMB)
+}
+
+// Similar image bindings
+
+func (a *App) FindSimilarImageGroups(folderPath string, includeSubfolders bool, threshold int) ([][]string, error) {
+	return similarity.FindSimilarGroups(folderPath, includeSubfolders, threshold, func(p similarity.Progress) {
+		runtime.EventsEmit(a.ctx, "similarity-progress", map[string]any{
+			"stage":   p.Stage,
+			"current": p.Current,
+			"total":   p.Total,
+		})
+	})
+}
+
+func (a *App) GetSimilarImageGroups(folderPath string) ([][]string, error) {
+	return similarity.LoadSimilarGroups(folderPath)
+}
+
+func (a *App) CheckSimilarImagesNeedReindex(folderPath string, includeSubfolders bool, threshold int) (bool, error) {
+	return similarity.NeedsReindex(folderPath, includeSubfolders, threshold)
+}
+
+func (a *App) GetSimilarImageThresholds() map[string]int {
+	return map[string]int{
+		"极度相似": 5,
+		"高度相似": 12,
+		"部分相似": 20,
+	}
+}
+
+func (a *App) GetSimilarImageState(folderPath string) (*models.SimilarFolderState, error) {
+	return database.GetSimilarFolderState(folderPath)
 }
 
 func (a *App) GetTagUsageCounts() (map[string]int, error) {

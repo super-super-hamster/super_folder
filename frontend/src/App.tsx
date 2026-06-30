@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import Sidebar from './components/layout/Sidebar'
 import TopNav from './components/layout/TopNav'
 import FileList from './components/fileList/FileList'
+import SimilarImages from './components/similar/SimilarImages'
 import RightSidebar from './components/layout/RightSidebar'
 import SearchPanel from './components/layout/SearchPanel'
 import { ModalManager } from './components/common/ModalManager'
@@ -165,7 +166,9 @@ function App() {
 
                 {/* FileList Island or File Editor */}
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
-                  {activeTab && !activeTab.isDir ? (
+                  {activeTab?.currentPath?.startsWith('similar://') ? (
+                    <SimilarImages />
+                  ) : activeTab && !activeTab.isDir ? (
                     <FullFileEditor path={activeTab.currentPath} />
                   ) : (
                     <FileList />

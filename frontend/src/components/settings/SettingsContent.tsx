@@ -4,6 +4,7 @@ import GeneralSettings from './GeneralSettings'
 import CacheSettings from './CacheSettings'
 import SearchPresetSettings from './SearchPresetSettings'
 import TagSettings from './TagSettings'
+import AdvancedSettings from './AdvancedSettings'
 
 export default function SettingsContent() {
   const { activeSettingsTab } = useUIStore()
@@ -15,6 +16,7 @@ export default function SettingsContent() {
         {activeSettingsTab === 'cache' && <CacheSettings />}
         {activeSettingsTab === 'search' && <SearchPresetSettings />}
         {activeSettingsTab === 'tag' && <TagSettings />}
+        {activeSettingsTab === 'advanced' && <AdvancedSettings />}
       </div>
     </div>
   )

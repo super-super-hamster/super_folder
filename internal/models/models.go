@@ -27,6 +27,35 @@ type Thumbnail struct {
 	Data         []byte // The resized JPEG byte array
 }
 
+// ImageHash stores perceptual hashes for similar-image detection
+type ImageHash struct {
+	Path       string `gorm:"primaryKey"`
+	FolderPath string `gorm:"index"`
+	PHash      uint64
+	DHash      uint64
+	FileSize   int64
+	ModTime    int64
+	IndexedAt  int64
+}
+
+// SimilarPair stores a pair of similar images within a folder scope
+type SimilarPair struct {
+	FolderPath string `gorm:"primaryKey"`
+	PathA      string `gorm:"primaryKey"`
+	PathB      string `gorm:"primaryKey"`
+	Distance   int
+	Threshold  int
+}
+
+// SimilarFolderState tracks the indexed state of a folder for incremental updates
+type SimilarFolderState struct {
+	FolderPath        string `gorm:"primaryKey"`
+	IncludeSubfolders bool
+	Threshold         int
+	MaxFileMtime      int64
+	IndexedAt         int64
+}
+
 // Tag represents a global file tag created by the user
 type Tag struct {
 	ID        string `json:"id" gorm:"primaryKey"`

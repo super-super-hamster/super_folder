@@ -34,7 +34,17 @@ func InitDB() error {
 	DB.Exec("PRAGMA journal_mode=WAL;")
 
 	// Migrate the schema
-	return DB.AutoMigrate(&models.Config{}, &models.Thumbnail{}, &models.Tag{}, &models.FileTag{}, &models.Remark{}, &models.Favorite{})
+	return DB.AutoMigrate(
+		&models.Config{},
+		&models.Thumbnail{},
+		&models.Tag{},
+		&models.FileTag{},
+		&models.Remark{},
+		&models.Favorite{},
+		&models.ImageHash{},
+		&models.SimilarPair{},
+		&models.SimilarFolderState{},
+	)
 }
 
 func GetConfig(key string) (string, error) {
@@ -290,6 +300,55 @@ func IsFavorite(path string) (bool, error) {
 	var count int64
 	err := DB.Model(&models.Favorite{}).Where("path = ?", path).Count(&count).Error
 	return count > 0, err
+}
+
+// Similar Image Management
+
+func SaveImageHashes(hashes []models.ImageHash) error {
+	return DB.Save(&hashes).Error
+}
+
+func GetImageHashesByFolder(folderPath string) ([]models.ImageHash, error) {
+	var hashes []models.ImageHash
+	err := DB.Where("folder_path = ?", folderPath).Find(&hashes).Error
+	return hashes, err
+}
+
+func DeleteImageHashesByFolder(folderPath string) error {
+	return DB.Where("folder_path = ?", folderPath).Delete(&models.ImageHash{}).Error
+}
+
+func SaveSimilarPairs(pairs []models.SimilarPair) error {
+	if len(pairs) == 0 {
+		return nil
+	}
+	return DB.Save(&pairs).Error
+}
+
+func DeleteSimilarPairsByFolder(folderPath string) error {
+	return DB.Where("folder_path = ?", folderPath).Delete(&models.SimilarPair{}).Error
+}
+
+func GetSimilarPairsByFolder(folderPath string) ([]models.SimilarPair, error) {
+	var pairs []models.SimilarPair
+	err := DB.Where("folder_path = ?", folderPath).Find(&pairs).Error
+	return pairs, err
+}
+
+func GetSimilarFolderState(folderPath string) (*models.SimilarFolderState, error) {
+	var state models.SimilarFolderState
+	err := DB.Where("folder_path = ?", folderPath).First(&state).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &state, nil
+}
+
+func SaveSimilarFolderState(state *models.SimilarFolderState) error {
+	return DB.Save(state).Error
 }
 
 

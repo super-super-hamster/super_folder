@@ -22,6 +22,10 @@ export function CheckBatchRenameConflicts(arg1) {
   return window['go']['main']['App']['CheckBatchRenameConflicts'](arg1);
 }
 
+export function CheckSimilarImagesNeedReindex(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CheckSimilarImagesNeedReindex'](arg1, arg2, arg3);
+}
+
 export function ClearThumbnailCache() {
   return window['go']['main']['App']['ClearThumbnailCache']();
 }
@@ -60,6 +64,10 @@ export function DeleteTag(arg1) {
 
 export function DeleteToRecycleBin(arg1) {
   return window['go']['main']['App']['DeleteToRecycleBin'](arg1);
+}
+
+export function FindSimilarImageGroups(arg1, arg2, arg3) {
+  return window['go']['main']['App']['FindSimilarImageGroups'](arg1, arg2, arg3);
 }
 
 export function GetConfig(arg1) {
@@ -112,6 +120,18 @@ export function GetRecentItems() {
 
 export function GetRenameSchemes() {
   return window['go']['main']['App']['GetRenameSchemes']();
+}
+
+export function GetSimilarImageGroups(arg1) {
+  return window['go']['main']['App']['GetSimilarImageGroups'](arg1);
+}
+
+export function GetSimilarImageState(arg1) {
+  return window['go']['main']['App']['GetSimilarImageState'](arg1);
+}
+
+export function GetSimilarImageThresholds() {
+  return window['go']['main']['App']['GetSimilarImageThresholds']();
 }
 
 export function GetTagUsageCounts() {
