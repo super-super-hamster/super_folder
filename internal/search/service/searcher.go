@@ -117,6 +117,10 @@ type SearchRequest struct {
 	RootPath        string   `json:"rootPath"`
 	RootPaths       []string `json:"rootPaths"`
 	Limit           int      `json:"limit"`
+	MinSize         *int64   `json:"minSize"`
+	MaxSize         *int64   `json:"maxSize"`
+	MinTime         *int64   `json:"minTime"`
+	MaxTime         *int64   `json:"maxTime"`
 }
 
 type SearchResponse struct {
@@ -148,6 +152,32 @@ func (s *Searcher) handleSearch(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SearchResponse{Paths: paths})
+}
+
+func matchesSizeTime(path string, minSize, maxSize, minTime, maxTime *int64) bool {
+	if minSize == nil && maxSize == nil && minTime == nil && maxTime == nil {
+		return true
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	if !info.IsDir() {
+		if minSize != nil && info.Size() < *minSize {
+			return false
+		}
+		if maxSize != nil && info.Size() > *maxSize {
+			return false
+		}
+	}
+	mtime := info.ModTime().UnixMilli()
+	if minTime != nil && mtime < *minTime {
+		return false
+	}
+	if maxTime != nil && mtime > *maxTime {
+		return false
+	}
+	return true
 }
 
 func (s *Searcher) executeSearch(req *SearchRequest) []string {
@@ -286,6 +316,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				}
 			}
 
+			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) {
+				continue
+			}
+
 			results = append(results, fullPath)
 		}
 		return results
@@ -409,6 +443,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				if !pathMatched {
 					continue
 				}
+			}
+
+			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) {
+				continue
 			}
 
 			results = append(results, fullPath)

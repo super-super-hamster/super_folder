@@ -3,6 +3,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useState, useRef, useEffect } from 'react'
 import { Input } from '@heroui/react'
+import SimpleDatePicker from '../common/SimpleDatePicker'
 
 export default function SearchPanel() {
   const { searchFilter, setSearchFilter, isSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
@@ -51,17 +52,21 @@ export default function SearchPanel() {
   if (!searchFilter.isCaseSensitive) availableFilters.push({ id: 'case', label: '区分大小写' })
   if (!searchFilter.isRegex) availableFilters.push({ id: 'regex', label: '正则表达式' })
   if (!searchFilter.isExcludeFolder) availableFilters.push({ id: 'exclude_folder', label: '排除文件夹' })
+  if (!searchFilter.isSizeFilter) availableFilters.push({ id: 'size', label: '文件大小' })
+  if (!searchFilter.isTimeFilter) availableFilters.push({ id: 'time', label: '修改时间' })
   if (searchFilter.type === 'all') {
     availableFilters.push({ id: 'file', label: '仅文件' })
     availableFilters.push({ id: 'folder', label: '仅文件夹' })
   }
-  
+
   const handleAddFilter = (id: string) => {
     if (id === 'case') setSearchFilter({ isCaseSensitive: true })
     if (id === 'regex') setSearchFilter({ isRegex: true })
     if (id === 'file') setSearchFilter({ type: 'file' })
     if (id === 'folder') setSearchFilter({ type: 'folder' })
     if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: true })
+    if (id === 'size') setSearchFilter({ isSizeFilter: true, minSize: null, maxSize: null })
+    if (id === 'time') setSearchFilter({ isTimeFilter: true, minTime: null, maxTime: null })
     setIsAdding(false)
   }
 
@@ -70,6 +75,8 @@ export default function SearchPanel() {
     if (id === 'regex') setSearchFilter({ isRegex: false })
     if (id === 'file' || id === 'folder') setSearchFilter({ type: 'all', extensions: [] })
     if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: false, excludedFolders: [] })
+    if (id === 'size') setSearchFilter({ isSizeFilter: false, minSize: null, maxSize: null })
+    if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null })
   }
 
   const submitExt = () => {
@@ -117,7 +124,7 @@ export default function SearchPanel() {
       <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 w-full h-full flex flex-col">
         <div className="p-6 h-full flex">
         {/* Left Filter Panel */}
-        <div className="w-[200px] border-r border-gray-300 pr-6 flex flex-col gap-3">
+        <div className="w-[200px] border-r border-gray-300 pr-6 flex flex-col gap-3 overflow-y-auto">
           
           <AnimatePresence>
             {searchFilter.type === 'file' && (
@@ -257,6 +264,71 @@ export default function SearchPanel() {
                 <button onClick={() => handleRemoveFilter('regex')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                   <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                 </button>
+              </motion.div>
+            )}
+
+            {searchFilter.isSizeFilter && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-800 font-medium">文件大小</span>
+                  <button onClick={() => handleRemoveFilter('size')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                    <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="w-full h-px bg-gray-200 my-2"></div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={searchFilter.minSize ?? ''}
+                    onChange={(e: any) => setSearchFilter({ minSize: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder="最小"
+                    className="w-16 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                  />
+                  <span className="text-gray-400 text-xs">-</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={searchFilter.maxSize ?? ''}
+                    onChange={(e: any) => setSearchFilter({ maxSize: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder="最大"
+                    className="w-16 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {searchFilter.isTimeFilter && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-800 font-medium">修改时间</span>
+                  <button onClick={() => handleRemoveFilter('time')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                    <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="w-full h-px bg-gray-200 my-2"></div>
+                <div className="space-y-2">
+                  <SimpleDatePicker
+                    value={searchFilter.minTime}
+                    onChange={(ts) => setSearchFilter({ minTime: ts })}
+                    ariaLabel="开始时间"
+                  />
+                  <SimpleDatePicker
+                    value={searchFilter.maxTime}
+                    onChange={(ts) => setSearchFilter({ maxTime: ts })}
+                    ariaLabel="结束时间"
+                  />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

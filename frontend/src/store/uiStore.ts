@@ -10,6 +10,12 @@ export interface SearchFilter {
   extensions: string[]
   isExcludeFolder: boolean
   excludedFolders: string[]
+  isSizeFilter: boolean
+  minSize: number | null
+  maxSize: number | null
+  isTimeFilter: boolean
+  minTime: number | null
+  maxTime: number | null
 }
 
 export interface AutocompleteSuggestion {
@@ -86,7 +92,13 @@ export const useUIStore = create<UIState>()(
       type: 'all',
       extensions: [],
       isExcludeFolder: false,
-      excludedFolders: []
+      excludedFolders: [],
+      isSizeFilter: false,
+      minSize: null,
+      maxSize: null,
+      isTimeFilter: false,
+      minTime: null,
+      maxTime: null
     },
       setSearchFilter: (filter) => set((state) => ({ searchFilter: { ...state.searchFilter, ...filter } })),
       isSidebarExpanded: false,

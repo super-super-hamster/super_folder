@@ -150,6 +150,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         fetchPromise = Promise.resolve([])
       }
     } else if (searchQuery && searchQuery.trim() !== '') {
+      const maxTime = searchFilter?.maxTime
       const req = {
         keyword: keyword,
         isRegex: searchFilter?.isRegex || false,
@@ -161,7 +162,11 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         tagLogic: tagLogic,
         maxDepth: 0,
         rootPath: currentPath,
-        limit: 2000
+        limit: 2000,
+        minSize: searchFilter?.minSize ?? null,
+        maxSize: searchFilter?.maxSize ?? null,
+        minTime: searchFilter?.minTime ?? null,
+        maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null
       }
       fetchPromise = SearchFiles(req)
     } else if (currentPath === 'favorite://') {
