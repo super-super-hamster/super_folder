@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"log"
 	"net"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 	"super_folder/internal/database"
 	"super_folder/internal/models"
 	"super_folder/internal/search/usn"
+
+	_ "golang.org/x/image/webp"
 )
 
 type Searcher struct {
@@ -122,6 +125,7 @@ type SearchRequest struct {
 	MaxSize         *int64   `json:"maxSize"`
 	MinTime         *int64   `json:"minTime"`
 	MaxTime         *int64   `json:"maxTime"`
+	ImageShape      string   `json:"imageShape"`
 }
 
 type SearchResponse struct {
@@ -196,6 +200,43 @@ func matchingRemarkPaths(terms []string) map[string]bool {
 		result[strings.ToLower(r.Path)] = true
 	}
 	return result
+}
+
+func matchesImageShape(path, shape string) bool {
+	if shape == "" {
+		return true
+	}
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp":
+	default:
+		return false
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		return false
+	}
+	if cfg.Width == 0 || cfg.Height == 0 {
+		return false
+	}
+
+	ratio := float64(cfg.Width) / float64(cfg.Height)
+	switch shape {
+	case "square":
+		return ratio >= 0.9 && ratio <= 1.1
+	case "landscape":
+		return ratio > 1.1
+	case "portrait":
+		return ratio < 0.9
+	}
+	return true
 }
 
 func (s *Searcher) executeSearch(req *SearchRequest) []string {
@@ -341,6 +382,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
+			if !matchesImageShape(fullPath, req.ImageShape) {
+				continue
+			}
+
 			results = append(results, fullPath)
 		}
 		return results
@@ -471,6 +516,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			}
 
 			if hasRemarkFilter && !remarkPaths[strings.ToLower(fullPath)] {
+				continue
+			}
+
+			if !matchesImageShape(fullPath, req.ImageShape) {
 				continue
 			}
 

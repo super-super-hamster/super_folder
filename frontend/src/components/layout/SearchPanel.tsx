@@ -394,9 +394,11 @@ export default function SearchPanel() {
                 <Select
                   selectedKey={searchFilter.imageShape || 'square'}
                   onSelectionChange={(key) => {
-                    const keySet = key as unknown as Set<string>
-                    const selected = keySet.values().next().value
-                    if (selected) setSearchFilter({ imageShape: selected as 'square' | 'landscape' | 'portrait' })
+                    if (!key || key === 'all') return
+                    const selected = typeof key === 'string' ? key : Array.from(key as unknown as Set<string>)[0]
+                    if (selected === 'square' || selected === 'landscape' || selected === 'portrait') {
+                      setSearchFilter({ imageShape: selected })
+                    }
                   }}
                   className="w-full"
                 >

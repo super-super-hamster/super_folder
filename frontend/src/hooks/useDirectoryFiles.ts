@@ -165,7 +165,8 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         minSize: toBytes(searchFilter?.minSize ?? null),
         maxSize: toBytes(searchFilter?.maxSize ?? null),
         minTime: searchFilter?.minTime ?? null,
-        maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null
+        maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null,
+        imageShape: searchFilter?.isImageShapeFilter ? searchFilter?.imageShape : undefined
       }
       fetchPromise = SearchFiles(req)
     } else if (currentPath === 'favorite://') {
