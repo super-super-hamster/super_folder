@@ -427,7 +427,7 @@ export default function SearchPanel() {
                           textValue={item.id}
                           className="rounded-lg px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black cursor-pointer"
                         >
-                          <img src={item.icon} className="w-5 h-5" />
+                          <img src={item.icon} className="w-8 h-8" />
                         </ListBox.Item>
                       ))}
                     </ListBox>
