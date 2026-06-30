@@ -6,6 +6,7 @@ import { useModalStore } from '../store/modalStore'
 import { ReadDirChunked, SearchFiles, GetFavorites, GetRecentItems, GetTagsForFiles } from '../../wailsjs/go/main/App'
 import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime'
 import { models } from '../../wailsjs/go/models'
+import { parseSearchQuery } from '../utils/searchQuery'
 
 export interface UseDirectoryFilesResult {
   files: models.FileInfo[]
@@ -59,27 +60,17 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 
     let fetchPromise: Promise<models.FileInfo[]>
 
-    let keyword = searchQuery ? searchQuery.trim() : ''
-    let tags: string[] = []
-    let tagLogic = 'OR'
-
-    if (keyword.toLowerCase().includes('tag:')) {
-      const parts = keyword.split('&')
-      if (parts.length > 1) {
-        tagLogic = 'AND'
-        tags = parts.map(p => {
-          const m = p.match(/tag:([^&\s]+)/i)
-          return m ? m[1] : ''
-        }).filter(Boolean)
-        keyword = keyword.replace(/tag:([^&\s]+)/gi, '').replace(/&/g, '').trim()
-      } else {
-        const m = keyword.match(/tag:([^\s]+)/gi)
-        if (m) {
-          tags = m.map(t => t.split(':')[1])
-          keyword = keyword.replace(/tag:([^\s]+)/gi, '').trim()
-        }
-      }
-    }
+    const parsed = parseSearchQuery(searchQuery || '')
+    let keyword = parsed.keyword
+    const tags = parsed.tags.map(t => {
+      const idx = t.indexOf(':')
+      return idx >= 0 ? t.slice(idx + 1) : t
+    }).filter(Boolean)
+    const remarks = parsed.remarks.map(r => {
+      const idx = r.indexOf(':')
+      return idx >= 0 ? r.slice(idx + 1) : r
+    }).filter(Boolean)
+    const tagLogic = (searchQuery && searchQuery.includes('&')) ? 'AND' : 'OR'
 
     if (currentPath === 'smartfolder://') {
       const virtualItems: models.FileInfo[] = smartFolders.map(sf => ({
@@ -151,6 +142,13 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       }
     } else if (searchQuery && searchQuery.trim() !== '') {
       const maxTime = searchFilter?.maxTime
+      const unit = searchFilter?.sizeUnit || 'MB'
+      const toBytes = (val: number | null) => {
+        if (val == null) return null
+        if (unit === 'KB') return val * 1024
+        if (unit === 'GB') return val * 1024 * 1024 * 1024
+        return val * 1024 * 1024
+      }
       const req = {
         keyword: keyword,
         isRegex: searchFilter?.isRegex || false,
@@ -160,11 +158,12 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         extensions: searchFilter?.extensions || [],
         tags: tags,
         tagLogic: tagLogic,
+        remarks: remarks,
         maxDepth: 0,
         rootPath: currentPath,
         limit: 2000,
-        minSize: searchFilter?.minSize ?? null,
-        maxSize: searchFilter?.maxSize ?? null,
+        minSize: toBytes(searchFilter?.minSize ?? null),
+        maxSize: toBytes(searchFilter?.maxSize ?? null),
         minTime: searchFilter?.minTime ?? null,
         maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null
       }

@@ -1,11 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore, type SortOption } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
+import { useTagStore, generateColorFromName } from '../../store/tagStore'
 import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags } from '../../../wailsjs/go/main/App'
 import { WindowToggleMaximise, WindowIsMaximised } from '../../../wailsjs/runtime/runtime'
 import { useRef, useState, useEffect } from 'react'
 import { Checkbox, Dropdown, Separator } from '@heroui/react'
 import DynamicBreadcrumb from './DynamicBreadcrumb'
+import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
 import upAnim from '../../assets/anim/up.json'
@@ -49,6 +51,7 @@ const AnimatedClickIcon = ({ animData, className, autoPlayCount }: { animData: a
 }
 
 export default function TopNav() {
+  const { globalTags } = useTagStore()
   const { 
     isSearchFocused, setSearchFocused, 
     searchQuery, setSearchQuery, 
@@ -74,64 +77,50 @@ export default function TopNav() {
     }).catch(e => console.error(e))
   }, [])
 
-  let parsedKeyword = searchQuery
-  const parsedTags: string[] = []
-  if (parsedKeyword.toLowerCase().includes('tag:')) {
-    const parts = parsedKeyword.split('&')
-    if (parts.length > 1) {
-      parts.forEach(p => {
-        const m = p.match(/tag:([^&\s]+)/i)
-        if (m) parsedTags.push(`tag:${m[1]}`)
-      })
-      parsedKeyword = parsedKeyword.replace(/tag:([^&\s]+)/gi, '').replace(/&/g, '').trimStart()
-    } else {
-      const m = parsedKeyword.match(/tag:([^\s]+)/gi)
-      if (m) {
-        m.forEach(t => parsedTags.push(t))
-        parsedKeyword = parsedKeyword.replace(/tag:([^\s]+)/gi, '').trimStart()
-      }
-    }
-  }
-  const tags = parsedTags
-  const inputValue = parsedKeyword
+  const { tags, remarks, keyword: inputValue } = parseSearchQuery(searchQuery)
+  const chips = [...tags, ...remarks]
 
-  const updateSearchQuery = (newTags: string[], newKeyword: string) => {
-    const query = newTags.length > 0 
-      ? newTags.join(' & ') + (newKeyword ? ' ' + newKeyword : '')
-      : newKeyword
-    setSearchQuery(query)
+  const updateSearchQuery = (parts: { tags?: string[]; remarks?: string[]; keyword?: string }) => {
+    setSearchQuery(buildSearchQuery({ tags, remarks, ...parts }))
   }
 
-  const handleRemoveTag = (index: number) => {
+  const handleRemoveChip = (index: number) => {
     const newTags = [...tags]
-    newTags.splice(index, 1)
-    updateSearchQuery(newTags, inputValue)
+    const newRemarks = [...remarks]
+    if (index < tags.length) {
+      newTags.splice(index, 1)
+    } else {
+      newRemarks.splice(index - tags.length, 1)
+    }
+    updateSearchQuery({ tags: newTags, remarks: newRemarks, keyword: inputValue })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
-    let newKeyword = val
-    let newTags = [...tags]
+    setSearchQuery(buildSearchQuery({ tags, remarks, keyword: val }))
 
-    const tagMatch = val.match(/(tag:[^\s]+)\s$/i)
-    if (tagMatch) {
-      newTags.push(tagMatch[1])
-      newKeyword = val.replace(tagMatch[1] + ' ', '')
-    }
-
-    updateSearchQuery(newTags, newKeyword)
-
-    const typed = newKeyword.trim().toLowerCase()
+    const { keyword: remaining } = parseSearchQuery(val)
+    const typed = remaining.trim().toLowerCase()
     let suggestions: any[] = []
-    
-    if (typed === 't' || typed === 'ta' || typed === 'tag') {
-      suggestions.push({ type: 'prefix', text: 'tag:', matchedPrefix: typed })
-    } else if (typed.startsWith('tag:')) {
-      const tagPrefix = typed.slice(4)
+
+    const prefixOptions = [
+      { key: 'tag:', label: 'tag:' },
+      { key: '标签:', label: '标签:' },
+      { key: '备注:', label: '备注:' },
+      { key: 'note:', label: 'note:' }
+    ]
+
+    if (typed === '' || prefixOptions.some(p => p.key.startsWith(typed))) {
+      suggestions = prefixOptions
+        .filter(p => typed === '' || p.key.startsWith(typed))
+        .map(p => ({ type: 'prefix', text: p.label, matchedPrefix: typed }))
+    } else if (typed.startsWith('tag:') || typed.startsWith('标签:')) {
+      const isChinese = typed.startsWith('标签:')
+      const tagPrefix = typed.slice(isChinese ? 3 : 4)
       const matches = availableTags.filter(t => t.toLowerCase().includes(tagPrefix))
       suggestions = matches.map(t => ({ type: 'tag', text: t, matchedPrefix: tagPrefix }))
     }
-    
+
     setSearchSuggestions(suggestions)
     setSelectedSuggestionIndex(suggestions.length > 0 ? 0 : -1)
 
@@ -139,8 +128,8 @@ export default function TopNav() {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
-      handleRemoveTag(tags.length - 1)
+    if (e.key === 'Backspace' && inputValue === '' && chips.length > 0) {
+      handleRemoveChip(chips.length - 1)
     }
 
     if (e.key === 'Enter') {
@@ -162,10 +151,11 @@ export default function TopNav() {
           e.preventDefault()
           const sugg = searchSuggestions[selectedSuggestionIndex]
           if (sugg.type === 'prefix') {
-            updateSearchQuery(tags, 'tag:')
+            updateSearchQuery({ keyword: sugg.text + ' ' })
           } else if (sugg.type === 'tag') {
-            const newTags = [...tags, `tag:${sugg.text}`]
-            updateSearchQuery(newTags, '')
+            const isChinese = inputValue.trim().toLowerCase().startsWith('标签:')
+            const raw = `${isChinese ? '标签' : 'tag'}:${sugg.text}`
+            updateSearchQuery({ tags: [...tags, raw], keyword: '' })
           }
           setSearchSuggestions([])
           setSelectedSuggestionIndex(-1)
@@ -329,22 +319,29 @@ export default function TopNav() {
             </div>
           )}
           
-          {tags.map((t, index) => (
-            <span key={index} className="flex items-center bg-gray-500 text-white rounded-full pl-2.5 pr-1.5 py-0.5 text-xs mr-1.5 shrink-0 shadow-sm font-medium">
-              {t}
-              <button 
-                onClick={() => handleRemoveTag(index)} 
-                className="ml-1 opacity-70 hover:opacity-100 outline-none flex items-center justify-center p-0.5 rounded-full hover:bg-sf-selected/90 transition-colors"
-              >
-                <img src="/src/assets/icons/close_line.svg" className="w-2.5 h-2.5 brightness-0 invert" />
-              </button>
-            </span>
-          ))}
+          {chips.map((chip, index) => {
+            const value = chip.slice(chip.indexOf(':') + 1)
+            const chipStyle: React.CSSProperties = {
+              backgroundColor: generateColorFromName(value),
+              color: '#000'
+            }
+            return (
+              <span key={index} className="flex items-center rounded-full pl-2.5 pr-1.5 py-0.5 text-xs mr-1.5 shrink-0 shadow-sm font-medium" style={chipStyle}>
+                {chip}
+                <button
+                  onClick={() => handleRemoveChip(index)}
+                  className="ml-1 opacity-70 hover:opacity-100 outline-none flex items-center justify-center p-0.5 rounded-full hover:bg-black/10 transition-colors"
+                >
+                  <img src="/src/assets/icons/close_line.svg" className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            )
+          })}
 
           <input
             id="search-input"
             className="flex-1 w-full min-w-[50px] bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-800"
-            placeholder={tags.length > 0 ? "" : "搜索..."}
+            placeholder={chips.length > 0 ? "" : "搜索..."}
             value={inputValue}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -361,7 +358,6 @@ export default function TopNav() {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setSearchQuery('')
-                setSearchPanelOpen(false)
               }}
             />
           )}

@@ -53,6 +53,94 @@ Use `onSelectionChange` with destructuring to extract the single selected value:
 
 ---
 
+## Dropdowns Inside Overflow-Hidden Containers
+
+Do not build custom absolute-positioned dropdowns inside panels that use `overflow-hidden`. They get clipped when the menu extends beyond the container bounds.
+
+Use HeroUI `Dropdown` with `Dropdown.Popover`. The popover is rendered in a portal and can escape `overflow-hidden` ancestors.
+
+```tsx
+<Dropdown>
+  <Dropdown.Trigger>
+    <span className="...">+</span>
+  </Dropdown.Trigger>
+  <Dropdown.Popover placement="right top" className="min-w-[160px]">
+    <Dropdown.Menu onAction={(key) => handleAction(String(key))}>
+      {items.map((item) => (
+        <Dropdown.Item key={item.id} id={item.id} textValue={item.label}>
+          <Label>{item.label}</Label>
+        </Dropdown.Item>
+      ))}
+      {hasSection && (
+        <Dropdown.Section>
+          <Header>Section Title</Header>
+          {sectionItems.map((item) => (
+            <Dropdown.Item key={item.id} id={item.id} textValue={item.label}>
+              <Label>{item.label}</Label>
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Section>
+      )}
+    </Dropdown.Menu>
+  </Dropdown.Popover>
+</Dropdown>
+```
+
+- Always provide both `key` and `id` on `Dropdown.Item`; React needs `key`, React Aria needs `id`.
+- Wrap item text in `<Label>` for consistent styling.
+- Use `<Dropdown.Section>` and `<Header>` to group related items.
+
+---
+
+## Range Filters (Size / Time)
+
+### Layout
+
+Stack min/max inputs vertically with a `|` separator between them.
+
+```tsx
+<div className="flex flex-col items-center gap-1">
+  <Input ... placeholder="最小" />
+  <span className="text-gray-400 text-xs">|</span>
+  <Input ... placeholder="最大" />
+</div>
+```
+
+### Anti-Fool Validation
+
+For numeric range inputs, validate on `onBlur` to avoid interfering with the user's keystrokes. When the user leaves a field, if the range is invalid, update the **other** boundary to match the boundary that was just edited.
+
+```tsx
+<Input
+  value={minSize ?? ''}
+  onChange={(e) => setSearchFilter({ minSize: e.target.value === '' ? null : Number(e.target.value) })}
+  onBlur={() => {
+    if (minSize != null && maxSize != null && minSize > maxSize) {
+      setSearchFilter({ maxSize: minSize })
+    }
+  }}
+/>
+```
+
+For date pickers, validation can happen on `onChange` because a selection is atomic.
+
+### Size Unit Selector
+
+Store the selected unit (`KB`, `MB`, `GB`) alongside the numeric values. Convert to bytes only when sending the request to the backend.
+
+```ts
+const toBytes = (val: number | null, unit: 'KB' | 'MB' | 'GB') => {
+  if (val == null) return null
+  if (unit === 'KB') return val * 1024
+  if (unit === 'GB') return val * 1024 * 1024 * 1024
+  return val * 1024 * 1024
+}
+```
+
+Default unit is `MB`.
+
+---
+
 ## Switch (Green When On)
 
 HeroUI Switch does not apply `data-[selected=true]` to the control element in all cases. Use the render-prop class pattern:

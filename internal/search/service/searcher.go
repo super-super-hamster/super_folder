@@ -113,6 +113,7 @@ type SearchRequest struct {
 	Extensions      []string `json:"extensions"`
 	Tags            []string `json:"tags"`
 	TagLogic        string   `json:"tagLogic"`
+	Remarks         []string `json:"remarks"`
 	MaxDepth        int      `json:"maxDepth"`
 	RootPath        string   `json:"rootPath"`
 	RootPaths       []string `json:"rootPaths"`
@@ -180,11 +181,24 @@ func matchesSizeTime(path string, minSize, maxSize, minTime, maxTime *int64) boo
 	return true
 }
 
-func (s *Searcher) executeSearch(req *SearchRequest) []string {
-	if strings.HasPrefix(req.Keyword, "澶囨敞:") {
-		return s.executeRemarkSearch(req)
+func matchingRemarkPaths(terms []string) map[string]bool {
+	if len(terms) == 0 {
+		return nil
 	}
+	var remarks []models.Remark
+	query := database.DB
+	for _, term := range terms {
+		query = query.Where("content LIKE ?", "%"+term+"%")
+	}
+	query.Find(&remarks)
+	result := make(map[string]bool, len(remarks))
+	for _, r := range remarks {
+		result[strings.ToLower(r.Path)] = true
+	}
+	return result
+}
 
+func (s *Searcher) executeSearch(req *SearchRequest) []string {
 	var regex *regexp.Regexp
 	if req.IsRegex && req.Keyword != "" {
 		flag := ""
@@ -196,6 +210,9 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			regex = re
 		}
 	}
+
+	remarkPaths := matchingRemarkPaths(req.Remarks)
+	hasRemarkFilter := len(req.Remarks) > 0
 
 	keyword := req.Keyword
 	if !req.CaseSensitive && !req.IsRegex {
@@ -317,6 +334,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			}
 
 			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) {
+				continue
+			}
+
+			if hasRemarkFilter && !remarkPaths[strings.ToLower(fullPath)] {
 				continue
 			}
 
@@ -449,6 +470,10 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
+			if hasRemarkFilter && !remarkPaths[strings.ToLower(fullPath)] {
+				continue
+			}
+
 			results = append(results, fullPath)
 		}
 		engine.Mu.RUnlock()
@@ -458,37 +483,6 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 		}
 	}
 
-	return results
-}
-
-func (s *Searcher) executeRemarkSearch(req *SearchRequest) []string {
-	actualKeyword := strings.TrimPrefix(req.Keyword, "澶囨敞:")
-	var remarks []models.Remark
-	
-	// Query SQLite for matching remarks
-	// If the keyword is empty, maybe return all files with remarks?
-	if actualKeyword == "" {
-		database.DB.Find(&remarks)
-	} else {
-		database.DB.Where("content LIKE ?", "%"+actualKeyword+"%").Find(&remarks)
-	}
-
-	var results []string
-	for _, r := range remarks {
-		// Basic filtering to match root path if provided
-		if req.RootPath != "" && !strings.HasPrefix(strings.ToLower(r.Path), strings.ToLower(req.RootPath)) {
-			continue
-		}
-		
-		// Ensure file still exists (optional, but good for UI consistency)
-		if _, err := os.Stat(r.Path); err == nil {
-			results = append(results, r.Path)
-		}
-		
-		if len(results) >= req.Limit {
-			break
-		}
-	}
 	return results
 }
 

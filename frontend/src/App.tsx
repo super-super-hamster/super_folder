@@ -30,26 +30,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target) return;
-      
-      const isInsideSearchBox = target.closest('#search-container');
-      const isInsideSearchPanel = target.closest('#search-panel');
-      
-      if (!isInsideSearchBox && !isInsideSearchPanel) {
-        const state = useUIStore.getState();
-        if (state.isSearchPanelOpen) {
-          state.setSearchPanelOpen(false);
-        }
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside, true);
-    return () => document.removeEventListener('mousedown', handleClickOutside, true);
-  }, []);
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();

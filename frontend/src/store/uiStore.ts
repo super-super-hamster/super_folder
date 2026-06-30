@@ -13,9 +13,12 @@ export interface SearchFilter {
   isSizeFilter: boolean
   minSize: number | null
   maxSize: number | null
+  sizeUnit: 'KB' | 'MB' | 'GB'
   isTimeFilter: boolean
   minTime: number | null
   maxTime: number | null
+  isImageShapeFilter: boolean
+  imageShape: 'square' | 'landscape' | 'portrait'
 }
 
 export interface AutocompleteSuggestion {
@@ -96,9 +99,12 @@ export const useUIStore = create<UIState>()(
       isSizeFilter: false,
       minSize: null,
       maxSize: null,
+      sizeUnit: 'MB',
       isTimeFilter: false,
       minTime: null,
-      maxTime: null
+      maxTime: null,
+      isImageShapeFilter: false,
+      imageShape: 'square'
     },
       setSearchFilter: (filter) => set((state) => ({ searchFilter: { ...state.searchFilter, ...filter } })),
       isSidebarExpanded: false,

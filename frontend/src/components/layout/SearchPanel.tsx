@@ -1,27 +1,21 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useSettingsStore } from '../../store/settingsStore'
-import { useState, useRef, useEffect } from 'react'
-import { Input } from '@heroui/react'
+import { useState, useEffect } from 'react'
+import { Input, Dropdown, Label, Header, Separator, Select, ListBox } from '@heroui/react'
 import SimpleDatePicker from '../common/SimpleDatePicker'
+import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 
 export default function SearchPanel() {
   const { searchFilter, setSearchFilter, isSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
   const { searchPresets } = useSettingsStore()
   const [isResizing, setIsResizing] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
   const [isAddingExt, setIsAddingExt] = useState(false)
   const [extInput, setExtInput] = useState('')
   const [isAddingExclude, setIsAddingExclude] = useState(false)
   const [excludeInput, setExcludeInput] = useState('')
-  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsAdding(false)
-      }
-    }
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return
       // SearchPanel is top-aligned just under TopNav.
@@ -36,13 +30,11 @@ export default function SearchPanel() {
       if (isResizing) setIsResizing(false)
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
@@ -54,6 +46,7 @@ export default function SearchPanel() {
   if (!searchFilter.isExcludeFolder) availableFilters.push({ id: 'exclude_folder', label: '排除文件夹' })
   if (!searchFilter.isSizeFilter) availableFilters.push({ id: 'size', label: '文件大小' })
   if (!searchFilter.isTimeFilter) availableFilters.push({ id: 'time', label: '修改时间' })
+  if (!searchFilter.isImageShapeFilter) availableFilters.push({ id: 'image_shape', label: '图片形状' })
   if (searchFilter.type === 'all') {
     availableFilters.push({ id: 'file', label: '仅文件' })
     availableFilters.push({ id: 'folder', label: '仅文件夹' })
@@ -67,7 +60,7 @@ export default function SearchPanel() {
     if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: true })
     if (id === 'size') setSearchFilter({ isSizeFilter: true, minSize: null, maxSize: null })
     if (id === 'time') setSearchFilter({ isTimeFilter: true, minTime: null, maxTime: null })
-    setIsAdding(false)
+    if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: true, imageShape: 'square' })
   }
 
   const handleRemoveFilter = (id: string) => {
@@ -77,6 +70,7 @@ export default function SearchPanel() {
     if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: false, excludedFolders: [] })
     if (id === 'size') setSearchFilter({ isSizeFilter: false, minSize: null, maxSize: null })
     if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null })
+    if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: false, imageShape: 'square' })
   }
 
   const submitExt = () => {
@@ -281,25 +275,63 @@ export default function SearchPanel() {
                   </button>
                 </div>
                 <div className="w-full h-px bg-gray-200 my-2"></div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
                   <Input
                     type="number"
                     min={0}
                     value={searchFilter.minSize ?? ''}
                     onChange={(e: any) => setSearchFilter({ minSize: e.target.value === '' ? null : Number(e.target.value) })}
+                    onBlur={() => {
+                      if (searchFilter.minSize != null && searchFilter.maxSize != null && searchFilter.minSize > searchFilter.maxSize) {
+                        setSearchFilter({ maxSize: searchFilter.minSize })
+                      }
+                    }}
                     placeholder="最小"
-                    className="w-16 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                    className="w-full h-7 text-xs bg-white border border-gray-200 px-2 rounded-md [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
-                  <span className="text-gray-400 text-xs">-</span>
+                  <span className="text-gray-400 text-xs">|</span>
                   <Input
                     type="number"
                     min={0}
                     value={searchFilter.maxSize ?? ''}
                     onChange={(e: any) => setSearchFilter({ maxSize: e.target.value === '' ? null : Number(e.target.value) })}
+                    onBlur={() => {
+                      if (searchFilter.maxSize != null && searchFilter.minSize != null && searchFilter.maxSize < searchFilter.minSize) {
+                        setSearchFilter({ minSize: searchFilter.maxSize })
+                      }
+                    }}
                     placeholder="最大"
-                    className="w-16 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                    className="w-full h-7 text-xs bg-white border border-gray-200 px-2 rounded-md [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                 </div>
+                <Select
+                  selectedKey={searchFilter.sizeUnit || 'MB'}
+                  onSelectionChange={(key) => {
+                    if (!key || key === 'all') return
+                    const selected = [...(key as unknown as Set<string>)][0]
+                    if (selected) setSearchFilter({ sizeUnit: selected as 'KB' | 'MB' | 'GB' })
+                  }}
+                  className="w-full mt-2"
+                >
+                  <Select.Trigger className="h-7 min-h-7 bg-white border border-gray-200 rounded-md px-2 text-xs shadow-none">
+                    <Select.Value className="text-xs" />
+                    <Select.Indicator className="text-gray-400" />
+                  </Select.Trigger>
+                  <Select.Popover className="border border-gray-200 shadow-lg rounded-xl p-1">
+                    <ListBox>
+                      {(['KB', 'MB', 'GB'] as const).map((unit) => (
+                        <ListBox.Item
+                          key={unit}
+                          id={unit}
+                          textValue={unit}
+                          className="rounded-lg text-xs px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black cursor-pointer"
+                        >
+                          {unit}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
               </motion.div>
             )}
 
@@ -317,76 +349,133 @@ export default function SearchPanel() {
                   </button>
                 </div>
                 <div className="w-full h-px bg-gray-200 my-2"></div>
-                <div className="space-y-2">
+                <div className="flex flex-col items-center gap-1">
                   <SimpleDatePicker
                     value={searchFilter.minTime}
-                    onChange={(ts) => setSearchFilter({ minTime: ts })}
+                    onChange={(ts) => {
+                      if (ts != null && searchFilter.maxTime != null && ts > searchFilter.maxTime) {
+                        setSearchFilter({ minTime: ts, maxTime: ts })
+                      } else {
+                        setSearchFilter({ minTime: ts })
+                      }
+                    }}
                     ariaLabel="开始时间"
                   />
+                  <span className="text-gray-400 text-xs">|</span>
                   <SimpleDatePicker
                     value={searchFilter.maxTime}
-                    onChange={(ts) => setSearchFilter({ maxTime: ts })}
+                    onChange={(ts) => {
+                      if (ts != null && searchFilter.minTime != null && ts < searchFilter.minTime) {
+                        setSearchFilter({ maxTime: ts, minTime: ts })
+                      } else {
+                        setSearchFilter({ maxTime: ts })
+                      }
+                    }}
                     ariaLabel="结束时间"
                   />
                 </div>
               </motion.div>
             )}
+
+            {searchFilter.isImageShapeFilter && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-800 font-medium">图片形状</span>
+                  <button onClick={() => handleRemoveFilter('image_shape')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                    <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="w-full h-px bg-gray-200 my-2"></div>
+                <Select
+                  selectedKey={searchFilter.imageShape || 'square'}
+                  onSelectionChange={(key) => {
+                    const keySet = key as unknown as Set<string>
+                    const selected = keySet.values().next().value
+                    if (selected) setSearchFilter({ imageShape: selected as 'square' | 'landscape' | 'portrait' })
+                  }}
+                  className="w-full"
+                >
+                  <Select.Trigger className="h-8 min-h-8 bg-white border border-gray-200 rounded-md px-2 shadow-none flex items-center justify-center">
+                    <Select.Value className="text-xs">
+                      {(value) => {
+                        const iconMap: Record<string, string> = {
+                          square: '/src/assets/icons/square_line.svg',
+                          landscape: '/src/assets/icons/rectangle_line.svg',
+                          portrait: '/src/assets/icons/rectangle_vertical_line.svg'
+                        }
+                        return <img src={iconMap[String(value)]} className="w-5 h-5" />
+                      }}
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Popover className="border border-gray-200 shadow-lg rounded-xl p-1">
+                    <ListBox>
+                      {([
+                        { id: 'square', icon: '/src/assets/icons/square_line.svg' },
+                        { id: 'landscape', icon: '/src/assets/icons/rectangle_line.svg' },
+                        { id: 'portrait', icon: '/src/assets/icons/rectangle_vertical_line.svg' }
+                      ] as const).map((item) => (
+                        <ListBox.Item
+                          key={item.id}
+                          id={item.id}
+                          textValue={item.id}
+                          className="rounded-lg px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black cursor-pointer"
+                        >
+                          <img src={item.icon} className="w-5 h-5" />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {(availableFilters.length > 0 || searchPresets.length > 0) && (
-            <div className="relative flex justify-center mt-1" ref={menuRef}>
-              <button 
-                onClick={() => setIsAdding(!isAdding)}
-                className="w-full flex items-center justify-center py-1 text-sf-text-secondary text-xl hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                +
-              </button>
-              
-              <AnimatePresence>
-                {isAdding && (
-                  <motion.div
-                    ref={menuRef}
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-full top-0 ml-4 w-40 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50"
-                  >
-                    <div className="flex flex-col gap-1 p-1 max-h-48 overflow-y-auto">
-                      {availableFilters.map(filter => (
-                        <button
-                          key={filter.id}
-                          onClick={() => handleAddFilter(filter.id)}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          {filter.label}
-                        </button>
+            <Dropdown>
+              <Dropdown.Trigger>
+                <span className="w-full flex items-center justify-center py-1 text-sf-text-secondary text-xl hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                  +
+                </span>
+              </Dropdown.Trigger>
+              <Dropdown.Popover placement="right top" className="min-w-[160px]">
+                <Dropdown.Menu
+                  onAction={(key) => {
+                    const keyStr = String(key)
+                    if (keyStr.startsWith('preset-')) {
+                      const presetId = keyStr.replace('preset-', '')
+                      const preset = searchPresets.find(p => p.id === presetId)
+                      if (preset) setSearchFilter(preset.filter)
+                    } else {
+                      handleAddFilter(keyStr)
+                    }
+                  }}
+                >
+                  {availableFilters.map(filter => (
+                    <Dropdown.Item key={filter.id} id={filter.id} textValue={filter.label}>
+                      <Label>{filter.label}</Label>
+                    </Dropdown.Item>
+                  ))}
+                  {searchPresets.length > 0 && availableFilters.length > 0 && (
+                    <Separator />
+                  )}
+                  {searchPresets.length > 0 && (
+                    <Dropdown.Section>
+                      <Header>预设</Header>
+                      {searchPresets.map(preset => (
+                        <Dropdown.Item key={`preset-${preset.id}`} id={`preset-${preset.id}`} textValue={preset.name}>
+                          <Label>{preset.name}</Label>
+                        </Dropdown.Item>
                       ))}
-                      {searchPresets.length > 0 && (
-                        <>
-                          {availableFilters.length > 0 && (
-                            <div className="h-px bg-gray-200 mx-2 my-1" />
-                          )}
-                          <div className="px-3 py-1 text-[10px] text-gray-400 font-medium uppercase tracking-wider">预设</div>
-                          {searchPresets.map(preset => (
-                            <button
-                              key={preset.id}
-                              onClick={() => {
-                                setSearchFilter(preset.filter)
-                                setIsAdding(false)
-                              }}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                              {preset.name}
-                            </button>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    </Dropdown.Section>
+                  )}
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           )}
         </div>
 
@@ -407,14 +496,14 @@ export default function SearchPanel() {
                   isSelected ? 'bg-gray-200/80' : 'hover:bg-gray-100'
                 }`}
                 onClick={() => {
-                  let newQuery = searchQuery
+                  const { tags, remarks, keyword } = parseSearchQuery(searchQuery)
                   if (sugg.type === 'prefix') {
-                    // Quick replace for tag:
-                    newQuery = searchQuery.replace(new RegExp(sugg.matchedPrefix + '$', 'i'), 'tag:')
-                  } else {
-                    newQuery = searchQuery.replace(new RegExp('tag:' + sugg.matchedPrefix + '$', 'i'), `tag:${sugg.text} `)
+                    useUIStore.getState().setSearchQuery(buildSearchQuery({ tags, remarks, keyword: sugg.text + ' ' }))
+                  } else if (sugg.type === 'tag') {
+                    const isChinese = keyword.trim().toLowerCase().startsWith('标签:')
+                    const raw = `${isChinese ? '标签' : 'tag'}:${sugg.text}`
+                    useUIStore.getState().setSearchQuery(buildSearchQuery({ tags: [...tags, raw], remarks, keyword: '' }))
                   }
-                  useUIStore.getState().setSearchQuery(newQuery)
                   useUIStore.getState().setSearchSuggestions([])
                   useUIStore.getState().setSelectedSuggestionIndex(-1)
                 }}
