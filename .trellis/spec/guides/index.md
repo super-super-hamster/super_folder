@@ -23,10 +23,21 @@ These guides help you **ask the right questions before coding**.
 |-------|---------|-------------|
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
+| [Requirements Clarification Guide](./requirements-clarification-guide.md) | Confirm unclear requirements before coding | When a requirement is ambiguous or a previous fix was rejected |
 
 ---
 
 ## Quick Reference: Thinking Triggers
+
+### When to Stop and Ask for Clarification
+
+- [ ] The user describes a visual issue without showing a reference or mock
+- [ ] Multiple valid interpretations exist for the requirement
+- [ ] The user rejects an implementation but has not stated the desired target state
+- [ ] You find yourself guessing dimensions, colors, ratios, thresholds, or behavior
+- [ ] A previous fix was rejected for being “not what I meant”
+
+→ Read [Requirements Clarification Guide](./requirements-clarification-guide.md)
 
 ### When to Think About Cross-Layer Issues
 

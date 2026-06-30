@@ -403,16 +403,16 @@ export default function SearchPanel() {
                   className="w-full"
                 >
                   <Select.Trigger className="h-8 min-h-8 bg-white border border-gray-200 rounded-md px-2 shadow-none flex items-center justify-center">
-                    <Select.Value className="text-xs">
-                      {(value) => {
-                        const iconMap: Record<string, string> = {
-                          square: '/src/assets/icons/square_line.svg',
-                          landscape: '/src/assets/icons/rectangle_line.svg',
-                          portrait: '/src/assets/icons/rectangle_vertical_line.svg'
-                        }
-                        return <img src={iconMap[String(value)]} className="w-5 h-5" />
-                      }}
-                    </Select.Value>
+                    {(() => {
+                      const iconMap: Record<string, string> = {
+                        square: '/src/assets/icons/square_line.svg',
+                        landscape: '/src/assets/icons/rectangle_line.svg',
+                        portrait: '/src/assets/icons/rectangle_vertical_line.svg'
+                      }
+                      const key = searchFilter.imageShape || 'square'
+                      return <img src={iconMap[key]} className="w-6 h-6" alt={key} />
+                    })()}
+                    <Select.Value className="sr-only" />
                   </Select.Trigger>
                   <Select.Popover className="border border-gray-200 shadow-lg rounded-xl p-1">
                     <ListBox>
