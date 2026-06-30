@@ -46,9 +46,11 @@ func FindSimilarGroups(folderPath string, includeSubfolders bool, threshold int,
 	totalPairs := len(hashes) * (len(hashes) - 1) / 2
 	processed := 0
 
+	useMax := threshold <= 5 // 极度相似 uses max(pHash, dHash)
+
 	for i := 0; i < len(hashes); i++ {
 		for j := i + 1; j < len(hashes); j++ {
-			dist := hashDistance(hashes[i].PHash, hashes[i].DHash, hashes[j].PHash, hashes[j].DHash)
+			dist := hashDistance(hashes[i].PHash, hashes[i].DHash, hashes[j].PHash, hashes[j].DHash, useMax)
 			if dist <= threshold {
 				a, b := hashes[i].Path, hashes[j].Path
 				if a > b {
@@ -118,9 +120,15 @@ func collectImageFiles(folderPath string, includeSubfolders bool) ([]string, err
 	return files, nil
 }
 
-func hashDistance(p1, d1, p2, d2 uint64) int {
+func hashDistance(p1, d1, p2, d2 uint64, useMax bool) int {
 	pdist := bits.OnesCount64(p1 ^ p2)
 	ddist := bits.OnesCount64(d1 ^ d2)
+	if useMax {
+		if pdist > ddist {
+			return pdist
+		}
+		return ddist
+	}
 	if pdist < ddist {
 		return pdist
 	}

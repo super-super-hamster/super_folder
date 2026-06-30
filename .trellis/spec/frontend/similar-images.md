@@ -15,13 +15,15 @@ Library: `github.com/corona10/goimagehash` (pure Go).
 
 ## Threshold Levels
 
-| Name | Distance | Typical Match |
-|------|----------|---------------|
-| 极度相似 | ≤ 5 | Same image, compression/resize |
-| 高度相似 | ≤ 12 | Same scene/object, minor edits |
-| 部分相似 | ≤ 20 | Shared logo/texture, different context |
+| Name | Strategy | Threshold | Typical Match |
+|------|----------|-----------|---------------|
+| 极度相似 | `max(pHashDist, dHashDist)` | ≤ 5 | Same image, compression/resize |
+| 高度相似 | `min(pHashDist, dHashDist)` | ≤ 12 | Same scene/object, minor edits |
+| 部分相似 | `min(pHashDist, dHashDist)` | ≤ 20 | Shared logo/texture, different context |
 
-Distance is `min(pHashDistance, dHashDistance)`. Both are Hamming distances over 64-bit hashes.
+- 极度相似 requires **both** hashes to be close, maximizing precision.
+- 高度/部分相似 only require **one** hash to be close, maximizing recall.
+- This creates a nested hierarchy: 极度相似 ⊂ 高度相似 ⊂ 部分相似.
 
 ---
 
