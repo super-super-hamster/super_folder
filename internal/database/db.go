@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/glebarez/sqlite"
@@ -33,6 +34,20 @@ func InitDB() error {
 	// Make sure WAL is applied
 	DB.Exec("PRAGMA journal_mode=WAL;")
 
+	// Schema migration: v2 drops legacy similar-image tables so they can be
+	// recreated with the current primary-key definitions.
+	schemaVersionStr, _ := GetConfig("db_schema_version")
+	schemaVersion := 0
+	if schemaVersionStr != "" {
+		schemaVersion, _ = strconv.Atoi(schemaVersionStr)
+	}
+	if schemaVersion < 2 {
+		DB.Exec("DROP TABLE IF EXISTS image_hashes;")
+		DB.Exec("DROP TABLE IF EXISTS similar_pairs;")
+		DB.Exec("DROP TABLE IF EXISTS similar_folder_states;")
+		_ = SetConfig("db_schema_version", "2")
+	}
+
 	// Migrate the schema
 	return DB.AutoMigrate(
 		&models.Config{},
@@ -43,6 +58,7 @@ func InitDB() error {
 		&models.Favorite{},
 		&models.ImageHash{},
 		&models.SimilarPair{},
+		&models.SimilarHashState{},
 		&models.SimilarFolderState{},
 	)
 }
@@ -305,6 +321,9 @@ func IsFavorite(path string) (bool, error) {
 // Similar Image Management
 
 func SaveImageHashes(hashes []models.ImageHash) error {
+	if len(hashes) == 0 {
+		return nil
+	}
 	return DB.Save(&hashes).Error
 }
 
@@ -325,19 +344,35 @@ func SaveSimilarPairs(pairs []models.SimilarPair) error {
 	return DB.Save(&pairs).Error
 }
 
-func DeleteSimilarPairsByFolder(folderPath string) error {
-	return DB.Where("folder_path = ?", folderPath).Delete(&models.SimilarPair{}).Error
+func DeleteSimilarPairsByFolder(folderPath string, threshold int, useMax bool) error {
+	return DB.Where("folder_path = ? AND threshold = ? AND use_max = ?", folderPath, threshold, useMax).Delete(&models.SimilarPair{}).Error
 }
 
-func GetSimilarPairsByFolder(folderPath string) ([]models.SimilarPair, error) {
+func GetSimilarPairsByFolder(folderPath string, threshold int, useMax bool) ([]models.SimilarPair, error) {
 	var pairs []models.SimilarPair
-	err := DB.Where("folder_path = ?", folderPath).Find(&pairs).Error
+	err := DB.Where("folder_path = ? AND threshold = ? AND use_max = ?", folderPath, threshold, useMax).Find(&pairs).Error
 	return pairs, err
 }
 
-func GetSimilarFolderState(folderPath string) (*models.SimilarFolderState, error) {
-	var state models.SimilarFolderState
+func GetSimilarHashState(folderPath string) (*models.SimilarHashState, error) {
+	var state models.SimilarHashState
 	err := DB.Where("folder_path = ?", folderPath).First(&state).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &state, nil
+}
+
+func SaveSimilarHashState(state *models.SimilarHashState) error {
+	return DB.Save(state).Error
+}
+
+func GetSimilarFolderState(folderPath string, threshold int, useMax bool) (*models.SimilarFolderState, error) {
+	var state models.SimilarFolderState
+	err := DB.Where("folder_path = ? AND threshold = ? AND use_max = ?", folderPath, threshold, useMax).First(&state).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

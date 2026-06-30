@@ -31,8 +31,8 @@ type Thumbnail struct {
 type ImageHash struct {
 	Path       string `gorm:"primaryKey"`
 	FolderPath string `gorm:"index"`
-	PHash      uint64
-	DHash      uint64
+	PHash      string // stored as decimal string to avoid sqlite uint64 high-bit issue
+	DHash      string
 	FileSize   int64
 	ModTime    int64
 	IndexedAt  int64
@@ -43,16 +43,25 @@ type SimilarPair struct {
 	FolderPath string `gorm:"primaryKey"`
 	PathA      string `gorm:"primaryKey"`
 	PathB      string `gorm:"primaryKey"`
+	UseMax     bool   `gorm:"primaryKey"`
 	Distance   int
 	Threshold  int
 }
 
-// SimilarFolderState tracks the indexed state of a folder for incremental updates
-type SimilarFolderState struct {
+// SimilarHashState tracks the freshness of cached image hashes for a folder
+type SimilarHashState struct {
 	FolderPath        string `gorm:"primaryKey"`
 	IncludeSubfolders bool
-	Threshold         int
 	MaxFileMtime      int64
+	IndexedAt         int64
+}
+
+// SimilarFolderState tracks that a specific search has been computed for a folder
+type SimilarFolderState struct {
+	FolderPath        string `gorm:"primaryKey"`
+	Threshold         int    `gorm:"primaryKey"`
+	UseMax            bool   `gorm:"primaryKey"`
+	IncludeSubfolders bool
 	IndexedAt         int64
 }
 

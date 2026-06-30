@@ -8,7 +8,6 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { PasteFiles, DeleteToRecycleBin, GetLocalServerPort, GetLocalAuthToken, OpenFileWithDefault } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import ContextMenu from './ContextMenu'
 import RenamePopover from './RenamePopover'
 import FileListItem from './FileListItem'
 import GroupFastScroller from './GroupFastScroller'
@@ -535,7 +534,6 @@ export default function FileList() {
 
       <GroupFastScroller rowVirtualizer={rowVirtualizer} listItems={listItems} isGrouped={isGrouped} />
 
-      <ContextMenu />
       <RenamePopover />
 
     </div>

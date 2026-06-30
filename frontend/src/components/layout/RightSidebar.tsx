@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import FilePreview from '../preview/FilePreview'
 import RemarkPanel from '../preview/RemarkPanel'
 import { useUIStore } from '../../store/uiStore'
-import TagPanel from './TagPanel'
+import RightSidebarAdvanced from './RightSidebarAdvanced'
 
 export default function RightSidebar() {
   const [activeTab, setActiveTab] = useState('预览')
@@ -85,7 +85,7 @@ export default function RightSidebar() {
           </div>
         )}
         {activeTab === '高级' && (
-          <TagPanel />
+          <RightSidebarAdvanced />
         )}
       </div>
     </motion.div>

@@ -12,6 +12,7 @@ import { useModalStore } from '../../store/modalStore'
 import { useTaskStore } from '../../store/taskStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
+import { isImage } from '../../utils/fileFormatting'
 import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
@@ -191,6 +192,18 @@ export default function ContextMenu() {
         break
       case 'refresh':
         triggerRefresh()
+        break
+      case 'find_similar':
+        if (targetPath) {
+          const folderPath = targetPath.substring(0, targetPath.lastIndexOf('\\')) || currentPath || 'C:\\'
+          const query = new URLSearchParams({
+            path: targetPath,
+            subfolders: 'false',
+            threshold: '5',
+            useMax: 'false'
+          })
+          navigate(`similar://${folderPath}?${query.toString()}`, '相似图片', false)
+        }
         break
     }
     closeMenu()
@@ -395,6 +408,12 @@ export default function ContextMenu() {
                   <button onClick={() => handleAction('open_with_default')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
                     <img src="/src/assets/icons/share_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="open with default" />
                     使用默认程序打开
+                  </button>
+                )}
+                {targetPath && isImage(targetPath.substring(targetPath.lastIndexOf('.'))) && (
+                  <button onClick={() => handleAction('find_similar')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                    <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="find similar" />
+                    和它相似的图
                   </button>
                 )}
               </>

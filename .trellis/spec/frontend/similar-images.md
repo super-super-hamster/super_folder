@@ -18,8 +18,8 @@ Library: `github.com/corona10/goimagehash` (pure Go).
 | Name | Strategy | Threshold | Typical Match |
 |------|----------|-----------|---------------|
 | 极度相似 | `max(pHashDist, dHashDist)` | ≤ 5 | Same image, compression/resize |
-| 高度相似 | `min(pHashDist, dHashDist)` | ≤ 12 | Same scene/object, minor edits |
-| 部分相似 | `min(pHashDist, dHashDist)` | ≤ 20 | Shared logo/texture, different context |
+| 高度相似 | `min(pHashDist, dHashDist)` | ≤ 5 | Same scene/object, minor edits |
+| 部分相似 | `min(pHashDist, dHashDist)` | ≤ 10 | Shared logo/texture, different context |
 
 - 极度相似 requires **both** hashes to be close, maximizing precision.
 - 高度/部分相似 only require **one** hash to be close, maximizing recall.
@@ -32,7 +32,7 @@ Library: `github.com/corona10/goimagehash` (pure Go).
 Similar-image mode uses a virtual path:
 
 ```
-similar://C:\folder\path?subfolders=true&threshold=12
+similar://C:\folder\path?subfolders=true&threshold=5&useMax=false
 ```
 
 - `similar://` prefix tells `App.tsx` to render the `SimilarImages` component
@@ -45,19 +45,21 @@ similar://C:\folder\path?subfolders=true&threshold=12
 
 ## State Storage
 
-Three DB tables:
+Four DB tables:
 
 - `image_hashes` — per-image pHash/dHash, scoped by `folder_path`
-- `similar_pairs` — edges between similar images within a folder scope
-- `similar_folder_state` — cached indexing state for incremental refresh
+- `similar_hash_states` — hash freshness per folder (`folder_path`, `include_subfolders`, `max_file_mtime`)
+- `similar_pairs` — edges between similar images, scoped by `folder_path`, `threshold`, and `use_max`
+- `similar_folder_states` — marks that a specific search (`threshold` + `use_max`) has been computed
 
 ### Refresh Logic
 
 On entering the page or clicking refresh:
-1. Load `SimilarFolderState` for the folder
-2. Compare stored `MaxFileMtime` with current folder's max file mtime
-3. If scope/threshold changed or mtime newer → recompute
-4. Otherwise → load cached `SimilarPair` rows and build groups
+1. Load `SimilarHashState` for the folder
+2. If missing, scope changed, or `MaxFileMtime` older than current max → recompute hashes and pairs
+3. Otherwise load `SimilarFolderState` for the requested `threshold`/`use_max`
+4. If that search state is missing → reuse hashes and recompute only pairs/groups
+5. Otherwise → load cached `SimilarPair` rows for the current `threshold`/`use_max` and build groups
 
 ---
 
@@ -89,5 +91,7 @@ Frontend listens with `EventsOn('similarity-progress', ...)` and updates `Progre
 ## Common Pitfalls
 
 - Don't call `FindSimilarImageGroups` without first checking `NeedsReindex`; cached results are fast
-- `SimilarImages` must restore the previous `viewMode` in its cleanup effect
+- `SimilarImages` no longer forces a global `viewMode`; it renders results in its own album-style layout using `FileListItem`
+- Right-click context menu must be rendered at the top level (e.g. `App.tsx`) so it stays available when `SimilarImages` replaces `FileList`
 - Recursive breadcrumb for `similar://` must use the raw folder path, not the full virtual path
+- `SimilarPair` must store the `use_max` value used during comparison; queries are scoped by (`folder_path`, `threshold`, `use_max`)

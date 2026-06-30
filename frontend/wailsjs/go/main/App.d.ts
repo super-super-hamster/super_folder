@@ -11,9 +11,11 @@ export function BatchRenameFiles(arg1:Record<string, string>):Promise<void>;
 
 export function CancelPaste(arg1:string):Promise<void>;
 
+export function CancelSimilarImageSearch():Promise<void>;
+
 export function CheckBatchRenameConflicts(arg1:Record<string, string>):Promise<Array<string>>;
 
-export function CheckSimilarImagesNeedReindex(arg1:string,arg2:boolean,arg3:number):Promise<boolean>;
+export function CheckSimilarImagesNeedReindex(arg1:string,arg2:boolean,arg3:number,arg4:boolean):Promise<boolean>;
 
 export function ClearThumbnailCache():Promise<void>;
 
@@ -35,7 +37,9 @@ export function DeleteTag(arg1:string):Promise<void>;
 
 export function DeleteToRecycleBin(arg1:Array<string>):Promise<void>;
 
-export function FindSimilarImageGroups(arg1:string,arg2:boolean,arg3:number):Promise<Array<any>>;
+export function FindImagesSimilarTo(arg1:string,arg2:string,arg3:boolean,arg4:number,arg5:boolean):Promise<Array<string>>;
+
+export function FindSimilarImageGroups(arg1:string,arg2:boolean,arg3:number,arg4:boolean):Promise<Array<any>>;
 
 export function GetConfig(arg1:string):Promise<string>;
 
@@ -63,9 +67,7 @@ export function GetRecentItems():Promise<Array<models.FileInfo>>;
 
 export function GetRenameSchemes():Promise<Array<rename.Scheme>>;
 
-export function GetSimilarImageGroups(arg1:string):Promise<Array<any>>;
-
-export function GetSimilarImageState(arg1:string):Promise<models.SimilarFolderState>;
+export function GetSimilarImageGroups(arg1:string,arg2:number,arg3:boolean):Promise<Array<any>>;
 
 export function GetSimilarImageThresholds():Promise<Record<string, number>>;
 

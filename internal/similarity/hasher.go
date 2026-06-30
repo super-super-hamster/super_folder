@@ -1,6 +1,7 @@
 package similarity
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/corona10/goimagehash"
+	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
 )
 
@@ -55,8 +57,8 @@ func ComputeHash(path string) (*models.ImageHash, error) {
 
 	return &models.ImageHash{
 		Path:      path,
-		PHash:     phash.GetHash(),
-		DHash:     dhash.GetHash(),
+		PHash:     fmt.Sprintf("%d", phash.GetHash()),
+		DHash:     fmt.Sprintf("%d", dhash.GetHash()),
 		FileSize:  info.Size(),
 		ModTime:   info.ModTime().UnixMilli(),
 		IndexedAt: time.Now().UnixMilli(),
@@ -76,22 +78,7 @@ func resizeMaxDimension(img image.Image, maxDim int) image.Image {
 	newH := int(float64(h) * scale)
 
 	resized := image.NewRGBA(image.Rect(0, 0, newW, newH))
-	xRatio := float64(w) / float64(newW)
-	yRatio := float64(h) / float64(newH)
-
-	for y := 0; y < newH; y++ {
-		for x := 0; x < newW; x++ {
-			srcX := int(float64(x) * xRatio)
-			srcY := int(float64(y) * yRatio)
-			resized.Set(x, y, img.At(bounds.Min.X+srcX, bounds.Min.Y+srcY))
-		}
-	}
+	draw.BiLinear.Scale(resized, resized.Bounds(), img, bounds, draw.Over, nil)
 	return resized
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}

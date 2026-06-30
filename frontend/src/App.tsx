@@ -14,6 +14,7 @@ import SettingsContent from './components/settings/SettingsContent'
 import { useUndoStore } from './store/undoStore'
 import TerminalPanel from './components/terminal/TerminalPanel'
 import FullFileEditor from './components/editor/FullFileEditor'
+import ContextMenu from './components/fileList/ContextMenu'
 
 function App() {
   const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
@@ -183,6 +184,7 @@ function App() {
         </div>
       </div>
       <ModalManager />
+      <ContextMenu />
     </>
   )
 }

@@ -8,37 +8,37 @@ import { isImage, getFileIcon, formatSize, formatDate } from '../../utils/fileFo
 export interface FileListItemProps {
   file: models.FileInfo
   viewMode: 'list' | 'grid' | 'album'
-  isSelectionMode: boolean
-  selectedPaths: Set<string>
-  dragSelectedPaths: Set<string>
-  dragOverPath: string | null
-  fileTagColors: Record<string, string>
+  isSelectionMode?: boolean
+  selectedPaths?: Set<string>
+  dragSelectedPaths?: Set<string>
+  dragOverPath?: string | null
+  fileTagColors?: Record<string, string>
   onClick: (e: React.MouseEvent, file: models.FileInfo) => void
   onDoubleClick: (file: models.FileInfo) => void
   onContextMenu: (e: React.MouseEvent, file: models.FileInfo) => void
-  onDragStart: (e: React.DragEvent, file: models.FileInfo) => void
-  onDragOver: (e: React.DragEvent, file: models.FileInfo) => void
-  onDragLeave: (e: React.DragEvent, file: models.FileInfo) => void
-  onDrop: (e: React.DragEvent, file: models.FileInfo) => void
-  onToggleSelect: (path: string) => void
+  onDragStart?: (e: React.DragEvent, file: models.FileInfo) => void
+  onDragOver?: (e: React.DragEvent, file: models.FileInfo) => void
+  onDragLeave?: (e: React.DragEvent, file: models.FileInfo) => void
+  onDrop?: (e: React.DragEvent, file: models.FileInfo) => void
+  onToggleSelect?: (path: string) => void
 }
 
 export default function FileListItem({
   file,
   viewMode,
-  isSelectionMode,
-  selectedPaths,
-  dragSelectedPaths,
-  dragOverPath,
-  fileTagColors,
+  isSelectionMode = false,
+  selectedPaths = new Set(),
+  dragSelectedPaths = new Set(),
+  dragOverPath = null,
+  fileTagColors = {},
   onClick,
   onDoubleClick,
   onContextMenu,
-  onDragStart,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  onToggleSelect
+  onDragStart = () => {},
+  onDragOver = () => {},
+  onDragLeave = () => {},
+  onDrop = () => {},
+  onToggleSelect = () => {}
 }: FileListItemProps) {
   const isSelected = selectedPaths.has(file.path) || dragSelectedPaths.has(file.path)
   const isChecked = selectedPaths.has(file.path)

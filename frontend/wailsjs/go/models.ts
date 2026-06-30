@@ -41,26 +41,6 @@ export namespace models {
 		    return a;
 		}
 	}
-	export class SimilarFolderState {
-	    FolderPath: string;
-	    IncludeSubfolders: boolean;
-	    Threshold: number;
-	    MaxFileMtime: number;
-	    IndexedAt: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new SimilarFolderState(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.FolderPath = source["FolderPath"];
-	        this.IncludeSubfolders = source["IncludeSubfolders"];
-	        this.Threshold = source["Threshold"];
-	        this.MaxFileMtime = source["MaxFileMtime"];
-	        this.IndexedAt = source["IndexedAt"];
-	    }
-	}
 	export class Tag {
 	    id: string;
 	    name: string;

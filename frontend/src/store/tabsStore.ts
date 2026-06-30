@@ -34,7 +34,7 @@ interface TabsState {
   addTab: (path: string, title?: string, isDir?: boolean) => void
   removeTab: (id: string) => void
   setActiveTab: (id: string) => void
-  navigate: (path: string, title?: string, isDir?: boolean) => void
+  navigate: (path: string, title?: string, isDir?: boolean, replace?: boolean) => void
   goBack: () => void
   goForward: () => void
   popCurrent: () => void
@@ -78,7 +78,7 @@ export const useTabsStore = create<TabsState>((set) => ({
       return { tabs: newTabs, activeTabId }
     })),
   setActiveTab: (id) => guardUnsaved(() => set({ activeTabId: id })),
-  navigate: (path, title, isDir = true) =>
+  navigate: (path, title, isDir = true, replace = false) =>
     guardUnsaved(() => set((state) => {
       const tabs = state.tabs.map((tab) => {
         if (tab.id === state.activeTabId) {
@@ -91,7 +91,11 @@ export const useTabsStore = create<TabsState>((set) => ({
           }
           // Add to history and truncate future history
           const newHistory = tab.history.slice(0, tab.historyIndex + 1)
-          newHistory.push({ path, isDir })
+          if (replace && tab.historyIndex >= 0) {
+            newHistory[tab.historyIndex] = { path, isDir }
+          } else {
+            newHistory.push({ path, isDir })
+          }
           return {
             ...tab,
             currentPath: path,

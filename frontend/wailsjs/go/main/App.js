@@ -18,12 +18,16 @@ export function CancelPaste(arg1) {
   return window['go']['main']['App']['CancelPaste'](arg1);
 }
 
+export function CancelSimilarImageSearch() {
+  return window['go']['main']['App']['CancelSimilarImageSearch']();
+}
+
 export function CheckBatchRenameConflicts(arg1) {
   return window['go']['main']['App']['CheckBatchRenameConflicts'](arg1);
 }
 
-export function CheckSimilarImagesNeedReindex(arg1, arg2, arg3) {
-  return window['go']['main']['App']['CheckSimilarImagesNeedReindex'](arg1, arg2, arg3);
+export function CheckSimilarImagesNeedReindex(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['CheckSimilarImagesNeedReindex'](arg1, arg2, arg3, arg4);
 }
 
 export function ClearThumbnailCache() {
@@ -66,8 +70,12 @@ export function DeleteToRecycleBin(arg1) {
   return window['go']['main']['App']['DeleteToRecycleBin'](arg1);
 }
 
-export function FindSimilarImageGroups(arg1, arg2, arg3) {
-  return window['go']['main']['App']['FindSimilarImageGroups'](arg1, arg2, arg3);
+export function FindImagesSimilarTo(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['FindImagesSimilarTo'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function FindSimilarImageGroups(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['FindSimilarImageGroups'](arg1, arg2, arg3, arg4);
 }
 
 export function GetConfig(arg1) {
@@ -122,12 +130,8 @@ export function GetRenameSchemes() {
   return window['go']['main']['App']['GetRenameSchemes']();
 }
 
-export function GetSimilarImageGroups(arg1) {
-  return window['go']['main']['App']['GetSimilarImageGroups'](arg1);
-}
-
-export function GetSimilarImageState(arg1) {
-  return window['go']['main']['App']['GetSimilarImageState'](arg1);
+export function GetSimilarImageGroups(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetSimilarImageGroups'](arg1, arg2, arg3);
 }
 
 export function GetSimilarImageThresholds() {

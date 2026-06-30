@@ -630,8 +630,8 @@ func (a *App) AutoCleanThumbnailCache(limitMB int) error {
 
 // Similar image bindings
 
-func (a *App) FindSimilarImageGroups(folderPath string, includeSubfolders bool, threshold int) ([][]string, error) {
-	return similarity.FindSimilarGroups(folderPath, includeSubfolders, threshold, func(p similarity.Progress) {
+func (a *App) FindSimilarImageGroups(folderPath string, includeSubfolders bool, threshold int, useMax bool) ([][]string, error) {
+	return similarity.FindSimilarGroups(folderPath, includeSubfolders, threshold, useMax, func(p similarity.Progress) {
 		runtime.EventsEmit(a.ctx, "similarity-progress", map[string]any{
 			"stage":   p.Stage,
 			"current": p.Current,
@@ -640,24 +640,28 @@ func (a *App) FindSimilarImageGroups(folderPath string, includeSubfolders bool, 
 	})
 }
 
-func (a *App) GetSimilarImageGroups(folderPath string) ([][]string, error) {
-	return similarity.LoadSimilarGroups(folderPath)
+func (a *App) FindImagesSimilarTo(queryPath string, folderPath string, includeSubfolders bool, threshold int, useMax bool) ([]string, error) {
+	return similarity.FindImagesSimilarTo(queryPath, folderPath, includeSubfolders, threshold, useMax)
 }
 
-func (a *App) CheckSimilarImagesNeedReindex(folderPath string, includeSubfolders bool, threshold int) (bool, error) {
-	return similarity.NeedsReindex(folderPath, includeSubfolders, threshold)
+func (a *App) CancelSimilarImageSearch() {
+	similarity.CancelCurrentSearch()
+}
+
+func (a *App) GetSimilarImageGroups(folderPath string, threshold int, useMax bool) ([][]string, error) {
+	return similarity.LoadSimilarGroups(folderPath, threshold, useMax)
+}
+
+func (a *App) CheckSimilarImagesNeedReindex(folderPath string, includeSubfolders bool, threshold int, useMax bool) (bool, error) {
+	return similarity.NeedsReindex(folderPath, includeSubfolders, threshold, useMax)
 }
 
 func (a *App) GetSimilarImageThresholds() map[string]int {
 	return map[string]int{
 		"极度相似": 5,
-		"高度相似": 12,
-		"部分相似": 20,
+		"高度相似": 5,
+		"部分相似": 10,
 	}
-}
-
-func (a *App) GetSimilarImageState(folderPath string) (*models.SimilarFolderState, error) {
-	return database.GetSimilarFolderState(folderPath)
 }
 
 func (a *App) GetTagUsageCounts() (map[string]int, error) {

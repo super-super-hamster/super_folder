@@ -166,7 +166,7 @@ export default function TagPanel() {
   }, [globalTags, inputValue])
 
   if (selectedPaths.size === 0) {
-    return <div className="text-gray-400 text-center mt-8 text-sm">请选择至少一个文件以管理标签</div>
+    return <div className="text-gray-400 text-center mt-8 text-sm">当前未选择文件</div>
   }
 
   return (
@@ -261,15 +261,13 @@ export default function TagPanel() {
 
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors text-sf-text mt-2"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors text-sf-text text-sm font-medium mt-2"
         >
-          {/* <motion.svg 
-            animate={{ rotate: isAdding ? 45 : 0 }} 
-            width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
-          </motion.svg> */}
+          </svg>
+          添加标签
         </button>
       </div>
     </div>
