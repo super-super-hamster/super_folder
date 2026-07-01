@@ -167,40 +167,51 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     const onDataDisposable = term.onData((data) => {
       if (sfMode) {
         if (sfState === 'rename_code') {
-          const lines = sfRenameCode.split('\n')
+          const getLines = () => sfRenameCode.split('\n')
+          const totalHeaderLines = 9
 
-          const redrawCode = () => {
-            const newLines = sfRenameCode.split('\n')
-            term.write('\x1b[2J\x1b[H')
-            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> \x1b[36m代码（按 ESC 完成）：\x1b[0m\r\n`)
-            term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
-            term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
-            term.write('\x1b[36m可用参数：\x1b[0m\r\n')
-            term.write('  file  - 当前文件对象：{ name, ext, path, isDir, size }\r\n')
-            term.write('  index - 当前文件在列表中的索引\r\n')
-            term.write('  files - 全部文件数组\r\n')
-            term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
-            term.write('\r\n')
+          const moveCursorTo = (targetLine: number, targetCol: number) => {
+            const newLines = getLines()
+            const safeLine = Math.max(0, Math.min(targetLine, newLines.length - 1))
+            const safeCol = Math.max(0, Math.min(targetCol, newLines[safeLine].length))
+            codeCursorLine = safeLine
+            codeCursorCol = safeCol
+            term.write('\x1b[H')
+            const targetY = totalHeaderLines + safeLine
+            if (targetY > 0) term.write('\x1b[B')
+            if (safeCol > 0) term.write('\x1b[C')
+          }
+
+          const drawContent = () => {
+            const newLines = getLines()
+            term.write('\x1b[H')
+            const headerEnd = totalHeaderLines
+            if (headerEnd > 0) term.write('\x1b[B')
             for (let i = 0; i < newLines.length; i++) {
+              term.write('\x1b[2K')
               term.write(newLines[i])
-              if (i < newLines.length - 1) term.write('\r\n')
+              if (i < newLines.length - 1) {
+                term.write('\r\n')
+              }
             }
-            // Position cursor
-            const targetLine = Math.max(0, Math.min(codeCursorLine, newLines.length - 1))
-            const targetCol = Math.max(0, Math.min(codeCursorCol, newLines[targetLine].length))
-            const linesAbove = newLines.length - targetLine - 1
-            if (linesAbove > 0) term.write(`\x1b[${linesAbove}A`)
-            const colsRight = newLines[targetLine].length - targetCol
-            if (colsRight > 0) term.write(`\x1b[${colsRight}C`)
+          }
+
+          const redrawCode = (focus = true) => {
+            drawContent()
+            if (focus) {
+              moveCursorTo(codeCursorLine, codeCursorCol)
+            }
           }
 
           if (data === '\x1b') { // ESC
+            term.write('\x1b[?1049l')
             sfState = 'rename_confirm'
             sfBuffer = ''
             sfCursorOffset = 0
-            term.write('\r\n\x1b[36m是否保存(Y/N)：\x1b[0m')
+            term.write('\x1b[36m是否保存(Y/N)：\x1b[0m')
             return
           } else if (data === '\r') {
+            const lines = getLines()
             const before = lines[codeCursorLine].slice(0, codeCursorCol)
             const after = lines[codeCursorLine].slice(codeCursorCol)
             lines[codeCursorLine] = before
@@ -211,9 +222,9 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             redrawCode()
             return
           } else if (data === '\x7f') { // Backspace
+            const lines = getLines()
             if (codeCursorCol > 0) {
-              const line = lines[codeCursorLine]
-              lines[codeCursorLine] = line.slice(0, codeCursorCol - 1) + line.slice(codeCursorCol)
+              lines[codeCursorLine] = lines[codeCursorLine].slice(0, codeCursorCol - 1) + lines[codeCursorLine].slice(codeCursorCol)
               codeCursorCol--
             } else if (codeCursorLine > 0) {
               const prevLen = lines[codeCursorLine - 1].length
@@ -226,42 +237,46 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             redrawCode()
             return
           } else if (data === '\x1b[A') { // Up
+            const lines = getLines()
             if (codeCursorLine > 0) {
               codeCursorLine--
               codeCursorCol = Math.min(codeCursorCol, lines[codeCursorLine].length)
-              redrawCode()
+              moveCursorTo(codeCursorLine, codeCursorCol)
             }
             return
           } else if (data === '\x1b[B') { // Down
+            const lines = getLines()
             if (codeCursorLine < lines.length - 1) {
               codeCursorLine++
               codeCursorCol = Math.min(codeCursorCol, lines[codeCursorLine].length)
-              redrawCode()
+              moveCursorTo(codeCursorLine, codeCursorCol)
             }
             return
           } else if (data === '\x1b[D') { // Left
+            const lines = getLines()
             if (codeCursorCol > 0) {
               codeCursorCol--
             } else if (codeCursorLine > 0) {
               codeCursorLine--
               codeCursorCol = lines[codeCursorLine].length
             }
-            redrawCode()
+            moveCursorTo(codeCursorLine, codeCursorCol)
             return
           } else if (data === '\x1b[C') { // Right
+            const lines = getLines()
             if (codeCursorCol < lines[codeCursorLine].length) {
               codeCursorCol++
             } else if (codeCursorLine < lines.length - 1) {
               codeCursorLine++
               codeCursorCol = 0
             }
-            redrawCode()
+            moveCursorTo(codeCursorLine, codeCursorCol)
             return
           } else if (data.startsWith('\x1b')) {
             return
           } else {
-            const line = lines[codeCursorLine]
-            lines[codeCursorLine] = line.slice(0, codeCursorCol) + data + line.slice(codeCursorCol)
+            const lines = getLines()
+            lines[codeCursorLine] = lines[codeCursorLine].slice(0, codeCursorCol) + data + lines[codeCursorLine].slice(codeCursorCol)
             codeCursorCol += data.length
             sfRenameCode = lines.join('\n')
             redrawCode()
@@ -269,7 +284,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           }
         }
 
-        if (sfState === 'rename_confirm') {
+                if (sfState === 'rename_confirm') {
           if (data === '\r') {
             const answer = sfBuffer.trim().toLowerCase()
             if (answer === 'y' || answer === 'yes') {
@@ -358,12 +373,16 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               sfState = 'rename_code'
               sfBuffer = ''
               sfRenameCode = RENAME_SCHEME_TEMPLATE
-              codeCursorLine = sfRenameCode.split('\n').length - 1
-              codeCursorCol = 1
+              const templateLines = sfRenameCode.split('\n')
+              codeCursorLine = templateLines.length - 1
+              codeCursorCol = templateLines[templateLines.length - 1].length
               const dir = await getSchemesDir()
               savePath = dir ? `${dir}\\${cmd}.js` : `${cmd}.js`
-              sfLineCount += 8 + sfRenameCode.split('\n').length
-              term.write('\x1b[36m代码（按 ESC 完成）：\x1b[0m\r\n')
+              sfLineCount += 8 + templateLines.length
+              // Enter alternate screen and draw initial editor
+              term.write('\x1b[?1049h')
+              term.write('\x1b[H\x1b[2J')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> \x1b[36m代码（按 ESC 完成，Ctrl+C 取消）：\x1b[0m\r\n`)
               term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
               term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
               term.write('\x1b[36m可用参数：\x1b[0m\r\n')
@@ -372,7 +391,10 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               term.write('  files - 全部文件数组\r\n')
               term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
               term.write('\r\n')
-              term.write(sfRenameCode)
+              for (let i = 0; i < templateLines.length; i++) {
+                term.write(templateLines[i])
+                if (i < templateLines.length - 1) term.write('\r\n')
+              }
             }).catch((e: any) => {
               term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
               term.write('\x1b[36m名称：\x1b[0m ')
@@ -440,13 +462,15 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               sfState = 'rename_code'
               sfBuffer = ''
               sfRenameCode = target.code
-              const lines = sfRenameCode.split('\n')
-              codeCursorLine = lines.length - 1
-              codeCursorCol = lines[lines.length - 1].length
+              const editLines = sfRenameCode.split('\n')
+              codeCursorLine = editLines.length - 1
+              codeCursorCol = editLines[editLines.length - 1].length
               const dir = await getSchemesDir()
               savePath = dir ? `${dir}\\${target.name}.js` : `${target.name}.js`
-              sfLineCount += 8 + lines.length
-              term.write('\x1b[36m代码（按 ESC 完成）：\x1b[0m\r\n')
+              sfLineCount += 8 + editLines.length
+              term.write('\x1b[?1049h')
+              term.write('\x1b[H\x1b[2J')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> \x1b[36m代码（按 ESC 完成，Ctrl+C 取消）：\x1b[0m\r\n`)
               term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
               term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
               term.write('\x1b[36m可用参数：\x1b[0m\r\n')
@@ -455,6 +479,10 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               term.write('  files - 全部文件数组\r\n')
               term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
               term.write('\r\n')
+              for (let i = 0; i < editLines.length; i++) {
+                term.write(editLines[i])
+                if (i < editLines.length - 1) term.write('\r\n')
+              }
               term.write(sfRenameCode)
             }).catch((e: any) => {
               term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
@@ -546,6 +574,10 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           }
         } else {
           if (data.startsWith('\x1b')) return // ignore other ansi
+          // If user was browsing history, reset to latest and start fresh input
+          if (sfHistoryIndex !== sfHistory.length) {
+            sfHistoryIndex = sfHistory.length
+          }
           const pos = sfBuffer.length - sfCursorOffset
           sfBuffer = sfBuffer.slice(0, pos) + data + sfBuffer.slice(pos)
           redrawLine()
@@ -702,15 +734,21 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
 
   // Call fitAddon when terminal panel height changes
   useEffect(() => {
-    if (fitAddonRef.current && isTerminalOpen) {
-      // Add a slight delay to allow CSS transitions/resizing to finish
-      const timeout = setTimeout(() => {
-        fitAddonRef.current?.fit()
-        if (xtermRef.current) {
-          EventsEmit('terminal:resize', { cols: xtermRef.current.cols, rows: xtermRef.current.rows })
-        }
-      }, 50) // Increased slightly to ensure flex layout finishes settling
-      return () => clearTimeout(timeout)
+    if (!fitAddonRef.current) return
+    const fit = () => {
+      if (!isTerminalOpen) return
+      fitAddonRef.current?.fit()
+      if (xtermRef.current) {
+        EventsEmit('terminal:resize', { cols: xtermRef.current.cols, rows: xtermRef.current.rows })
+      }
+    }
+    // Initial fit after panel opens
+    const t1 = setTimeout(fit, 50)
+    // Re-fit after animation completes
+    const t2 = setTimeout(fit, 250)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
     }
   }, [terminalPanelHeight, isTerminalOpen])
 
@@ -743,7 +781,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         {/* Terminal Container */}
         <div 
           ref={terminalRef} 
-          className="flex-1 p-3 pt-4 overflow-hidden"
+          className="flex-1 p-3 pt-4 overflow-hidden h-full"
           style={{
             paddingRight: '12px'
           }}
