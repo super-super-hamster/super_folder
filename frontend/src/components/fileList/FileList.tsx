@@ -195,12 +195,14 @@ export default function FileList() {
   }, [viewMode, effectiveColumns])
 
   useEffect(() => {
-    if (scrollToPath && listItems.length > 0) {
-      const index = listItems.findIndex(i => i.type === 'row' && i.items?.some(f => f.path === scrollToPath))
-      if (index >= 0) {
+    if (!scrollToPath) return
+    if (listItems.length === 0) return
+    const index = listItems.findIndex(i => i.type === 'row' && i.items?.some(f => f.path === scrollToPath))
+    if (index >= 0) {
+      requestAnimationFrame(() => {
         rowVirtualizer.scrollToIndex(index, { align: 'center' })
-        setScrollToPath(null)
-      }
+      })
+      setScrollToPath(null)
     }
   }, [scrollToPath, listItems, rowVirtualizer, setScrollToPath])
 
