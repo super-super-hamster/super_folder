@@ -14,6 +14,7 @@ import SettingsContent from './components/settings/SettingsContent'
 import { useUndoStore } from './store/undoStore'
 import TerminalPanel from './components/terminal/TerminalPanel'
 import FullFileEditor from './components/editor/FullFileEditor'
+import ChineseConvView from './components/chineseconv/ChineseConvView'
 import ContextMenu from './components/fileList/ContextMenu'
 
 function App() {
@@ -149,6 +150,8 @@ function App() {
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
                   {activeTab?.currentPath?.startsWith('similar://') ? (
                     <SimilarImages />
+                  ) : activeTab?.currentPath === 'chineseconv://' ? (
+                    <ChineseConvView />
                   ) : activeTab && !activeTab.isDir ? (
                     <FullFileEditor path={activeTab.currentPath} />
                   ) : (

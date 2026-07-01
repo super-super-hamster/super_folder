@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useContextMenuStore } from '../../store/contextMenuStore'
 import { useSelectionStore } from '../../store/selectionStore'
+import { useChineseConvStore } from '../../store/chineseConvStore'
 import { useClipboardStore } from '../../store/clipboardStore'
 import { useRenameStore } from '../../store/renameStore'
 import { useBatchRenameStore } from '../../store/batchRenameStore'
@@ -26,6 +27,7 @@ export default function ContextMenu() {
   const { selectedPaths, clearSelection } = useSelectionStore()
   const { startRename } = useRenameStore()
   const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
+  const { addFiles: addChineseConvFiles } = useChineseConvStore()
   const { favorites, toggleFavorite } = useFavoriteStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
@@ -131,6 +133,19 @@ export default function ContextMenu() {
           store.setFiles(files)
 
           navigate(currentPath + '\\转换', '转换')
+        }
+        break
+      case 'chinese_conv':
+        {
+          const filePaths = targets.filter(p => {
+            const ext = (p.split('\\').pop() || '').toLowerCase()
+            const dot = ext.lastIndexOf('.')
+            return dot !== -1 && (ext.slice(dot) === '.txt' || ext.slice(dot) === '.epub')
+          })
+          if (filePaths.length > 0) {
+            addChineseConvFiles(filePaths)
+            navigate('chineseconv://', '简繁转换', false)
+          }
         }
         break
       case 'copy':
@@ -352,6 +367,13 @@ export default function ContextMenu() {
                 重命名
               </div>
               <span className="text-gray-400 text-xs tracking-wider">F2</span>
+            </button>
+            <button 
+              onClick={() => handleAction('chinese_conv')} 
+              className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"
+            >
+              <img src="/src/assets/icons/transfer_horizontal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="简繁转换" />
+              简繁转换
             </button>
             <button 
               onClick={() => handleAction('convert')} 

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"super_folder/internal/chineseconv"
 	"super_folder/internal/converter"
 	"super_folder/internal/database"
 	"super_folder/internal/fs"
@@ -153,6 +154,20 @@ func (a *App) SelectDirectory() (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+func (a *App) SelectFiles() ([]string, error) {
+	files, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择文件",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "文本/电子书", Pattern: "*.txt;*.epub"},
+			{DisplayName: "所有文件", Pattern: "*.*"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 // File system bindings
@@ -719,5 +734,17 @@ func (a *App) GetFavorites() ([]models.FileInfo, error) {
 		})
 	}
 	return files, nil
+}
+
+func (a *App) ConvertChineseFiles(paths []string, baseScheme string, customPairs []chineseconv.CustomPair) ([]string, error) {
+	var results []string
+	for _, p := range paths {
+		out, err := chineseconv.ConvertFile(p, baseScheme, customPairs)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, out)
+	}
+	return results, nil
 }
 

@@ -42,6 +42,10 @@ export function Close() {
   return window['go']['main']['App']['Close']();
 }
 
+export function ConvertChineseFiles(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ConvertChineseFiles'](arg1, arg2, arg3);
+}
+
 export function ConvertFile(arg1, arg2) {
   return window['go']['main']['App']['ConvertFile'](arg1, arg2);
 }
@@ -224,6 +228,10 @@ export function SearchFiles(arg1) {
 
 export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
+}
+
+export function SelectFiles() {
+  return window['go']['main']['App']['SelectFiles']();
 }
 
 export function SetConfig(arg1, arg2) {

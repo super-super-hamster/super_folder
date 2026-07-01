@@ -23,6 +23,13 @@ export interface SearchPreset {
   }
 }
 
+export interface ChineseConvScheme {
+  id: string
+  name: string
+  baseScheme: string
+  pairs: { from: string; to: string }[]
+}
+
 export interface SmartFolder {
   id: string
   name: string
@@ -36,6 +43,8 @@ interface SettingsState {
   setShortcuts: (items: ShortcutItem[]) => void
   searchPresets: SearchPreset[]
   setSearchPresets: (presets: SearchPreset[]) => void
+  chineseConvSchemes: ChineseConvScheme[]
+  setChineseConvSchemes: (schemes: ChineseConvScheme[]) => void
   smartFolders: SmartFolder[]
   setSmartFolders: (folders: SmartFolder[]) => void
   cacheLimitMB: number
@@ -53,6 +62,7 @@ interface SettingsState {
   loadFromBackend: () => Promise<void>
   saveShortcuts: () => Promise<void>
   saveSearchPresets: () => Promise<void>
+  saveChineseConvSchemes: () => Promise<void>
   saveSmartFolders: () => Promise<void>
   saveDoubleClickOpenMode: () => Promise<void>
   saveThumbnailBudgetMB: () => Promise<void>
@@ -88,6 +98,11 @@ export const useSettingsStore = create<SettingsState>()(
       setSearchPresets: (presets) => {
         set({ searchPresets: presets })
         get().saveSearchPresets()
+      },
+      chineseConvSchemes: [],
+      setChineseConvSchemes: (schemes) => {
+        set({ chineseConvSchemes: schemes })
+        get().saveChineseConvSchemes()
       },
       smartFolders: [],
       setSmartFolders: (folders) => {
@@ -140,6 +155,13 @@ export const useSettingsStore = create<SettingsState>()(
         } catch (e) { console.error("Failed to load searchPresets", e) }
 
         try {
+          const ccJSON = await GetConfig("chineseConvSchemes")
+          if (ccJSON) {
+            set({ chineseConvSchemes: JSON.parse(ccJSON) })
+          }
+        } catch (e) { console.error("Failed to load chineseConvSchemes", e) }
+
+        try {
           const sfJSON = await GetConfig("smartFolders")
           if (sfJSON) {
             set({ smartFolders: JSON.parse(sfJSON) })
@@ -176,6 +198,12 @@ export const useSettingsStore = create<SettingsState>()(
         try {
           await SetConfig("searchPresets", JSON.stringify(get().searchPresets))
         } catch (e) { console.error("Failed to save searchPresets", e) }
+      },
+
+      saveChineseConvSchemes: async () => {
+        try {
+          await SetConfig("chineseConvSchemes", JSON.stringify(get().chineseConvSchemes))
+        } catch (e) { console.error("Failed to save chineseConvSchemes", e) }
       },
       
       saveSmartFolders: async () => {

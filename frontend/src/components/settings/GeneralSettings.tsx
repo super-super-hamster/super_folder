@@ -15,6 +15,8 @@ const shortcutMapping: Record<string, string> = {
   'videos': 'Videos',
 }
 
+import ChineseConvSettings from './ChineseConvSettings'
+
 export default function GeneralSettings() {
   const {
     shortcuts, setShortcuts, loadFromBackend,
@@ -195,6 +197,8 @@ export default function GeneralSettings() {
           </div>
         </div>
       </div>
+
+      <ChineseConvSettings />
     </div>
   )
 }
