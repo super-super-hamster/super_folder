@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { isImage, isCode, isMarkdown, isText, isVideo, isAudio, isPdf, isDocx, isXlsx, isEditableText } from '../../utils/previewHelper'
+import { isImage, isCode, isMarkdown, isText, isVideo, isAudio, isPdf, isDocx, isXlsx, isEditableText, isEpub } from '../../utils/previewHelper'
 import ImagePreview from '../preview/ImagePreview'
 import PdfPreview from '../preview/PdfPreview'
 import DocxPreview from '../preview/DocxPreview'
@@ -7,6 +7,7 @@ import XlsxPreview from '../preview/XlsxPreview'
 import MediaPreview from '../preview/MediaPreview'
 import MarkdownPreview from '../preview/MarkdownPreview'
 import CodePreview from '../preview/CodePreview'
+import EpubPreview from '../preview/EpubPreview'
 import TextContextMenu from './TextContextMenu'
 import { ReadFileText, WriteFileText } from '../../../wailsjs/go/main/App'
 import { useUIStore } from '../../store/uiStore'
@@ -106,6 +107,7 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
     if (isAudio(ext)) return <MediaPreview path={path} type="audio" />
     if (isMarkdown(ext)) return <MarkdownPreview path={path} />
     if (isCode(ext)) return <CodePreview path={path} ext={ext} />
+    if (isEpub(ext)) return <EpubPreview path={path} />
 
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-sm flex-col gap-2 wails-no-drag">

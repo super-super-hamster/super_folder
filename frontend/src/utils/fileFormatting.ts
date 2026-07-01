@@ -26,6 +26,8 @@ export function getFileIcon(file: models.FileInfo) {
       return 'doc_line.svg'
     case '.pdf':
       return 'pdf_line.svg'
+    case '.epub':
+      return 'book_2_line.svg'
     case '.txt':
     case '.md':
       return 'document_line.svg'

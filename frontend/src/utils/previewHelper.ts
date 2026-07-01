@@ -7,9 +7,10 @@ export const isAudio = (ext: string) => ['.mp3', '.wav', '.flac', '.aac', '.ogg'
 export const isPdf = (ext: string) => ext.toLowerCase() === '.pdf'
 export const isDocx = (ext: string) => ext.toLowerCase() === '.docx'
 export const isXlsx = (ext: string) => ext.toLowerCase() === '.xlsx' || ext.toLowerCase() === '.csv'
+export const isEpub = (ext: string) => ext.toLowerCase() === '.epub'
 
 export const isPreviewSupported = (ext: string) => {
-    return isImage(ext) || isCode(ext) || isMarkdown(ext) || isText(ext) || isVideo(ext) || isAudio(ext) || isPdf(ext) || isDocx(ext) || isXlsx(ext)
+    return isImage(ext) || isCode(ext) || isMarkdown(ext) || isText(ext) || isVideo(ext) || isAudio(ext) || isPdf(ext) || isDocx(ext) || isXlsx(ext) || isEpub(ext)
 }
 
 export const isEditableText = (ext: string) => {

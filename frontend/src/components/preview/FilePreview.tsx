@@ -12,6 +12,7 @@ import XlsxPreview from './XlsxPreview'
 import TextPreview from './TextPreview'
 import MediaPreview from './MediaPreview'
 import MarkdownPreview from './MarkdownPreview'
+import EpubPreview from './EpubPreview'
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
   <div className={`w-full bg-white rounded-xl border border-gray-100 overflow-hidden relative flex flex-col min-h-0 max-h-full flex-1`}>
@@ -114,6 +115,7 @@ export default function FilePreview() {
   const isPdf = selectedFile.ext === '.pdf'
   const isDocx = selectedFile.ext === '.docx'
   const isXlsx = selectedFile.ext === '.xlsx' || selectedFile.ext === '.csv'
+  const isEpub = selectedFile.ext === '.epub'
 
   if (isImage) {
     return <ImagePreview path={selectedFile.path} />
@@ -149,6 +151,10 @@ export default function FilePreview() {
 
   if (isMarkdown) {
     return <Wrapper><MarkdownPreview path={selectedFile.path} /></Wrapper>
+  }
+
+  if (isEpub) {
+    return <Wrapper><EpubPreview path={selectedFile.path} /></Wrapper>
   }
 
   return (
