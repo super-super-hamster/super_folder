@@ -19,18 +19,23 @@ openMenu(e.clientX, e.clientY, f.path, f.name, f.isDir, scrollRef.current?.getBo
 In the menu component, compute clamped coordinates before rendering:
 
 ```tsx
-const menuHeight = 300 // approximate max height for a full menu
+const menuHeight = 200 // approximate max height for a full menu
 const menuWidth = 176  // w-44
 
 let left = x
 let top = y
 
 if (containerRect) {
-  left = Math.min(left, containerRect.right - menuWidth)
-  top = Math.min(top, containerRect.bottom - menuHeight)
-  top = Math.max(top, containerRect.top)
+  if (left + menuWidth > containerRect.right) {
+    left = Math.max(containerRect.left, containerRect.right - menuWidth)
+  }
+  if (top + menuHeight > containerRect.bottom) {
+    top = Math.max(containerRect.top, y - menuHeight)
+  }
 }
 ```
+
+Prefer flipping the menu above the cursor when it would overflow the bottom edge, rather than pinning it to the panel bottom. This keeps the menu close to the click point.
 
 For a fixed-width menu (`w-44` = 176 px), hard-code `menuWidth` to match. Estimate `menuHeight` from the tallest realistic menu.
 

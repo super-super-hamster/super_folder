@@ -287,13 +287,17 @@ export default function ContextMenu() {
   }
 
   const MENU_WIDTH = 176
-  const MENU_HEIGHT = 300
+  const MENU_HEIGHT = 200
 
   let menuX = x
   let menuY = y
   if (containerRect) {
-    menuX = Math.min(Math.max(menuX, containerRect.left), Math.max(containerRect.left, containerRect.right - MENU_WIDTH))
-    menuY = Math.min(menuY, containerRect.bottom - MENU_HEIGHT)
+    if (menuX + MENU_WIDTH > containerRect.right) {
+      menuX = Math.max(containerRect.left, containerRect.right - MENU_WIDTH)
+    }
+    if (menuY + MENU_HEIGHT > containerRect.bottom) {
+      menuY = Math.max(containerRect.top, y - MENU_HEIGHT)
+    }
     menuY = Math.max(menuY, containerRect.top)
   }
 
