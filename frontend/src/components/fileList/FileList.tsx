@@ -382,8 +382,8 @@ export default function FileList() {
       className="h-full w-full relative overflow-hidden flex flex-col" 
       onContextMenu={(e) => {
         e.preventDefault()
-        if (currentPath) {
-          openMenu(e.clientX, e.clientY, '', '')
+        if (currentPath && scrollRef.current) {
+          openMenu(e.clientX, e.clientY, '', '', false, scrollRef.current.getBoundingClientRect())
         }
       }}
     >
@@ -492,7 +492,7 @@ export default function FileList() {
                     onContextMenu={(e, f) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      openMenu(e.clientX, e.clientY, f.path, f.name)
+                      openMenu(e.clientX, e.clientY, f.path, f.name, f.isDir, scrollRef.current?.getBoundingClientRect())
                     }}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}

@@ -4,10 +4,11 @@ export interface ContextMenuState {
   isVisible: boolean
   x: number
   y: number
-  targetPath: string // If empty, it means clicked on empty space
+  targetPath: string
   targetName: string
   isDir: boolean
-  openMenu: (x: number, y: number, targetPath: string, targetName: string, isDir?: boolean) => void
+  containerRect: DOMRect | null
+  openMenu: (x: number, y: number, targetPath: string, targetName: string, isDir?: boolean, containerRect?: DOMRect | null) => void
   closeMenu: () => void
 }
 
@@ -18,6 +19,7 @@ export const useContextMenuStore = create<ContextMenuState>((set) => ({
   targetPath: '',
   targetName: '',
   isDir: false,
-  openMenu: (x, y, targetPath, targetName, isDir = false) => set({ isVisible: true, x, y, targetPath, targetName, isDir }),
+  containerRect: null,
+  openMenu: (x, y, targetPath, targetName, isDir = false, containerRect = null) => set({ isVisible: true, x, y, targetPath, targetName, isDir, containerRect }),
   closeMenu: () => set({ isVisible: false }),
 }))

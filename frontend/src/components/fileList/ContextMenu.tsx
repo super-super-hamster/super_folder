@@ -23,7 +23,7 @@ import copyAnim from '../../assets/anim/copy.json'
 import trashAnim from '../../assets/anim/trash.json'
 
 export default function ContextMenu() {
-  const { isVisible, x, y, targetPath, targetName, isDir, closeMenu } = useContextMenuStore()
+  const { isVisible, x, y, targetPath, targetName, isDir, closeMenu, containerRect } = useContextMenuStore()
   const { copy, cut, items: clipboardItems, operation } = useClipboardStore()
   const { selectedPaths, clearSelection } = useSelectionStore()
   const { startRename } = useRenameStore()
@@ -33,6 +33,8 @@ export default function ContextMenu() {
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
   const { smartFolders, setSmartFolders, doubleClickOpenMode } = useSettingsStore()
+  const { viewMode } = useUIStore()
+  const isAlbumView = viewMode === 'album'
   const isRunning = useTaskStore(state => state.isRunning)
   const copyLottieRef = useRef<LottieRefCurrentProps>(null)
   const trashLottieRef = useRef<LottieRefCurrentProps>(null)
@@ -264,23 +266,34 @@ export default function ContextMenu() {
       }
       
       useUIStore.getState().setScrollToPath(newPath)
-      
+
       // Wait for DOM to update and start rename
       let attempts = 0
       const poll = setInterval(() => {
         const el = document.getElementById(`file-${newPath}`)
         if (el) {
           clearInterval(poll)
+          el.scrollIntoView({ block: 'center' })
           startRename(newPath, newName, el.getBoundingClientRect())
-        } else if (attempts > 20) {
+        } else if (attempts > 30) {
           clearInterval(poll)
         }
         attempts++
       }, 50)
-      
+
     } catch (e) {
       console.error(e)
     }
+  }
+
+  const MENU_WIDTH = 176
+  const MENU_HEIGHT = 340
+
+  let menuX = x
+  let menuY = y
+  if (containerRect) {
+    menuX = Math.min(Math.max(menuX, containerRect.left), Math.max(containerRect.left, containerRect.right - MENU_WIDTH))
+    menuY = Math.min(Math.max(menuY, containerRect.top), Math.max(containerRect.top, containerRect.bottom - MENU_HEIGHT))
   }
 
   const renderIcon = (path: string, viewBox: string = "0 0 24 24") => (
@@ -296,7 +309,7 @@ export default function ContextMenu() {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.1 }}
-        style={{ top: posY, left: posX }}
+        style={{ top: menuY, left: menuX }}
         className="fixed z-[60] w-44 bg-white/90 backdrop-blur-md rounded-lg shadow-panel border border-gray-100 py-2 flex flex-col text-sm text-gray-800 font-medium overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}
@@ -461,15 +474,19 @@ export default function ContextMenu() {
                   <span className="text-gray-400 text-xs tracking-wider">Ctrl+V</span>
                 </button>
                 <div className="h-px bg-gray-200 my-1 mx-2" />
-                <button onClick={() => handleCreate('folder')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-                  <img src="/src/assets/icons/new_folder_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new folder" />
-                  新建文件夹
-                </button>
-                <button onClick={() => handleCreate('file')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
-                  <img src="/src/assets/icons/file_new_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new file" />
-                  新建文件
-                </button>
-                <div className="h-px bg-gray-200 my-1 mx-2" />
+                {!isAlbumView && (
+                  <>
+                    <button onClick={() => handleCreate('folder')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                      <img src="/src/assets/icons/new_folder_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new folder" />
+                      新建文件夹
+                    </button>
+                    <button onClick={() => handleCreate('file')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                      <img src="/src/assets/icons/file_new_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="new file" />
+                      新建文件
+                    </button>
+                    <div className="h-px bg-gray-200 my-1 mx-2" />
+                  </>
+                )}
                 <button onClick={() => handleAction('copy-path')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
                   <img src="/src/assets/icons/directory_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="copy path" />
                   复制当前路径
