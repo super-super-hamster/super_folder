@@ -7,7 +7,8 @@ import { EventsOn, EventsEmit } from '../../../wailsjs/runtime'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useState } from 'react'
-import { SaveRenameScheme } from '../../../wailsjs/go/main/App'
+import { SaveRenameScheme, GetRenameSchemes } from '../../../wailsjs/go/main/App'
+
 
 interface TerminalPanelProps {
   onClose?: () => void
@@ -177,12 +178,34 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           sfCursorOffset = 0
 
           if (sfState === 'rename_name') {
-            sfRenameName = cmd
-            sfState = 'rename_code'
-            sfBuffer = ''
-            sfRenameCode = ''
-            sfLineCount++
-            term.write('code (Press ESC to finish): \r\n')
+            if (cmd === '') {
+              term.write('\x1b[31m[Error] 名称不能为空\x1b[0m\r\n')
+              term.write('name: ')
+              sfBuffer = ''
+              return
+            }
+            GetRenameSchemes().then((existing) => {
+              const list = existing || []
+              const lower = cmd.toLowerCase()
+              const dup = list.find(s => s.name.toLowerCase() === lower)
+              if (dup) {
+                term.write(`\x1b[31m[Error] 方案 '${cmd}' 已存在，请重新输入\x1b[0m\r\n`)
+                term.write('name: ')
+                sfBuffer = ''
+                sfRenameName = ''
+                return
+              }
+              sfRenameName = cmd
+              sfState = 'rename_code'
+              sfBuffer = ''
+              sfRenameCode = ''
+              sfLineCount++
+              term.write('code (Press ESC to finish): \r\n')
+            }).catch((e: any) => {
+              term.write(`\x1b[31m[Error] ${e?.message || String(e)}\x1b[0m\r\n`)
+              term.write('name: ')
+              sfBuffer = ''
+            })
             return
           }
 

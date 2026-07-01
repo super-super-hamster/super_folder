@@ -289,7 +289,7 @@ export default function BatchRenameView() {
                   {schemes.map(s => (
                     <ListBox.Item key={s.name} id={s.name} textValue={s.name} className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">{s.name}</ListBox.Item>
                   ))}
-                  <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-blue-600 font-bold data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                  <ListBox.Item key="__ADD_NEW__" id="__ADD_NEW__" textValue="新建方案..." className="text-gray-800 font-bold data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
                   <div className="flex items-center justify-center gap-2">
                     <img src="/src/assets/icons/add_line.svg" className="w-4 h-4" alt="Add" />
                     新建方案...

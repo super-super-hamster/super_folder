@@ -109,6 +109,9 @@ export default function FileList() {
       }
     },
     onRename: () => {
+      if (currentPath === 'batch-rename://') {
+        return
+      }
       const selectedArr = Array.from(selectedPaths)
       if (selectedArr.length === 1) {
         const targetPath = selectedArr[0]
