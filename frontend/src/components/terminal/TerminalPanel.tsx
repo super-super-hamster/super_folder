@@ -577,6 +577,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           // If user was browsing history, reset to latest and start fresh input
           if (sfHistoryIndex !== sfHistory.length) {
             sfHistoryIndex = sfHistory.length
+            sfBuffer = ""
           }
           const pos = sfBuffer.length - sfCursorOffset
           sfBuffer = sfBuffer.slice(0, pos) + data + sfBuffer.slice(pos)
