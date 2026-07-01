@@ -159,14 +159,26 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         setLoading(false)
       })
 
+    const lastKeyRef = { key: '', time: 0 }
+    const DOUBLE_PRESS_WINDOW = 400
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!renditionRef.current) return
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault()
-        renditionRef.current.prev()
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        renditionRef.current.next()
+        const now = Date.now()
+        if (lastKeyRef.key === e.key && now - lastKeyRef.time <= DOUBLE_PRESS_WINDOW) {
+          if (e.key === 'ArrowLeft') {
+            renditionRef.current.prev()
+          } else {
+            renditionRef.current.next()
+          }
+          lastKeyRef.key = ''
+          lastKeyRef.time = 0
+        } else {
+          lastKeyRef.key = e.key
+          lastKeyRef.time = now
+        }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
         viewerRef.current?.scrollBy({ top: -40, behavior: 'smooth' })

@@ -18,7 +18,7 @@ Add an in-app EPUB viewer so users can read `.epub` e-books inside the applicati
 5. Content rendering uses vertical scrolling (`scrolled-doc` flow).
 6. Images inside EPUB content are constrained to `max-width: 100%` so horizontal scrolling is never required.
 7. Keyboard controls:
-   - Left / Right arrow keys: previous / next chapter.
+   - Double-press Left / Right arrow keys: previous / next chapter (prevent accidental chapter switch).
    - Up / Down arrow keys: scroll content.
 8. Mouse wheel scrolls content.
 9. Reading progress (CFI) is persisted per file in `localStorage` using key `epub:<absolute file path>`; reopening a book restores the last position.
