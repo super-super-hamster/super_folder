@@ -111,8 +111,10 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          img, svg, video { max-width: 100% !important; height: auto !important; }
-          body { overflow-x: hidden !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; }
+          img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
+          body > * { max-width: 100% !important; }
+          img { display: block; }
         `
         doc.head.appendChild(style)
       }
@@ -135,8 +137,10 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          img, svg, video { max-width: 100% !important; height: auto !important; }
-          body { overflow-x: hidden !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; }
+          img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
+          body > * { max-width: 100% !important; }
+          img { display: block; }
         `
         doc.head.appendChild(style)
       }
@@ -282,10 +286,10 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1 min-h-0 relative overflow-hidden">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-400 bg-white z-10">
-            正在加载电子书...
+            加载中...
           </div>
         )}
         {error && (
@@ -293,7 +297,7 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
             {error}
           </div>
         )}
-        <div ref={viewerRef} className="h-full w-full overflow-y-auto bg-white" />
+        <div ref={viewerRef} className="h-full w-full overflow-y-auto overflow-x-hidden bg-white" />
       </div>
     </div>
   )

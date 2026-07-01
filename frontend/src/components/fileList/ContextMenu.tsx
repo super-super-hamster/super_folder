@@ -422,15 +422,17 @@ export default function ContextMenu() {
               </div>
               <span className="text-gray-400 text-xs tracking-wider">F2</span>
             </button>
-            <button 
-              onClick={() => handleAction('chinese_conv')} 
-              className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"
-            >
-              <img src="/src/assets/icons/transfer_horizontal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="简繁转换" />
-              简繁转换
-            </button>
-            <button 
-              onClick={() => handleAction('convert')} 
+            {!isDir && (
+              <button
+                onClick={() => handleAction('chinese_conv')}
+                className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"
+              >
+                <img src="/src/assets/icons/transfer_horizontal_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="简繁转换" />
+                简繁转换
+              </button>
+            )}
+            <button
+              onClick={() => handleAction('convert')}
               disabled={convertibleFormats.length === 0 || isRunning}
               className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
