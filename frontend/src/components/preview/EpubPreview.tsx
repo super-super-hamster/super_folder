@@ -111,7 +111,7 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          html, body { max-width: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; margin: 0 !important; padding: 0 !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; margin: 0 !important; padding: 0 16px !important; }
           * { scrollbar-width: none !important; }
           *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
           img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }

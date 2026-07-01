@@ -244,15 +244,15 @@ export default function TopNav() {
                   animate={{ opacity: 1, width: 'auto' }}
                   exit={isSearchActive ? { opacity: 0, width: 0, transition: { duration: 0 } } : { opacity: 0, width: 0 }}
                   transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-                  className={`relative flex items-center transition-colors whitespace-nowrap group ${
-                    isActive ? 'flex-shrink-0 max-w-full active-tab-wrapper' : 'flex-shrink-0 px-3 py-1 rounded-full hover:bg-gray-200/50 text-gray-600'
+                  className={`relative flex items-center transition-colors whitespace-nowrap group shrink-0 ${
+                    isActive ? 'active-tab-wrapper' : 'px-3 py-1 rounded-full hover:bg-gray-200/50 text-gray-600'
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
                   {isActive ? (
-                    <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink min-w-0 max-w-full font-medium text-primary relative z-panel">
+                    <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink-0 min-w-0 font-medium text-primary relative z-panel">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
-                        <div className="text-sm tracking-wider flex items-center h-full shrink min-w-0">
+                        <div className="text-sm tracking-wider flex items-center h-full shrink-0 min-w-0">
                           {tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片') ? (
                             <span className="truncate">{tab.title}</span>
                           ) : (
@@ -273,9 +273,9 @@ export default function TopNav() {
                       )}
                     </div>
                   ) : (
-                    <div className="relative z-panel flex items-center">
+                    <div className="relative z-panel flex items-center shrink-0">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
-                        <div className="text-sm tracking-wider flex items-center h-full flex-1 min-w-0">
+                        <div className="text-sm tracking-wider flex items-center h-full shrink-0 min-w-0">
                             {(() => {
                               if (tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片')) return <span className="truncate">{tab.title}</span>
                               const parts = tab.title.replace(/\\$/, '').split('\\')
