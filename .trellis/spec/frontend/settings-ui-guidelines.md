@@ -241,6 +241,26 @@ Do not use `variant="flat"` or `variant="ghost"` unless the design explicitly ca
 
 ---
 
+## Icon Buttons
+
+Icon-only buttons use a plain rectangular hover background. Do not add a circular border or `rounded-full` background.
+
+```tsx
+<button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors">
+  <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" />
+</button>
+```
+
+Avoid:
+
+```tsx
+<button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
+```
+
+This applies to toolbar icon buttons, title-bar controls, and any other icon-only trigger. Circular hover backgrounds create a distracting halo around the icon; a simple rectangular hover keeps the UI clean.
+
+---
+
 ## Zustand Settings Persistence
 
 Prefer `partialize` to persist only specific fields:

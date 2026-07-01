@@ -153,7 +153,7 @@ export default function ConversionView() {
                       <button 
                         onClick={() => removeFile(file.path)}
                         disabled={isProcessing}
-                        className={`w-8 h-8 rounded-full ${file.status === 'success' ? '' : 'hover:bg-gray-100'} flex items-center justify-center transition-colors disabled:opacity-50`}
+                        className={`w-8 h-8 ${file.status === 'success' ? '' : 'hover:bg-gray-100'} flex items-center justify-center transition-colors disabled:opacity-50`}
                       >
                         {file.status === 'success' ? (
                           <img src="/src/assets/icons/check_line.svg" className="w-5 h-5 opacity-90" alt="success" />

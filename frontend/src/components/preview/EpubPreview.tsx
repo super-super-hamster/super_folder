@@ -242,7 +242,7 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         <button
           onClick={goPrev}
           disabled={!canGoPrev}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="上一章"
         >
           <Lottie lottieRef={leftRef} animationData={leftAnim} autoplay={false} loop={false} className="w-5 h-5" />
@@ -258,7 +258,7 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
           <button
             onClick={goNext}
             disabled={!canGoNext}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="下一章"
           >
             <Lottie lottieRef={rightRef} animationData={rightAnim} autoplay={false} loop={false} className="w-5 h-5" />
@@ -267,7 +267,7 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
           <Dropdown>
             <Dropdown.Trigger>
               <button
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
                 title="目录"
               >
                 <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" alt="目录" />
