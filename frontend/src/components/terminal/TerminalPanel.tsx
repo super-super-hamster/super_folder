@@ -3,6 +3,26 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { motion } from 'framer-motion'
+import EditorLib from 'react-simple-code-editor'
+const Editor = (EditorLib as any).default || EditorLib
+import Prism from 'prismjs'
+import 'prismjs/themes/prism-tomorrow.css'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-jsx'
+import 'prismjs/components/prism-tsx'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-css'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-java'
+import 'prismjs/components/prism-c'
+import 'prismjs/components/prism-cpp'
+import 'prismjs/components/prism-csharp'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-sql'
+import 'prismjs/components/prism-yaml'
+import 'prismjs/components/prism-markdown'
+import 'prismjs/components/prism-go'
 import { EventsOn, EventsEmit } from '../../../wailsjs/runtime'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -24,6 +44,11 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
   const { terminalPanelHeight, setTerminalPanelHeight, isTerminalOpen } = useUIStore()
   const [isResizing, setIsResizing] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 })
+
+  const [editorMode, setEditorMode] = useState<'none' | 'editing' | 'prompt'>('none')
+  const [editorName, setEditorName] = useState('')
+  const [editorCode, setEditorCode] = useState('')
+  const [editorOriginalCode, setEditorOriginalCode] = useState('')
 
   const closeContextMenu = () => setContextMenu({ visible: false, x: 0, y: 0 })
 
@@ -182,23 +207,28 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               }
               sfRenameName = cmd
               try {
-                await SaveRenameScheme(cmd, RENAME_SCHEME_TEMPLATE)
                 const schemes = await GetRenameSchemes()
-                const scheme = schemes.find(s => s.name === cmd)
-                if (scheme?.path) {
-                  useTabsStore.getState().navigate(scheme.path, cmd, false)
-                  term.write(`\r\n\x1b[32m[成功] 方案 '${cmd}' 已创建并打开\x1b[0m\r\n`)
+                const existingScheme = schemes.find(s => s.name === cmd)
+                const savePath = existingScheme?.path || `${cmd}.js`
+                await SaveRenameScheme(cmd, RENAME_SCHEME_TEMPLATE(savePath))
+                const refreshed = await GetRenameSchemes()
+                const scheme = refreshed.find(s => s.name === cmd)
+                if (scheme) {
+                  setEditorName(scheme.name)
+                  setEditorCode(scheme.code)
+                  setEditorOriginalCode(scheme.code)
+                  setEditorMode('editing')
                 } else {
                   term.write(`\r\n\x1b[32m[成功] 方案 '${cmd}' 已创建\x1b[0m\r\n`)
                 }
               } catch (e: any) {
                 term.write(`\r\n\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+                sfState = 'cmd'
+                sfBuffer = ''
+                sfRenameName = ''
+                sfCursorOffset = 0
+                term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
               }
-              sfState = 'cmd'
-              sfBuffer = ''
-              sfRenameName = ''
-              sfCursorOffset = 0
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             }).catch((e: any) => {
               term.write(`\r\n\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
               term.write('\x1b[36m名称：\x1b[0m ')
@@ -319,13 +349,10 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
               return
             }
-            if (target.path) {
-              useTabsStore.getState().navigate(target.path, target.name, false)
-              term.write(`\x1b[32m[成功] 已打开方案 '${target.name}'\x1b[0m\r\n`)
-            } else {
-              term.write(`\x1b[31m[错误] 无法定位方案 '${target.name}' 的文件路径\x1b[0m\r\n`)
-            }
-            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            setEditorName(target.name)
+            setEditorCode(target.code)
+            setEditorOriginalCode(target.code)
+            setEditorMode('editing')
           }).catch((e: any) => {
             term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
             term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
@@ -599,6 +626,60 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     }
   }, [terminalPanelHeight, isTerminalOpen])
 
+  const highlightCode = (codeToHighlight: string) => {
+    try {
+      if (Prism.languages.javascript) {
+        return Prism.highlight(codeToHighlight, Prism.languages.javascript, 'javascript')
+      }
+      return codeToHighlight
+    } catch (e) {
+      return codeToHighlight
+    }
+  }
+
+  const exitEditor = () => {
+    setEditorMode('none')
+    setEditorName('')
+    setEditorCode('')
+    setEditorOriginalCode('')
+  }
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && editorMode === 'editing') {
+      e.preventDefault()
+      setEditorMode('prompt')
+    }
+  }
+
+  const handlePromptKeyDown = (e: React.KeyboardEvent) => {
+    if (editorMode !== 'prompt') return
+    const key = e.key.toLowerCase()
+    if (key === 'y') {
+      SaveRenameScheme(editorName, editorCode).then(() => {
+        exitEditor()
+        const term = xtermRef.current
+        if (term) {
+          term.write('\x1b[32m[成功] 方案已保存\x1b[0m\r\n')
+          term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${useTabsStore.getState().tabs.find(t => t.id === useTabsStore.getState().activeTabId)?.currentPath || ''}> `)
+        }
+      }).catch((err: any) => {
+        const term = xtermRef.current
+        if (term) {
+          term.write(`\x1b[31m[错误] ${err?.message || String(err)}\x1b[0m\r\n`)
+          term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${useTabsStore.getState().tabs.find(t => t.id === useTabsStore.getState().activeTabId)?.currentPath || ''}> `)
+        }
+        exitEditor()
+      })
+    } else if (key === 'n') {
+      exitEditor()
+      const term = xtermRef.current
+      if (term) {
+        term.write('\x1b[33m[取消] 未保存方案\x1b[0m\r\n')
+        term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${useTabsStore.getState().tabs.find(t => t.id === useTabsStore.getState().activeTabId)?.currentPath || ''}> `)
+      }
+    }
+  }
+
   return (
     <motion.div 
       initial={{ height: 0, opacity: 0 }}
@@ -624,7 +705,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
       )}
       
       {/* Inner Box */}
-      <div className="w-full h-full bg-white rounded-2xl shadow-panel border border-gray-200 flex flex-col overflow-hidden wails-no-drag">
+      <div className="w-full h-full bg-white rounded-2xl shadow-panel border border-gray-200 flex flex-col overflow-hidden wails-no-drag relative">
         {/* Terminal Container */}
         <div 
           ref={terminalRef} 
@@ -633,6 +714,58 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             paddingRight: '12px'
           }}
         />
+
+        {/* Scheme Editor Overlay */}
+        {editorMode !== 'none' && (
+          <div 
+            className="absolute inset-0 z-20 flex flex-col bg-[#1d1f21] wails-no-drag"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            onKeyDown={handleEditorKeyDown}
+            tabIndex={-1}
+          >
+            <div className="flex-1 overflow-auto p-4 no-scrollbar">
+              <style>{`
+                .code-editor-override textarea {
+                  outline: none !important;
+                }
+              `}</style>
+              <Editor
+                value={editorCode}
+                onValueChange={setEditorCode}
+                highlight={highlightCode}
+                padding={10}
+                className="text-sm code-editor-override"
+                textareaClassName="focus:outline-none"
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: 13,
+                  backgroundColor: 'transparent',
+                  minHeight: '100%',
+                  color: '#c5c8c6'
+                }}
+              />
+            </div>
+            <div className="px-4 py-2 text-xs text-gray-400 bg-[#1d1f21] border-t border-gray-700 flex justify-between items-center">
+              <span>按 ESC 退出编辑</span>
+              <span>{editorName}.js</span>
+            </div>
+
+            {/* Save Confirmation Prompt */}
+            {editorMode === 'prompt' && (
+              <div 
+                className="absolute inset-0 z-30 flex items-center justify-center bg-black/40"
+                onKeyDown={handlePromptKeyDown}
+                tabIndex={0}
+                ref={(el) => { if (el) setTimeout(() => el.focus(), 0) }}
+              >
+                <div className="bg-[#1d1f21] border border-gray-600 rounded-lg px-6 py-4 shadow-xl">
+                  <div className="text-sm text-gray-200 mb-3">是否保存(Y/N)：</div>
+                  <div className="text-xs text-gray-400">按 Y 保存并退出，按 N 不保存退出</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <TerminalContextMenu
         term={xtermRef.current}
