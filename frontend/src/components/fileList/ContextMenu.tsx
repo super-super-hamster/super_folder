@@ -144,7 +144,7 @@ export default function ContextMenu() {
           })
           if (filePaths.length > 0) {
             addChineseConvFiles(filePaths)
-            navigate('chineseconv://', '简繁转换', false)
+            navigate(currentPath + '\\简繁转换', '简繁转换', false)
           }
         }
         break

@@ -150,7 +150,7 @@ function App() {
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
                   {activeTab?.currentPath?.startsWith('similar://') ? (
                     <SimilarImages />
-                  ) : activeTab?.currentPath === 'chineseconv://' ? (
+                  ) : activeTab?.currentPath?.endsWith('\\简繁转换') ? (
                     <ChineseConvView />
                   ) : activeTab && !activeTab.isDir ? (
                     <FullFileEditor path={activeTab.currentPath} />
