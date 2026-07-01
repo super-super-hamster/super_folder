@@ -420,7 +420,21 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             sfLineCount++
             term.write('\x1b[36m名称：\x1b[0m ')
             return
-          } else if (cmd.startsWith('rename show')) {
+          }
+
+          const parseSfCommand = (input: string) => {
+            const parts = input.trim().split(/\s+/).filter(Boolean)
+            return parts.length > 0 ? parts[0] : ''
+          }
+
+          const getSfCommandArg = (input: string, prefix: string) => {
+            const rest = input.slice(prefix.length).trim()
+            return rest
+          }
+
+          const sfCmd = parseSfCommand(cmd)
+
+          if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'show') {
             GetRenameSchemes().then((schemes) => {
               const list = schemes || []
               if (list.length === 0) {
@@ -438,8 +452,8 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             })
             return
-          } else if (cmd.startsWith('rename edit ')) {
-            const name = cmd.slice('rename edit '.length).trim()
+          } else if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'edit') {
+            const name = getSfCommandArg(cmd, 'rename edit')
             if (!name) {
               term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
               term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
@@ -489,8 +503,8 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
               term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             })
             return
-          } else if (cmd.startsWith('rename delete ')) {
-            const name = cmd.slice('rename delete '.length).trim()
+          } else if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'delete') {
+            const name = getSfCommandArg(cmd, 'rename delete')
             if (!name) {
               term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
               term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
