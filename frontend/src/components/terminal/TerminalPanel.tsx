@@ -103,9 +103,8 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     }
 
     let sfMode = false
-    let sfState = 'cmd' // 'cmd' | 'rename_name' | 'rename_code' | 'rename_confirm'
+    let sfState = 'cmd' // 'cmd' | 'rename_name'
     let sfRenameName = ""
-    let sfRenameCode = ""
     let sfBuffer = ""
     let cmdRawBuffer = ""
     let currentSfPath = ""
@@ -115,20 +114,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     let sfHistory: string[] = []
     let sfHistoryIndex = 0
     let sfCursorOffset = 0
-    let codeCursorLine = 0
-    let codeCursorCol = 0
-    let savePath = ''
-
-    const getSchemesDir = async () => {
-      try {
-        const result = await (window as any).go?.main?.App?.GetConfig?.('schemes_dir')
-        if (result) return result as string
-      } catch {
-        // ignore
-      }
-      return ''
-    }
-
 
     term.attachCustomKeyEventHandler((e) => {
       // Handle Ctrl+Enter directly to close terminal without bubbling to App.tsx
@@ -143,11 +128,10 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
       if (e.ctrlKey && e.code === 'KeyC' && e.type === 'keydown' && sfMode) {
         e.preventDefault()
         e.stopPropagation()
-        if (sfState === 'rename_name' || sfState === 'rename_code' || sfState === 'rename_confirm') {
+        if (sfState === 'rename_name') {
           sfState = 'cmd'
           sfBuffer = ''
           sfRenameName = ''
-          sfRenameCode = ''
           sfCursorOffset = 0
           term.write('\r\n\x1b[33m[取消] 已取消新建方案\x1b[0m\r\n')
           term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
@@ -166,154 +150,62 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     // Handle input from user
     const onDataDisposable = term.onData((data) => {
       if (sfMode) {
-        if (sfState === 'rename_code') {
-          const getLines = () => sfRenameCode.split('\n')
-          const totalHeaderLines = 9
-
-          const moveCursorTo = (targetLine: number, targetCol: number) => {
-            const newLines = getLines()
-            const safeLine = Math.max(0, Math.min(targetLine, newLines.length - 1))
-            const safeCol = Math.max(0, Math.min(targetCol, newLines[safeLine].length))
-            codeCursorLine = safeLine
-            codeCursorCol = safeCol
-            term.write('\x1b[H')
-            const targetY = totalHeaderLines + safeLine
-            if (targetY > 0) term.write('\x1b[B')
-            if (safeCol > 0) term.write('\x1b[C')
-          }
-
-          const drawContent = () => {
-            const newLines = getLines()
-            term.write('\x1b[H')
-            const headerEnd = totalHeaderLines
-            if (headerEnd > 0) term.write('\x1b[B')
-            for (let i = 0; i < newLines.length; i++) {
-              term.write('\x1b[2K')
-              term.write(newLines[i])
-              if (i < newLines.length - 1) {
-                term.write('\r\n')
-              }
-            }
-          }
-
-          const redrawCode = (focus = true) => {
-            drawContent()
-            if (focus) {
-              moveCursorTo(codeCursorLine, codeCursorCol)
-            }
-          }
-
+        if (sfState === 'rename_name') {
           if (data === '\x1b') { // ESC
-            term.write('\x1b[?1049l')
-            sfState = 'rename_confirm'
+            sfState = 'cmd'
             sfBuffer = ''
+            sfRenameName = ''
             sfCursorOffset = 0
-            term.write('\x1b[36m是否保存(Y/N)：\x1b[0m')
+            term.write('\r\n\x1b[33m[取消] 已取消新建方案\x1b[0m\r\n')
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
             return
           } else if (data === '\r') {
-            const lines = getLines()
-            const before = lines[codeCursorLine].slice(0, codeCursorCol)
-            const after = lines[codeCursorLine].slice(codeCursorCol)
-            lines[codeCursorLine] = before
-            lines.splice(codeCursorLine + 1, 0, after)
-            sfRenameCode = lines.join('\n')
-            codeCursorLine++
-            codeCursorCol = 0
-            redrawCode()
-            return
-          } else if (data === '\x7f') { // Backspace
-            const lines = getLines()
-            if (codeCursorCol > 0) {
-              lines[codeCursorLine] = lines[codeCursorLine].slice(0, codeCursorCol - 1) + lines[codeCursorLine].slice(codeCursorCol)
-              codeCursorCol--
-            } else if (codeCursorLine > 0) {
-              const prevLen = lines[codeCursorLine - 1].length
-              lines[codeCursorLine - 1] += lines[codeCursorLine]
-              lines.splice(codeCursorLine, 1)
-              codeCursorLine--
-              codeCursorCol = prevLen
-            }
-            sfRenameCode = lines.join('\n')
-            redrawCode()
-            return
-          } else if (data === '\x1b[A') { // Up
-            const lines = getLines()
-            if (codeCursorLine > 0) {
-              codeCursorLine--
-              codeCursorCol = Math.min(codeCursorCol, lines[codeCursorLine].length)
-              moveCursorTo(codeCursorLine, codeCursorCol)
-            }
-            return
-          } else if (data === '\x1b[B') { // Down
-            const lines = getLines()
-            if (codeCursorLine < lines.length - 1) {
-              codeCursorLine++
-              codeCursorCol = Math.min(codeCursorCol, lines[codeCursorLine].length)
-              moveCursorTo(codeCursorLine, codeCursorCol)
-            }
-            return
-          } else if (data === '\x1b[D') { // Left
-            const lines = getLines()
-            if (codeCursorCol > 0) {
-              codeCursorCol--
-            } else if (codeCursorLine > 0) {
-              codeCursorLine--
-              codeCursorCol = lines[codeCursorLine].length
-            }
-            moveCursorTo(codeCursorLine, codeCursorCol)
-            return
-          } else if (data === '\x1b[C') { // Right
-            const lines = getLines()
-            if (codeCursorCol < lines[codeCursorLine].length) {
-              codeCursorCol++
-            } else if (codeCursorLine < lines.length - 1) {
-              codeCursorLine++
-              codeCursorCol = 0
-            }
-            moveCursorTo(codeCursorLine, codeCursorCol)
-            return
-          } else if (data.startsWith('\x1b')) {
-            return
-          } else {
-            const lines = getLines()
-            lines[codeCursorLine] = lines[codeCursorLine].slice(0, codeCursorCol) + data + lines[codeCursorLine].slice(codeCursorCol)
-            codeCursorCol += data.length
-            sfRenameCode = lines.join('\n')
-            redrawCode()
-            return
-          }
-        }
-
-                if (sfState === 'rename_confirm') {
-          if (data === '\r') {
-            const answer = sfBuffer.trim().toLowerCase()
-            if (answer === 'y' || answer === 'yes') {
-              SaveRenameScheme(sfRenameName, sfRenameCode).then(() => {
-                term.write('\r\n\x1b[32m[成功] 方案已保存\x1b[0m\r\n')
-                sfState = 'cmd'
-                sfBuffer = ''
-                sfCursorOffset = 0
-                term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              }).catch((e: any) => {
-                term.write(`\r\n\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
-                sfState = 'cmd'
-                sfBuffer = ''
-                sfCursorOffset = 0
-                term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              })
-            } else if (answer === 'n' || answer === 'no') {
-              term.write('\r\n\x1b[33m[取消] 未保存方案\x1b[0m\r\n')
-              sfState = 'cmd'
+            const cmd = sfBuffer.trim()
+            if (cmd === '') {
+              term.write('\r\n\x1b[31m[错误] 名称不能为空\x1b[0m\r\n')
+              term.write('\x1b[36m名称：\x1b[0m ')
               sfBuffer = ''
               sfCursorOffset = 0
-              sfRenameName = ''
-              sfRenameCode = ''
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            } else {
-              term.write('\r\n\x1b[31m[错误] 请输入 Y 或 N\x1b[0m\r\n')
-              sfBuffer = ''
-              term.write('\x1b[36m是否保存(Y/N)：\x1b[0m')
+              return
             }
+            GetRenameSchemes().then(async (existing) => {
+              const list = existing || []
+              const lower = cmd.toLowerCase()
+              const dup = list.find(s => s.name.toLowerCase() === lower)
+              if (dup) {
+                term.write(`\r\n\x1b[31m[错误] 方案 '${cmd}' 已存在，请重新输入\x1b[0m\r\n`)
+                term.write('\x1b[36m名称：\x1b[0m ')
+                sfBuffer = ''
+                sfRenameName = ''
+                sfCursorOffset = 0
+                return
+              }
+              sfRenameName = cmd
+              try {
+                await SaveRenameScheme(cmd, RENAME_SCHEME_TEMPLATE)
+                const schemes = await GetRenameSchemes()
+                const scheme = schemes.find(s => s.name === cmd)
+                if (scheme?.path) {
+                  useTabsStore.getState().navigate(scheme.path, cmd, false)
+                  term.write(`\r\n\x1b[32m[成功] 方案 '${cmd}' 已创建并打开\x1b[0m\r\n`)
+                } else {
+                  term.write(`\r\n\x1b[32m[成功] 方案 '${cmd}' 已创建\x1b[0m\r\n`)
+                }
+              } catch (e: any) {
+                term.write(`\r\n\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+              }
+              sfState = 'cmd'
+              sfBuffer = ''
+              sfRenameName = ''
+              sfCursorOffset = 0
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            }).catch((e: any) => {
+              term.write(`\r\n\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+              term.write('\x1b[36m名称：\x1b[0m ')
+              sfBuffer = ''
+              sfRenameName = ''
+              sfCursorOffset = 0
+            })
             return
           } else if (data === '\x7f') {
             if (sfBuffer.length > 0) {
@@ -330,7 +222,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         }
 
         const redrawLine = () => {
-          const prompt = sfState === 'rename_name' ? '\x1b[36m名称：\x1b[0m ' : `\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `
+          const prompt = `\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `
           term.write(`\x1b[2K\r${prompt}${sfBuffer}`)
           if (sfCursorOffset > 0) {
             term.write(`\x1b[${sfCursorOffset}D`)
@@ -351,187 +243,127 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           sfHistoryIndex = sfHistory.length
           sfCursorOffset = 0
 
-          if (sfState === 'rename_name') {
-            if (cmd === '') {
-              term.write('\x1b[31m[错误] 名称不能为空\x1b[0m\r\n')
-              term.write('\x1b[36m名称：\x1b[0m ')
-              sfBuffer = ''
-              return
-            }
-            GetRenameSchemes().then(async (existing) => {
-              const list = existing || []
-              const lower = cmd.toLowerCase()
-              const dup = list.find(s => s.name.toLowerCase() === lower)
-              if (dup) {
-                term.write(`\x1b[31m[错误] 方案 '${cmd}' 已存在，请重新输入\x1b[0m\r\n`)
-                term.write('\x1b[36m名称：\x1b[0m ')
-                sfBuffer = ''
-                sfRenameName = ''
-                return
-              }
-              sfRenameName = cmd
-              sfState = 'rename_code'
-              sfBuffer = ''
-              sfRenameCode = RENAME_SCHEME_TEMPLATE
-              const templateLines = sfRenameCode.split('\n')
-              codeCursorLine = templateLines.length - 1
-              codeCursorCol = templateLines[templateLines.length - 1].length
-              const dir = await getSchemesDir()
-              savePath = dir ? `${dir}\\${cmd}.js` : `${cmd}.js`
-              sfLineCount += 8 + templateLines.length
-              // Enter alternate screen and draw initial editor
-              term.write('\x1b[?1049h')
-              term.write('\x1b[H\x1b[2J')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> \x1b[36m代码（按 ESC 完成，Ctrl+C 取消）：\x1b[0m\r\n`)
-              term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
-              term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
-              term.write('\x1b[36m可用参数：\x1b[0m\r\n')
-              term.write('  file  - 当前文件对象：{ name, ext, path, isDir, size }\r\n')
-              term.write('  index - 当前文件在列表中的索引\r\n')
-              term.write('  files - 全部文件数组\r\n')
-              term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
-              term.write('\r\n')
-              for (let i = 0; i < templateLines.length; i++) {
-                term.write(templateLines[i])
-                if (i < templateLines.length - 1) term.write('\r\n')
-              }
-            }).catch((e: any) => {
-              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
-              term.write('\x1b[36m名称：\x1b[0m ')
-              sfBuffer = ''
-            })
-            return
+        const parts = cmd.trim().split(/\s+/).filter(Boolean)
+        const mainCmd = parts.length > 0 ? parts[0] : ''
+        const subCmd = parts.length > 1 ? parts[1] : ''
+        const arg = parts.length > 2 ? parts.slice(2).join(' ') : ''
+
+        const getSfCommandArg = (input: string, prefixTokens: string[]) => {
+          const tokens = input.trim().split(/\s+/).filter(Boolean)
+          if (tokens.length < prefixTokens.length) return ''
+          for (let i = 0; i < prefixTokens.length; i++) {
+            if (tokens[i] !== prefixTokens[i]) return ''
           }
+          return tokens.slice(prefixTokens.length).join(' ')
+        }
 
-          if (cmd === '@cmd') {
-            sfMode = false
-            sfBuffer = ""
-            syncingConpty = true
-            syncBuffer = ""
-            term.write('\x1b[0m') // Reset ANSI
-            EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
-            // Sync ConPTY cursor down to match xterm by sending empty enters. Empty enters don't go into history!
-            const newlines = '\r'.repeat(Math.max(1, sfLineCount))
-            EventsEmit('terminal:input', newlines)
-            sfLineCount = 0
-          } else if (cmd === 'rename add') {
-            sfState = 'rename_name'
-            sfBuffer = ''
-            sfLineCount++
-            term.write('\x1b[36m名称：\x1b[0m ')
-            return
-          }
+        if (sfState === 'rename_name') {
+          return
+        }
 
-          const parseSfCommand = (input: string) => {
-            const parts = input.trim().split(/\s+/).filter(Boolean)
-            return parts.length > 0 ? parts[0] : ''
-          }
-
-          const getSfCommandArg = (input: string, prefix: string) => {
-            const rest = input.slice(prefix.length).trim()
-            return rest
-          }
-
-          const sfCmd = parseSfCommand(cmd)
-
-          if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'show') {
-            GetRenameSchemes().then((schemes) => {
-              const list = schemes || []
-              if (list.length === 0) {
-                term.write('\x1b[33m[提示] 暂无重命名方案\x1b[0m\r\n')
-              } else {
-                term.write('\x1b[36m重命名方案列表：\x1b[0m\r\n')
-                list.forEach((s) => {
-                  term.write(`  - ${s.name}\r\n`)
-                })
-              }
-              sfLineCount += Math.max(list.length, 1) + 1
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            }).catch((e: any) => {
-              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            })
-            return
-          } else if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'edit') {
-            const name = getSfCommandArg(cmd, 'rename edit')
-            if (!name) {
-              term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              return
+        if (cmd === '@cmd') {
+          sfMode = false
+          sfBuffer = ""
+          syncingConpty = true
+          syncBuffer = ""
+          term.write('\x1b[0m') // Reset ANSI
+          EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
+          // Sync ConPTY cursor down to match xterm by sending empty enters. Empty enters don't go into history!
+          const newlines = '\r'.repeat(Math.max(1, sfLineCount))
+          EventsEmit('terminal:input', newlines)
+          sfLineCount = 0
+        } else if (mainCmd === 'rename' && subCmd === 'add') {
+          sfState = 'rename_name'
+          sfBuffer = ''
+          sfLineCount++
+          term.write('\x1b[36m名称：\x1b[0m ')
+          return
+        } else if (mainCmd === 'rename' && subCmd === 'show') {
+          GetRenameSchemes().then((schemes) => {
+            const list = schemes || []
+            if (list.length === 0) {
+              term.write('\x1b[33m[提示] 暂无重命名方案\x1b[0m\r\n')
+            } else {
+              term.write('\x1b[36m重命名方案列表：\x1b[0m\r\n')
+              list.forEach((s) => {
+                term.write(`  - ${s.name}\r\n`)
+              })
             }
-            if (name.includes(' ')) {
-              term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              return
-            }
-            GetRenameSchemes().then(async (schemes) => {
-              const list = schemes || []
-              const target = list.find((s) => s.name.toLowerCase() === name.toLowerCase())
-              if (!target) {
-                term.write(`\x1b[31m[错误] 方案 '${name}' 不存在\x1b[0m\r\n`)
-                term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-                return
-              }
-              sfRenameName = target.name
-              sfState = 'rename_code'
-              sfBuffer = ''
-              sfRenameCode = target.code
-              const editLines = sfRenameCode.split('\n')
-              codeCursorLine = editLines.length - 1
-              codeCursorCol = editLines[editLines.length - 1].length
-              const dir = await getSchemesDir()
-              savePath = dir ? `${dir}\\${target.name}.js` : `${target.name}.js`
-              sfLineCount += 8 + editLines.length
-              term.write('\x1b[?1049h')
-              term.write('\x1b[H\x1b[2J')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> \x1b[36m代码（按 ESC 完成，Ctrl+C 取消）：\x1b[0m\r\n`)
-              term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
-              term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
-              term.write('\x1b[36m可用参数：\x1b[0m\r\n')
-              term.write('  file  - 当前文件对象：{ name, ext, path, isDir, size }\r\n')
-              term.write('  index - 当前文件在列表中的索引\r\n')
-              term.write('  files - 全部文件数组\r\n')
-              term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
-              term.write('\r\n')
-              for (let i = 0; i < editLines.length; i++) {
-                term.write(editLines[i])
-                if (i < editLines.length - 1) term.write('\r\n')
-              }
-              term.write(sfRenameCode)
-            }).catch((e: any) => {
-              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            })
-            return
-          } else if (sfCmd === 'rename' && parseSfCommand(cmd.slice('rename'.length)) === 'delete') {
-            const name = getSfCommandArg(cmd, 'rename delete')
-            if (!name) {
-              term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              return
-            }
-            if (name.includes(' ')) {
-              term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-              return
-            }
-            DeleteRenameScheme(name).then(() => {
-              term.write(`\x1b[32m[成功] 方案 '${name}' 已删除\x1b[0m\r\n`)
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            }).catch((e: any) => {
-              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
-              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
-            })
-            return
-          } else {
-            if (cmd.length > 0) {
-              // We could also pass currentSfPath to the backend if needed
-              EventsEmit('terminal:sf:command', cmd)
-            }
-            sfBuffer = ""
-            sfLineCount++
+            sfLineCount += Math.max(list.length, 1) + 1
             term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          }).catch((e: any) => {
+            term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          })
+          sfBuffer = ''
+          return
+        } else if (mainCmd === 'rename' && subCmd === 'edit') {
+          const name = getSfCommandArg(cmd, ['rename', 'edit'])
+          if (!name) {
+            term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            sfBuffer = ''
+            return
           }
+          if (name.includes(' ')) {
+            term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            sfBuffer = ''
+            return
+          }
+          GetRenameSchemes().then((schemes) => {
+            const list = schemes || []
+            const target = list.find((s) => s.name.toLowerCase() === name.toLowerCase())
+            if (!target) {
+              term.write(`\x1b[31m[错误] 方案 '${name}' 不存在\x1b[0m\r\n`)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+              return
+            }
+            if (target.path) {
+              useTabsStore.getState().navigate(target.path, target.name, false)
+              term.write(`\x1b[32m[成功] 已打开方案 '${target.name}'\x1b[0m\r\n`)
+            } else {
+              term.write(`\x1b[31m[错误] 无法定位方案 '${target.name}' 的文件路径\x1b[0m\r\n`)
+            }
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          }).catch((e: any) => {
+            term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          })
+          sfBuffer = ''
+          return
+        } else if (mainCmd === 'rename' && subCmd === 'delete') {
+          const name = getSfCommandArg(cmd, ['rename', 'delete'])
+          if (!name) {
+            term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            sfBuffer = ''
+            return
+          }
+          if (name.includes(' ')) {
+            term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            sfBuffer = ''
+            return
+          }
+          DeleteRenameScheme(name).then(() => {
+            term.write(`\x1b[32m[成功] 方案 '${name}' 已删除\x1b[0m\r\n`)
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          }).catch((e: any) => {
+            term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+            term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+          })
+          sfBuffer = ''
+          return
+        } else {
+          if (cmd.length > 0) {
+            // We could also pass currentSfPath to the backend if needed
+            EventsEmit('terminal:sf:command', cmd)
+          }
+          sfBuffer = ""
+          sfLineCount++
+          term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+        }
         } else if (data === '\x1b[A') { // Up arrow
           if (sfState === 'cmd' && sfHistoryIndex > 0) {
             sfHistoryIndex--

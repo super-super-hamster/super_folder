@@ -58,6 +58,7 @@ func StartWatcher(ctx context.Context) error {
 type Scheme struct {
 	Name string `json:"name"`
 	Code string `json:"code"`
+	Path string `json:"path"`
 }
 
 func getSchemesDir() (string, error) {
@@ -138,13 +139,14 @@ func GetRenameSchemes() ([]Scheme, error) {
 		if !f.IsDir() && strings.HasSuffix(f.Name(), ".js") {
 			path := filepath.Join(dir, f.Name())
 			content, err := ioutil.ReadFile(path)
-			if err == nil {
-				name := strings.TrimSuffix(f.Name(), ".js")
-				schemes = append(schemes, Scheme{
-					Name: name,
-					Code: string(content),
-				})
-			}
+		if err == nil {
+			name := strings.TrimSuffix(f.Name(), ".js")
+			schemes = append(schemes, Scheme{
+				Name: name,
+				Code: string(content),
+				Path: path,
+			})
+		}
 		}
 	}
 	return schemes, nil

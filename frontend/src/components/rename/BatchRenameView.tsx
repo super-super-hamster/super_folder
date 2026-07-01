@@ -27,20 +27,24 @@ export default function BatchRenameView() {
       if (finalSchemes.length === 0) {
         finalSchemes = [
           {
-            name: '添加日期后缀',
-            code: `const d = new Date();\nconst dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');\nreturn file.name + "_" + dateStr;`
-          },
-          {
-            name: '添加日期前缀',
-            code: `const d = new Date();\nconst dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');\nreturn dateStr + "_" + file.name;`
-          },
-          {
-            name: '后缀数字补零对齐',
-            code: `const match = file.name.match(/(\\d+)$/);\nif (!match) return file.name;\nconst numStr = match[1];\nlet maxLen = 0;\nfor (const f of files) {\n  const m = f.name.match(/(\\d+)$/);\n  if (m && m[1].length > maxLen) maxLen = m[1].length;\n}\nreturn file.name.substring(0, file.name.length - numStr.length) + numStr.padStart(maxLen, '0');`
-          },
-          {
-            name: '前缀数字补零对齐',
-            code: `const match = file.name.match(/^(\\d+)/);\nif (!match) return file.name;\nconst numStr = match[1];\nlet maxLen = 0;\nfor (const f of files) {\n  const m = f.name.match(/^(\\d+)/);\n  if (m && m[1].length > maxLen) maxLen = m[1].length;\n}\nreturn numStr.padStart(maxLen, '0') + file.name.substring(numStr.length);`
+          name: '添加日期后缀',
+          code: `const d = new Date();\nconst dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');\nreturn file.name + "_" + dateStr;`,
+          path: ''
+        },
+        {
+          name: '添加日期前缀',
+          code: `const d = new Date();\nconst dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');\nreturn dateStr + "_" + file.name;`,
+          path: ''
+        },
+        {
+          name: '后缀数字补零对齐',
+          code: `const match = file.name.match(/(\\d+)$/);\nif (!match) return file.name;\nconst numStr = match[1];\nlet maxLen = 0;\nfor (const f of files) {\n  const m = f.name.match(/(\\d+)$/);\n  if (m && m[1].length > maxLen) maxLen = m[1].length;\n}\nreturn file.name.substring(0, file.name.length - numStr.length) + numStr.padStart(maxLen, '0');`,
+          path: ''
+        },
+        {
+          name: '前缀数字补零对齐',
+          code: `const match = file.name.match(/^(\\d+)/);\nif (!match) return file.name;\nconst numStr = match[1];\nlet maxLen = 0;\nfor (const f of files) {\n  const m = f.name.match(/^(\\d+)/);\n  if (m && m[1].length > maxLen) maxLen = m[1].length;\n}\nreturn numStr.padStart(maxLen, '0') + file.name.substring(numStr.length);`,
+          path: ''
           }
         ]
       }

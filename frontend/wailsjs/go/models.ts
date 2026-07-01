@@ -69,6 +69,7 @@ export namespace rename {
 	export class Scheme {
 	    name: string;
 	    code: string;
+	    path: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Scheme(source);
@@ -78,6 +79,7 @@ export namespace rename {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
 	        this.code = source["code"];
+	        this.path = source["path"];
 	    }
 	}
 
