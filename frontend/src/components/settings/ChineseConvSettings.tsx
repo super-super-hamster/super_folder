@@ -147,7 +147,7 @@ export default function ChineseConvSettings() {
                     placeholder="目标词"
                     className="flex-1"
                   />
-                  <Button onPress={handleAddPair} className="bg-gray-800 text-white">添加</Button>
+                  <Button onPress={handleAddPair}>添加</Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {pairs.map((p, idx) => (
@@ -178,7 +178,7 @@ export default function ChineseConvSettings() {
                 >
                   取消
                 </Button>
-                <Button onPress={handleSave} className="bg-gray-800 text-white">保存</Button>
+                <Button onPress={handleSave}>保存</Button>
               </div>
             </motion.div>
           )}

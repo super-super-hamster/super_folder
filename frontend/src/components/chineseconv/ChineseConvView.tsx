@@ -48,17 +48,18 @@ export default function ChineseConvView() {
         to: p.to,
       }))
 
-      for (const file of files) {
+      const currentFiles = useChineseConvStore.getState().files
+      for (const file of currentFiles) {
         if (cancelled || useChineseConvStore.getState().isPaused || !useChineseConvStore.getState().isProcessing) break
         if (file.status === 'success' || file.status === 'error') continue
 
-        updateFileStatus(file.path, 'converting')
+        useChineseConvStore.getState().updateFileStatus(file.path, 'converting')
         try {
           await ConvertChineseFiles([file.path], baseScheme, pairs)
-          updateFileStatus(file.path, 'success')
+          useChineseConvStore.getState().updateFileStatus(file.path, 'success')
         } catch (e: any) {
           console.error('Convert failed', file.path, e)
-          updateFileStatus(file.path, 'error')
+          useChineseConvStore.getState().updateFileStatus(file.path, 'error')
           setErrorMsg(e?.message || String(e))
         }
       }
@@ -67,7 +68,8 @@ export default function ChineseConvView() {
 
     run()
     return () => { cancelled = true }
-  }, [isProcessing, isPaused, files, baseScheme, customSchemeId, chineseConvSchemes, updateFileStatus, setIsProcessing])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProcessing, isPaused])
 
   const handleImportFolder = async () => {
     const dir = await SelectDirectory()
@@ -196,7 +198,7 @@ export default function ChineseConvView() {
             <button
               onClick={handleImportFiles}
               disabled={isProcessing}
-              className="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-800 flex items-center justify-center transition-colors disabled:opacity-50"
+              className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
               title="从文件导入"
             >
               <img src="/src/assets/icons/file_new_line.svg" className="w-5 h-5 invert" alt="文件" />
@@ -204,7 +206,7 @@ export default function ChineseConvView() {
             <button
               onClick={handleImportFolder}
               disabled={isProcessing}
-              className="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-800 flex items-center justify-center transition-colors disabled:opacity-50"
+              className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
               title="从文件夹导入"
             >
               <img src="/src/assets/icons/folder_3_line.svg" className="w-5 h-5 invert" alt="文件夹" />
@@ -278,8 +280,8 @@ export default function ChineseConvView() {
             disabled={files.length === 0 || allDone}
             className={`px-8 py-2 rounded-full text-sm font-medium transition-colors ${
               isProcessing && !isPaused
-                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                : 'bg-gray-800 text-white hover:bg-gray-900'
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                : 'bg-blue-500 text-white hover:bg-blue-600'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isProcessing ? (isPaused ? '继续' : '暂停') : '开始转换'}

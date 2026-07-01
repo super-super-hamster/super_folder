@@ -15,6 +15,14 @@ export default function DynamicBreadcrumb({ path }: Props) {
   if (path === 'smartfolder://' || path.startsWith('smartfolder://')) {
     return <span className="truncate">虚拟文件夹</span>
   }
+  if (path === 'chineseconv://') {
+    return (
+      <div className="flex items-center">
+        <span className="text-sm truncate">简繁转换</span>
+      </div>
+    )
+  }
+
   if (path.startsWith('similar://')) {
     const rest = path.slice('similar://'.length)
     const folderPath = rest.split('?')[0]

@@ -212,6 +212,21 @@ The settings sidebar tabs follow this order (defined in `SettingsSidebar.tsx`):
 
 ---
 
+## Button Color Semantics
+
+Use HeroUI `Button` without explicit background classes to get the default blue primary style. Only add explicit colors for the following semantic cases:
+
+| Action type | Class | Example |
+|-------------|-------|---------|
+| Primary / functional | HeroUI default (blue) | 保存, 添加, 开始转换 |
+| Confirm / positive | `className="bg-green-500 text-white"` | 确认, 保存并退出 |
+| Cancel / neutral | `className="bg-gray-100 text-gray-700"` | 取消, 返回 |
+| Destructive / danger | `className="bg-red-500 text-white"` | 删除, 清空, 覆盖 |
+
+Do not use `variant="flat"` or `variant="ghost"` unless the design explicitly calls for it; HeroUI v3 in this project does not expose those variants consistently.
+
+---
+
 ## Zustand Settings Persistence
 
 Prefer `partialize` to persist only specific fields:

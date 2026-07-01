@@ -9,11 +9,13 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/uuid v1.6.0
+	github.com/longbridgeapp/opencc v0.3.13
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/wailsapp/wails/v2 v2.11.0
 	golang.org/x/image v0.42.0
+	golang.org/x/net v0.35.0
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
 	gorm.io/gorm v1.31.1
@@ -36,7 +38,6 @@ require (
 	github.com/leaanthony/u v1.1.1 // indirect
 	github.com/liuzl/cedar-go v0.0.0-20170805034717-80a9c64b256d // indirect
 	github.com/liuzl/da v0.0.0-20180704015230-14771aad5b1d // indirect
-	github.com/longbridgeapp/opencc v0.3.13 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -50,7 +51,6 @@ require (
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
