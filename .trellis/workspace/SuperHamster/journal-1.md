@@ -38,3 +38,36 @@ Fixed EPUB viewer vertical scrollbar by hiding .epub-container and iframe scroll
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: Top tab sizing + EPUB padding
+
+**Date**: 2026-07-01
+**Task**: Top tab sizing + EPUB padding
+**Branch**: `main`
+
+### Summary
+
+Adjusted TopNav so tab wrappers no longer shrink and active tab background matches text width; added 16px left/right padding to EPUB iframe body.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `349f0b2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
