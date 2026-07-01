@@ -13,8 +13,17 @@ export const getSpecialTitle = (path: string) => {
   if (path.startsWith('smartfolder://')) {
     return '虚拟文件夹'
   }
-  if (path.startsWith('similar://')) {
+  if (path.endsWith('\\相似图片')) {
     return '相似图片'
+  }
+  if (path.endsWith('\\批量重命名')) {
+    return '批量重命名'
+  }
+  if (path.endsWith('\\转换')) {
+    return '转换'
+  }
+  if (path.endsWith('\\简繁转换')) {
+    return '简繁转换'
   }
   return path.split('\\').pop() || path
 }

@@ -253,7 +253,7 @@ export default function TopNav() {
                     <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink min-w-0 max-w-full font-medium text-primary relative z-panel">
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full shrink min-w-0">
-                          {tab.currentPath === 'batch-rename://' || tab.currentPath?.startsWith('similar://') ? (
+                          {tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片') ? (
                             <span className="truncate">{tab.title}</span>
                           ) : (
                             <DynamicBreadcrumb path={tab.currentPath || tab.title} />
@@ -277,7 +277,7 @@ export default function TopNav() {
                       <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full flex-1 min-w-0">
                             {(() => {
-                              if (tab.currentPath === 'batch-rename://' || tab.currentPath?.startsWith('similar://')) return <span className="truncate">{tab.title}</span>
+                              if (tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片')) return <span className="truncate">{tab.title}</span>
                               const parts = tab.title.replace(/\\$/, '').split('\\')
                               if (parts.length > 3) {
                                 return '... > ' + parts.slice(-2).join(' > ')

@@ -201,7 +201,7 @@ export default function ChineseConvView() {
               className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
               title="从文件导入"
             >
-              <img src="/src/assets/icons/file_new_line.svg" className="w-5 h-5 invert" alt="文件" />
+              <img src="/src/assets/icons/file_new_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件" />
             </button>
             <button
               onClick={handleImportFolder}
@@ -209,7 +209,7 @@ export default function ChineseConvView() {
               className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
               title="从文件夹导入"
             >
-              <img src="/src/assets/icons/folder_3_line.svg" className="w-5 h-5 invert" alt="文件夹" />
+              <img src="/src/assets/icons/new_folder_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件夹" />
             </button>
           </div>
         </div>

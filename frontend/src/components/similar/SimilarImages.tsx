@@ -26,8 +26,11 @@ interface ProgressData {
 }
 
 function parseSimilarPath(path: string) {
-  const prefix = 'similar://'
-  const rest = path.slice(prefix.length)
+  const suffix = '\\相似图片'
+  if (!path.endsWith(suffix)) {
+    return { folderPath: path, queryImagePath: undefined, includeSubfolders: false, threshold: 5, useMax: false }
+  }
+  const rest = path.slice(0, -suffix.length)
   const [folderPath, queryString] = rest.split('?')
   const params = new URLSearchParams(queryString || '')
   return {
@@ -37,6 +40,11 @@ function parseSimilarPath(path: string) {
     threshold: parseInt(params.get('threshold') || '5', 10),
     useMax: params.get('useMax') === 'true'
   }
+}
+
+export function buildSimilarPath(folderPath: string, query: URLSearchParams) {
+  const params = query.toString()
+  return folderPath + (params ? `?${params}` : '') + '\\相似图片'
 }
 
 function fakeFile(path: string): models.FileInfo {
@@ -85,7 +93,7 @@ export default function SimilarImages() {
   const { doubleClickOpenMode } = useSettingsStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
   const currentPath = activeTab?.currentPath || ''
-  const { folderPath, queryImagePath, includeSubfolders, threshold, useMax } = parseSimilarPath(currentPath)
+  const { folderPath, queryImagePath, includeSubfolders, threshold, useMax } = useMemo(() => parseSimilarPath(currentPath), [currentPath])
 
   const [groups, setGroups] = useState<string[][]>([])
   const [loading, setLoading] = useState(true)

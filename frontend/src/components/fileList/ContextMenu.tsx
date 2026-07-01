@@ -14,7 +14,8 @@ import { useTaskStore } from '../../store/taskStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
 import { isImage } from '../../utils/fileFormatting'
-import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal } from '../../../wailsjs/go/main/App'
+import { buildSimilarPath } from '../similar/SimilarImages'
+import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal, GetSimilarImageThresholds } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
@@ -210,14 +211,16 @@ export default function ContextMenu() {
         break
       case 'find_similar':
         if (targetPath) {
-          const folderPath = targetPath.substring(0, targetPath.lastIndexOf('\\')) || currentPath || 'C:\\'
+          const imagePath = targetPath
+          const folderPath = imagePath.substring(0, imagePath.lastIndexOf('\\')) || currentPath || 'C:\\'
           const query = new URLSearchParams({
-            path: targetPath,
+            path: imagePath,
             subfolders: 'false',
             threshold: '5',
             useMax: 'false'
           })
-          navigate(`similar://${folderPath}?${query.toString()}`, '相似图片', false)
+          const similarPath = buildSimilarPath(folderPath, query)
+          navigate(similarPath, '相似图片', false)
         }
         break
     }

@@ -109,7 +109,7 @@ export default function FileList() {
       }
     },
     onRename: () => {
-      if (currentPath === 'batch-rename://') {
+      if (currentPath?.endsWith('\\批量重命名')) {
         return
       }
       const selectedArr = Array.from(selectedPaths)

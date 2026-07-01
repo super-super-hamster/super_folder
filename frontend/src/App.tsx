@@ -148,7 +148,7 @@ function App() {
 
                 {/* FileList Island or File Editor */}
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
-                  {activeTab?.currentPath?.startsWith('similar://') ? (
+                  {activeTab?.currentPath?.endsWith('\\相似图片') ? (
                     <SimilarImages />
                   ) : activeTab?.currentPath?.endsWith('\\简繁转换') ? (
                     <ChineseConvView />

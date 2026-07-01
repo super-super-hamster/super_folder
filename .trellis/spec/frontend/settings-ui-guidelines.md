@@ -212,6 +212,20 @@ The settings sidebar tabs follow this order (defined in `SettingsSidebar.tsx`):
 
 ---
 
+## Secondary Feature Pages
+
+Secondary feature pages (batch rename, conversion, similar images, Chinese conversion, etc.) are represented as virtual subfolders of the current directory. Use the pattern:
+
+```tsx
+navigate(currentPath + '\\功能名', '功能名', false)
+```
+
+The view is rendered by matching `currentPath.endsWith('\\功能名')` in `App.tsx` / `FileList.tsx`. The `DynamicBreadcrumb` then naturally renders the parent folder chain followed by the feature label, e.g. `D: > fileGe > 批量重命名`.
+
+Avoid custom URI schemes for folder-relative feature pages. Only use schemes for top-level special views that have no parent folder (e.g. `favorite://`, `recent://`).
+
+---
+
 ## Button Color Semantics
 
 Use HeroUI `Button` without explicit background classes to get the default blue primary style. Only add explicit colors for the following semantic cases:

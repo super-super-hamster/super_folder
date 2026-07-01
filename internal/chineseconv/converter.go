@@ -76,8 +76,10 @@ func ConvertFile(srcPath string, baseScheme string, pairs []CustomPair) (string,
 	srcDir := filepath.Dir(srcPath)
 	outDir := filepath.Join(srcDir, OutputDirName(baseScheme))
 
-	baseName := filepath.Base(srcPath)
-	outPath := filepath.Join(outDir, baseName)
+	baseName := strings.TrimSuffix(filepath.Base(srcPath), ext)
+	suffix := TargetName(baseScheme)
+	outName := fmt.Sprintf("%s_%s%s", baseName, suffix, ext)
+	outPath := filepath.Join(outDir, outName)
 
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return "", err

@@ -4,6 +4,7 @@ import TagPanel from './TagPanel'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
 import { GetSimilarImageThresholds } from '../../../wailsjs/go/main/App'
+import { buildSimilarPath } from '../similar/SimilarImages'
 
 const scopeOptions = [
   { id: 'current', name: '当前文件夹' },
@@ -27,8 +28,8 @@ export default function RightSidebarAdvanced() {
   }, [])
 
   const getRealFolderPath = () => {
-    if (currentPath.startsWith('similar://')) {
-      return currentPath.slice('similar://'.length).split('?')[0]
+    if (currentPath.endsWith('\\相似图片')) {
+      return currentPath.split('?')[0].slice(0, -'\\相似图片'.length)
     }
     return currentPath
   }
@@ -44,8 +45,8 @@ export default function RightSidebarAdvanced() {
       threshold: threshold.toString(),
       useMax: useMax.toString()
     })
-    const targetPath = `similar://${folderPath}?${query.toString()}`
-    const replace = currentPath.startsWith('similar://')
+    const targetPath = buildSimilarPath(folderPath, query)
+    const replace = currentPath.endsWith('\\相似图片')
     setSettingsOpen(false)
     navigate(targetPath, '相似图片', false, replace)
   }
