@@ -111,15 +111,89 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          html, body { max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; margin: 0 !important; padding: 0 !important; }
+          * { scrollbar-width: none !important; }
+          *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
           img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
           body > * { max-width: 100% !important; }
           img { display: block; }
-          * { word-wrap: break-word !important; }
+          * { word-wrap: break-word !important; overflow-wrap: break-word !important; }
+          pre, code { white-space: pre-wrap !important; word-break: break-all !important; }
+          table { display: table !important; table-layout: fixed !important; width: 100% !important; max-width: 100% !important; }
+          td, th { word-break: break-all !important; overflow-wrap: break-word !important; }
         `
         doc.head.appendChild(style)
       }
     })
+
+    const lastKeyRef = { key: '', time: 0 }
+    const DOUBLE_PRESS_WINDOW = 400
+    const iframeHandlers = new WeakMap<Document, { handler: (e: KeyboardEvent) => void; keyUp: (e: KeyboardEvent) => void }>()
+
+    const makeKeyHandler = (scrollTarget: HTMLElement | Window) => {
+      return (e: KeyboardEvent) => {
+        if (!renditionRef.current) return
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault()
+          const now = Date.now()
+          if (lastKeyRef.key === e.key && now - lastKeyRef.time <= DOUBLE_PRESS_WINDOW) {
+            if (e.key === 'ArrowLeft') {
+              renditionRef.current.prev()
+            } else {
+              renditionRef.current.next()
+            }
+            lastKeyRef.key = ''
+            lastKeyRef.time = 0
+          } else {
+            lastKeyRef.key = e.key
+            lastKeyRef.time = now
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          if (scrollTarget instanceof Window) {
+            viewerRef.current?.scrollBy({ top: -40, behavior: 'smooth' })
+          } else {
+            scrollTarget.scrollBy({ top: -40, behavior: 'smooth' })
+          }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          if (scrollTarget instanceof Window) {
+            viewerRef.current?.scrollBy({ top: 40, behavior: 'smooth' })
+          } else {
+            scrollTarget.scrollBy({ top: 40, behavior: 'smooth' })
+          }
+        }
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault()
+      }
+    }
+
+    rendition.hooks.content.register((contents: any) => {
+      const doc = contents.document as Document | undefined
+      if (!doc) return
+      const handler = makeKeyHandler(viewerRef.current || window)
+      doc.addEventListener('keydown', handler)
+      doc.addEventListener('keyup', handleKeyUp)
+      iframeHandlers.set(doc, { handler, keyUp: handleKeyUp })
+    })
+
+    const parentKeyHandler = makeKeyHandler(window)
+    window.addEventListener('keydown', parentKeyHandler, true)
+    window.addEventListener('keyup', handleKeyUp, true)
+
+    const resizeObserver = new ResizeObserver(() => {
+      try {
+        const el = viewerRef.current
+        if (el) renditionRef.current?.resize(el.clientWidth, el.clientHeight)
+      } catch {}
+    })
+    if (viewerRef.current) {
+      resizeObserver.observe(viewerRef.current)
+    }
 
     rendition.on('relocated', (location: any) => {
       if (!mounted) return
@@ -134,18 +208,6 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
 
     rendition.on('rendered', (_section: any, view: any) => {
       if (!mounted) return
-      const doc = view?.document
-      if (doc && doc.head) {
-        const style = doc.createElement('style')
-        style.textContent = `
-          html, body { max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; }
-          img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
-          body > * { max-width: 100% !important; }
-          img { display: block; }
-          * { word-wrap: break-word !important; }
-        `
-        doc.head.appendChild(style)
-      }
       const section = book.spine?.get?.(view?.section?.href || view?.section?.idref)
       const title = (section as any)?.chapter?.title || (section as any)?.navitem?.label || ''
       if (title) setChapterTitle(title)
@@ -165,44 +227,11 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         setLoading(false)
       })
 
-    const lastKeyRef = { key: '', time: 0 }
-    const DOUBLE_PRESS_WINDOW = 400
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!renditionRef.current) return
-      const target = e.target as HTMLElement
-      if (target?.tagName === 'BUTTON' || target?.tagName === 'A' || target?.isContentEditable) {
-        return
-      }
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        e.preventDefault()
-        const now = Date.now()
-        if (lastKeyRef.key === e.key && now - lastKeyRef.time <= DOUBLE_PRESS_WINDOW) {
-          if (e.key === 'ArrowLeft') {
-            renditionRef.current.prev()
-          } else {
-            renditionRef.current.next()
-          }
-          lastKeyRef.key = ''
-          lastKeyRef.time = 0
-        } else {
-          lastKeyRef.key = e.key
-          lastKeyRef.time = now
-        }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        viewerRef.current?.scrollBy({ top: -40, behavior: 'smooth' })
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        viewerRef.current?.scrollBy({ top: 40, behavior: 'smooth' })
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
     return () => {
       mounted = false
-      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keydown', parentKeyHandler, true)
+      window.removeEventListener('keyup', handleKeyUp, true)
+      resizeObserver.disconnect()
       try {
         rendition.destroy()
       } catch {}
@@ -244,13 +273,24 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
 
   return (
     <div className="h-full w-full flex flex-col bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden wails-no-drag">
+      <style>{`
+        .epub-container {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .epub-container::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}</style>
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
         <button
           onClick={goPrev}
+          onMouseDown={(e) => e.preventDefault()}
           disabled={!canGoPrev}
           className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
           title="上一章"
-          tabIndex={-1}
         >
           <Lottie lottieRef={leftRef} animationData={leftAnim} autoplay={false} loop={false} className="w-5 h-5" />
         </button>
@@ -264,10 +304,10 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={goNext}
+            onMouseDown={(e) => e.preventDefault()}
             disabled={!canGoNext}
             className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
             title="下一章"
-            tabIndex={-1}
           >
             <Lottie lottieRef={rightRef} animationData={rightAnim} autoplay={false} loop={false} className="w-5 h-5" />
           </button>
@@ -275,9 +315,9 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
           <Dropdown>
             <Dropdown.Trigger>
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
                 title="目录"
-                tabIndex={-1}
               >
                 <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" alt="目录" />
               </button>
@@ -306,7 +346,11 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
             {error}
           </div>
         )}
-        <div ref={viewerRef} className="h-full w-full overflow-y-auto overflow-x-hidden bg-white" />
+        <div
+          ref={viewerRef}
+          className="h-full w-full overflow-y-auto overflow-x-hidden bg-white no-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        />
       </div>
     </div>
   )

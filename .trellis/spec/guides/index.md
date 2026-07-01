@@ -91,6 +91,18 @@ This single habit prevents most "forgot to update X" bugs.
 
 ---
 
+## Commit Rule (CRITICAL)
+
+> **Never commit changes without explicit user approval.**
+
+- Do not run `git commit`, `git push`, create pull requests, or merge branches unless the user explicitly asks you to.
+- After finishing work, stop and wait for the user to review. Present a concise summary of changes and ask whether to commit.
+- This rule applies to all repositories, branches, and file types in this project.
+
+This preserves user control over the codebase and prevents unintended changes from being persisted.
+
+---
+
 ## How to Use This Directory
 
 1. **Before coding**: Skim the relevant thinking guide

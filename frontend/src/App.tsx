@@ -63,9 +63,17 @@ function App() {
       }
       
       if (e.key === 'ArrowLeft' || (e.altKey && e.key === 'ArrowLeft') || e.key === 'BrowserBack') {
+        const activeTab = useTabsStore.getState().tabs.find(t => t.id === useTabsStore.getState().activeTabId)
+        const extMatch = activeTab?.currentPath?.match(/\.([^\.]+)$/)
+        const ext = extMatch ? `.${extMatch[1].toLowerCase()}` : ''
+        if (ext === '.epub') return
         e.preventDefault();
         document.getElementById('nav-back-button')?.click();
       } else if (e.key === 'ArrowRight' || (e.altKey && e.key === 'ArrowRight') || e.key === 'BrowserForward') {
+        const activeTab = useTabsStore.getState().tabs.find(t => t.id === useTabsStore.getState().activeTabId)
+        const extMatch = activeTab?.currentPath?.match(/\.([^\.]+)$/)
+        const ext = extMatch ? `.${extMatch[1].toLowerCase()}` : ''
+        if (ext === '.epub') return
         e.preventDefault();
         document.getElementById('nav-forward-button')?.click();
       } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
@@ -120,34 +128,36 @@ function App() {
   return (
     <>
       <div className="flex h-screen w-screen bg-gray-200 p-4 gap-4 overflow-hidden select-none font-sans text-gray-800 wails-draggable">
-        {/* Sidebar Island */}
-        {isSettingsOpen ? <SettingsSidebar /> : <Sidebar />}
+        { /* Sidebar Island */ }
+        <div className="shrink-0 h-full">
+          {isSettingsOpen ? <SettingsSidebar /> : <Sidebar />}
+        </div>
 
-        {/* Main Column */}
+        { /* Main Column */ }
         <div className="flex flex-col flex-1 gap-4 min-w-0">
-          {/* TopNav Island */}
+          { /* TopNav Island */ }
           <TopNav />
 
-          {/* Search Panel Island (Conditionally rendered) */}
+          { /* Search Panel Island (Conditionally rendered) */ }
           {!isSettingsOpen && (
             <AnimatePresence>
               {isSearchPanelOpen && <SearchPanel />}
             </AnimatePresence>
           )}
 
-          {/* Content Area */}
+          { /* Content Area */ }
           <div className="flex flex-1 gap-4 min-h-0 relative">
             {isSettingsOpen ? (
               <SettingsContent />
             ) : (
               <>
-                {/* Left Sidebar Island (formerly RightSidebar) */}
+                { /* Left Sidebar Island (formerly RightSidebar) */ }
                 <AnimatePresence>
                   {isRightSidebarOpen && <RightSidebar />}
                 </AnimatePresence>
 
-                {/* FileList Island or File Editor */}
-                <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag">
+                { /* FileList Island or File Editor */ }
+                <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag min-w-0">
                   {activeTab?.currentPath?.endsWith('\\相似图片') ? (
                     <SimilarImages />
                   ) : activeTab?.currentPath?.endsWith('\\简繁转换') ? (

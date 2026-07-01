@@ -260,7 +260,7 @@ Avoid:
 <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
 ```
 
-This applies to toolbar icon buttons, title-bar controls, and any other icon-only trigger. Circular hover backgrounds create a distracting halo around the icon; a simple rectangular hover keeps the UI clean. Setting `tabIndex={-1}` keeps arrow-key navigation inside the document content.
+This applies to toolbar icon buttons, title-bar controls, and any other icon-only trigger. Circular hover backgrounds create a distracting halo around the icon; a simple rectangular hover keeps the UI clean. Setting `tabIndex={-1}` keeps arrow-key navigation inside the document content. If the component is inside a form or needs to remain focusable for accessibility, use `onMouseDown={(e) => e.preventDefault()}` instead of `tabIndex={-1}` to prevent the button from stealing focus on click.
 
 ---
 
