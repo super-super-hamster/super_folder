@@ -16,28 +16,35 @@ Store the container rectangle when opening the menu:
 openMenu(e.clientX, e.clientY, f.path, f.name, f.isDir, scrollRef.current?.getBoundingClientRect())
 ```
 
-In the menu component, compute clamped coordinates before rendering:
+In the menu component, compute the height from the actual items that will be rendered, then clamp coordinates:
 
 ```tsx
-const menuHeight = 200 // approximate max height for a full menu
-const menuWidth = 176  // w-44
+const MENU_WIDTH = 176
+const ITEM_HEIGHT = 34
+const DIVIDER_HEIGHT = 9
+const PADDING_Y = 16
+
+// Count buttons and dividers that will actually render for this menu variant
+const { itemCount, dividerCount } = computeMenuItemCounts(...)
+const menuHeight = itemCount * ITEM_HEIGHT + dividerCount * DIVIDER_HEIGHT + PADDING_Y
 
 let left = x
 let top = y
 
 if (containerRect) {
-  if (left + menuWidth > containerRect.right) {
-    left = Math.max(containerRect.left, containerRect.right - menuWidth)
+  if (left + MENU_WIDTH > containerRect.right) {
+    left = Math.max(containerRect.left, x - MENU_WIDTH)
   }
   if (top + menuHeight > containerRect.bottom) {
     top = Math.max(containerRect.top, y - menuHeight)
   }
+  top = Math.max(top, containerRect.top)
 }
 ```
 
 Prefer flipping the menu above the cursor when it would overflow the bottom edge, rather than pinning it to the panel bottom. This keeps the menu close to the click point.
 
-For a fixed-width menu (`w-44` = 176 px), hard-code `menuWidth` to match. Estimate `menuHeight` from the tallest realistic menu.
+Do not add internal scrollbars to the context menu. If the full menu cannot fit inside the container even after flipping, still prefer the flipped position; the container itself is expected to be tall enough for normal usage.
 
 ---
 

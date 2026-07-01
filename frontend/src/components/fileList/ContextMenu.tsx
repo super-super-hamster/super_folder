@@ -71,22 +71,6 @@ export default function ContextMenu() {
 
   if (!isVisible) return null
 
-  // Ensure menu stays within screen bounds
-  const menuWidth = 176 // w-44 = 176px
-  const menuHeight = targetPath ? 300 : 220 // Safe height estimates
-  
-  let posX = x
-  if (x + menuWidth > window.innerWidth) {
-    posX = window.innerWidth - menuWidth - 10
-  }
-  if (posX < 10) posX = 10
-
-  let posY = y
-  if (y + menuHeight > window.innerHeight) {
-    posY = y - menuHeight // open upwards
-  }
-  if (posY < 10) posY = 10
-
   const currentPath = tabs.find(t => t.id === activeTabId)?.currentPath
 
   const handleAction = (action: string) => {
@@ -287,18 +271,67 @@ export default function ContextMenu() {
   }
 
   const MENU_WIDTH = 176
-  const MENU_HEIGHT = 200
+  const ITEM_HEIGHT = 34
+  const DIVIDER_HEIGHT = 9
+  const PADDING_Y = 16
+
+  let itemCount = 0
+  let dividerCount = 0
+
+  if (targetPath === '__create_smart_folder__') {
+    itemCount = 0
+  } else if (targetPath) {
+    if (targetPath.startsWith('smartfolder://')) {
+      itemCount = 1
+    } else {
+      itemCount = 6 // copy, cut, paste, favorite, rename, chinese_conv
+      dividerCount++ // after paste
+      itemCount++ // convert
+      itemCount++ // delete
+      dividerCount++ // before copy-path
+      itemCount++ // copy-path
+      if (isDir) {
+        itemCount += 2 // open_in_explorer, open_terminal
+      } else {
+        itemCount++ // open_in_app or open_with_default
+        if (isImage(targetPath.substring(targetPath.lastIndexOf('.')))) {
+          itemCount++ // find_similar
+        }
+      }
+    }
+  } else {
+    itemCount = 1 // refresh
+    if (currentPath && !currentPath.startsWith('favorite://') && !currentPath.startsWith('recent://') && !currentPath.startsWith('smartfolder://') && !currentPath.startsWith('preset://')) {
+      itemCount++ // paste
+      dividerCount++
+      itemCount++ // new folder
+      if (!isAlbumView) {
+        itemCount++ // new file
+      }
+      dividerCount++
+      itemCount += 2 // copy-path, open_terminal
+    }
+  }
+
+  const menuHeight = itemCount * ITEM_HEIGHT + dividerCount * DIVIDER_HEIGHT + PADDING_Y
 
   let menuX = x
   let menuY = y
   if (containerRect) {
     if (menuX + MENU_WIDTH > containerRect.right) {
-      menuX = Math.max(containerRect.left, containerRect.right - MENU_WIDTH)
+      menuX = Math.max(containerRect.left, x - MENU_WIDTH)
     }
-    if (menuY + MENU_HEIGHT > containerRect.bottom) {
-      menuY = Math.max(containerRect.top, y - MENU_HEIGHT)
+    if (menuY + menuHeight > containerRect.bottom) {
+      menuY = Math.max(containerRect.top, y - menuHeight)
     }
     menuY = Math.max(menuY, containerRect.top)
+  } else {
+    if (menuX + MENU_WIDTH > window.innerWidth) {
+      menuX = Math.max(0, window.innerWidth - MENU_WIDTH)
+    }
+    if (menuY + menuHeight > window.innerHeight) {
+      menuY = Math.max(0, y - menuHeight)
+    }
   }
 
   const renderIcon = (path: string, viewBox: string = "0 0 24 24") => (
