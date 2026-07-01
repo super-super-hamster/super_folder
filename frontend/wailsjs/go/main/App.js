@@ -62,6 +62,10 @@ export function DeleteFileRemark(arg1) {
   return window['go']['main']['App']['DeleteFileRemark'](arg1);
 }
 
+export function DeleteRenameScheme(arg1) {
+  return window['go']['main']['App']['DeleteRenameScheme'](arg1);
+}
+
 export function DeleteTag(arg1) {
   return window['go']['main']['App']['DeleteTag'](arg1);
 }

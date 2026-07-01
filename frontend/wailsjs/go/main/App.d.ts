@@ -33,6 +33,8 @@ export function CreateTag(arg1:models.Tag):Promise<void>;
 
 export function DeleteFileRemark(arg1:string):Promise<void>;
 
+export function DeleteRenameScheme(arg1:string):Promise<void>;
+
 export function DeleteTag(arg1:string):Promise<void>;
 
 export function DeleteToRecycleBin(arg1:Array<string>):Promise<void>;

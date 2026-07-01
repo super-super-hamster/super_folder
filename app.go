@@ -235,6 +235,10 @@ func (a *App) SaveRenameScheme(name string, code string) error {
 	return rename.SaveRenameScheme(name, code)
 }
 
+func (a *App) DeleteRenameScheme(name string) error {
+	return rename.DeleteRenameScheme(name)
+}
+
 func (a *App) CheckBatchRenameConflicts(operations map[string]string) []string {
 	return rename.CheckBatchRenameConflicts(operations)
 }

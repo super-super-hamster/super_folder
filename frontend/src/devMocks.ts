@@ -56,6 +56,7 @@ export function installDevMocks() {
           BatchRenameFiles: async () => {},
           CheckBatchRenameConflicts: async () => [],
           SaveRenameScheme: async () => {},
+          DeleteRenameScheme: async () => {},
           ToggleFavorite: async () => {},
           CreateTag: async () => {},
           DeleteTag: async () => {},

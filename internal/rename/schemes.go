@@ -150,19 +150,35 @@ func GetRenameSchemes() ([]Scheme, error) {
 	return schemes, nil
 }
 
-func SaveRenameScheme(name string, code string) error {
+func schemeFilePath(name string) (string, error) {
 	dir, err := getSchemesDir()
 	if err != nil {
-		return err
+		return "", err
 	}
-	
 	filename := name
 	if !strings.HasSuffix(strings.ToLower(filename), ".js") {
 		filename += ".js"
 	}
-	
-	path := filepath.Join(dir, filename)
+	return filepath.Join(dir, filename), nil
+}
+
+func SaveRenameScheme(name string, code string) error {
+	path, err := schemeFilePath(name)
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(path, []byte(code), 0644)
+}
+
+func DeleteRenameScheme(name string) error {
+	path, err := schemeFilePath(name)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("方案不存在")
+	}
+	return os.Remove(path)
 }
 
 // CheckBatchRenameConflicts returns a list of target paths that already exist.

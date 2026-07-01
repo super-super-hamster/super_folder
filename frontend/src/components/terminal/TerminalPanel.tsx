@@ -7,7 +7,7 @@ import { EventsOn, EventsEmit } from '../../../wailsjs/runtime'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useState } from 'react'
-import { SaveRenameScheme, GetRenameSchemes } from '../../../wailsjs/go/main/App'
+import { SaveRenameScheme, GetRenameSchemes, DeleteRenameScheme } from '../../../wailsjs/go/main/App'
 import { RENAME_SCHEME_TEMPLATE } from '../../utils/renameSchemeTemplate'
 import { ClipboardGetText, ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import TerminalContextMenu from './TerminalContextMenu'
@@ -397,6 +397,89 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             sfBuffer = ''
             sfLineCount++
             term.write('\x1b[36m名称：\x1b[0m ')
+            return
+          } else if (cmd.startsWith('rename show')) {
+            GetRenameSchemes().then((schemes) => {
+              const list = schemes || []
+              if (list.length === 0) {
+                term.write('\x1b[33m[提示] 暂无重命名方案\x1b[0m\r\n')
+              } else {
+                term.write('\x1b[36m重命名方案列表：\x1b[0m\r\n')
+                list.forEach((s) => {
+                  term.write(`  - ${s.name}\r\n`)
+                })
+              }
+              sfLineCount += Math.max(list.length, 1) + 1
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            }).catch((e: any) => {
+              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            })
+            return
+          } else if (cmd.startsWith('rename edit ')) {
+            const name = cmd.slice('rename edit '.length).trim()
+            if (!name) {
+              term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+              return
+            }
+            if (name.includes(' ')) {
+              term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+              return
+            }
+            GetRenameSchemes().then(async (schemes) => {
+              const list = schemes || []
+              const target = list.find((s) => s.name.toLowerCase() === name.toLowerCase())
+              if (!target) {
+                term.write(`\x1b[31m[错误] 方案 '${name}' 不存在\x1b[0m\r\n`)
+                term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+                return
+              }
+              sfRenameName = target.name
+              sfState = 'rename_code'
+              sfBuffer = ''
+              sfRenameCode = target.code
+              const lines = sfRenameCode.split('\n')
+              codeCursorLine = lines.length - 1
+              codeCursorCol = lines[lines.length - 1].length
+              const dir = await getSchemesDir()
+              savePath = dir ? `${dir}\\${target.name}.js` : `${target.name}.js`
+              sfLineCount += 8 + lines.length
+              term.write('\x1b[36m代码（按 ESC 完成）：\x1b[0m\r\n')
+              term.write('\x1b[36m方案将保存到：\x1b[0m ' + savePath + '\r\n')
+              term.write('\x1b[36m使用 JavaScript 编写重命名逻辑。\x1b[0m\r\n')
+              term.write('\x1b[36m可用参数：\x1b[0m\r\n')
+              term.write('  file  - 当前文件对象：{ name, ext, path, isDir, size }\r\n')
+              term.write('  index - 当前文件在列表中的索引\r\n')
+              term.write('  files - 全部文件数组\r\n')
+              term.write('\x1b[36m返回值：\x1b[0m 新的文件名（不含扩展名），系统会自动追加扩展名。\r\n')
+              term.write('\r\n')
+              term.write(sfRenameCode)
+            }).catch((e: any) => {
+              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            })
+            return
+          } else if (cmd.startsWith('rename delete ')) {
+            const name = cmd.slice('rename delete '.length).trim()
+            if (!name) {
+              term.write('\x1b[31m[错误] 请输入方案名称\x1b[0m\r\n')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+              return
+            }
+            if (name.includes(' ')) {
+              term.write('\x1b[31m[错误] 方案名称不能包含空格\x1b[0m\r\n')
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+              return
+            }
+            DeleteRenameScheme(name).then(() => {
+              term.write(`\x1b[32m[成功] 方案 '${name}' 已删除\x1b[0m\r\n`)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            }).catch((e: any) => {
+              term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
+              term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
+            })
             return
           } else {
             if (cmd.length > 0) {
