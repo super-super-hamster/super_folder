@@ -111,10 +111,11 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          html, body { max-width: 100% !important; overflow-x: hidden !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; }
           img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
           body > * { max-width: 100% !important; }
           img { display: block; }
+          * { word-wrap: break-word !important; }
         `
         doc.head.appendChild(style)
       }
@@ -137,10 +138,11 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
       if (doc && doc.head) {
         const style = doc.createElement('style')
         style.textContent = `
-          html, body { max-width: 100% !important; overflow-x: hidden !important; }
+          html, body { max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; }
           img, svg, video, canvas, iframe, object, embed { max-width: 100% !important; height: auto !important; box-sizing: border-box !important; }
           body > * { max-width: 100% !important; }
           img { display: block; }
+          * { word-wrap: break-word !important; }
         `
         doc.head.appendChild(style)
       }
@@ -168,6 +170,10 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!renditionRef.current) return
+      const target = e.target as HTMLElement
+      if (target?.tagName === 'BUTTON' || target?.tagName === 'A' || target?.isContentEditable) {
+        return
+      }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault()
         const now = Date.now()
@@ -242,8 +248,9 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         <button
           onClick={goPrev}
           disabled={!canGoPrev}
-          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
           title="上一章"
+          tabIndex={-1}
         >
           <Lottie lottieRef={leftRef} animationData={leftAnim} autoplay={false} loop={false} className="w-5 h-5" />
         </button>
@@ -258,8 +265,9 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
           <button
             onClick={goNext}
             disabled={!canGoNext}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
             title="下一章"
+            tabIndex={-1}
           >
             <Lottie lottieRef={rightRef} animationData={rightAnim} autoplay={false} loop={false} className="w-5 h-5" />
           </button>
@@ -267,8 +275,9 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
           <Dropdown>
             <Dropdown.Trigger>
               <button
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
                 title="目录"
+                tabIndex={-1}
               >
                 <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" alt="目录" />
               </button>

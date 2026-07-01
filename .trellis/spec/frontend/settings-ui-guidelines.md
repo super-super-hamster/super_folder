@@ -243,10 +243,13 @@ Do not use `variant="flat"` or `variant="ghost"` unless the design explicitly ca
 
 ## Icon Buttons
 
-Icon-only buttons use a plain rectangular hover background. Do not add a circular border or `rounded-full` background.
+Icon-only buttons use a plain rectangular hover background. Do not add a circular border or `rounded-full` background. Also remove default focus outlines and prevent focus from stealing keyboard input from the main content area.
 
 ```tsx
-<button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors">
+<button 
+  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+  tabIndex={-1}
+>
   <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" />
 </button>
 ```
@@ -257,7 +260,7 @@ Avoid:
 <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
 ```
 
-This applies to toolbar icon buttons, title-bar controls, and any other icon-only trigger. Circular hover backgrounds create a distracting halo around the icon; a simple rectangular hover keeps the UI clean.
+This applies to toolbar icon buttons, title-bar controls, and any other icon-only trigger. Circular hover backgrounds create a distracting halo around the icon; a simple rectangular hover keeps the UI clean. Setting `tabIndex={-1}` keeps arrow-key navigation inside the document content.
 
 ---
 
