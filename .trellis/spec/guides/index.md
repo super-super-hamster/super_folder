@@ -69,6 +69,18 @@ These guides help you **ask the right questions before coding**.
 - [ ] Reviewer says "behavior change" → Read the code comments — is it intentional design?
 - [ ] Reviewer identifies a "bug" in test → Mentally delete the feature being tested — does the test still pass? If yes → tautological test
 
+### When to Reach for codebase-memory MCP
+
+优先使用 codebase-memory MCP 的场景：
+
+- [ ] 需要分析函数/模块的调用链路或影响面
+- [ ] 需要理解模块架构、服务边界或跨层数据流
+- [ ] 需要用自然语言查询不确定命名/拼写的函数、类、路由或变量
+- [ ] 需要进行多条件组合查询（如某层 + 某数据字段 + 某种调用关系）
+- [ ] 简单的 grep/glob 无法快速定位，或结果噪音太高
+
+→ 先尝试 `search_graph` / `search_code` / `trace_path` / `query_graph` 等 codebase-memory 工具，再回退到手动 grep/glob。
+
 **Common AI reviewer false-positive patterns**:
 1. **Trust boundary confusion**: Treating internal data (bundled JSON manifests) as untrusted external input
 2. **Ignoring design comments**: Flagging intentional behavior documented in code comments as bugs
