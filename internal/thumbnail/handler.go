@@ -28,19 +28,33 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-var maxThumbBudget int64 = 50 * 1024 * 1024 // 50MB default budget
+const (
+	minComputeBudgetMB = 16
+	maxComputeBudgetMB = 1024
+	defaultComputeBudgetMB = 512
+)
+
+var computeBudgetMB int = defaultComputeBudgetMB
+var maxThumbBudget int64 = int64(computeBudgetMB) * 1024 * 1024
 var thumbSem = semaphore.NewWeighted(maxThumbBudget)
 
 func GetBudgetLimitMB() int {
-	return int(maxThumbBudget / (1024 * 1024))
+	return computeBudgetMB
 }
 
 func SetBudgetLimitMB(limitMB int) {
+	if limitMB < minComputeBudgetMB {
+		limitMB = minComputeBudgetMB
+	}
+	if limitMB > maxComputeBudgetMB {
+		limitMB = maxComputeBudgetMB
+	}
 	newLimit := int64(limitMB) * 1024 * 1024
 	diff := newLimit - maxThumbBudget
 	if diff > 0 {
 		thumbSem.Release(diff)
 	}
+	computeBudgetMB = limitMB
 	maxThumbBudget = newLimit
 }
 
@@ -85,8 +99,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine weight based on file size
-	weight := info.Size()
+	// Estimate decode memory from image resolution (RGBA decoded image)
+	weight, err := estimateDecodeMemory(path)
+	if err != nil {
+		weight = 100 * 1024
+	}
 	if weight < 100*1024 {
 		weight = 100 * 1024 // Min 100KB cost
 	}
@@ -162,5 +179,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	w.Write(data)
+}
+
+func estimateDecodeMemory(path string) (int64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		return 0, err
+	}
+
+	// RGBA decoded image: width * height * 4 bytes
+	return int64(cfg.Width) * int64(cfg.Height) * 4, nil
 }
 

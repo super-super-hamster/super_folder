@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import EditorLib from 'react-simple-code-editor'
 const Editor = (EditorLib as any).default || EditorLib
 import Prism from 'prismjs'
@@ -20,6 +20,7 @@ import 'prismjs/components/prism-yaml'
 import 'prismjs/components/prism-markdown'
 import 'prismjs/components/prism-go'
 
+import TextContextMenu from '../editor/TextContextMenu'
 import { ReadFileText, WriteFileText } from '../../../wailsjs/go/main/App'
 import { useUIStore } from '../../store/uiStore'
 
@@ -56,6 +57,7 @@ export default function CodePreview({ path, ext }: CodePreviewProps) {
   const [originalCode, setOriginalCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   const { setUnsavedEditorPath } = useUIStore()
 
@@ -121,11 +123,9 @@ export default function CodePreview({ path, ext }: CodePreviewProps) {
   if (error) return <div className="p-4 text-sm text-red-500 flex items-center justify-center h-full">{error}</div>
 
   return (
-    <div className="w-full h-full overflow-auto bg-[#1d1f21] relative no-scrollbar wails-no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+    <div ref={editorRef} className="w-full h-full overflow-auto bg-[#1d1f21] relative no-scrollbar wails-no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
       {code !== originalCode && (
-        <div className="absolute top-2 right-4 z-10 px-3 py-1 bg-yellow-100/10 text-yellow-500 text-xs font-medium rounded-full shadow-sm border border-yellow-500/30">
-          未保存 (Ctrl+S)
-        </div>
+        <div className="absolute top-3 right-4 z-10 w-2 h-2 rounded-full bg-orange-500" />
       )}
       <div className="min-h-full min-w-full p-4" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
         <style>{`
@@ -149,6 +149,7 @@ export default function CodePreview({ path, ext }: CodePreviewProps) {
           }}
         />
       </div>
+      <TextContextMenu containerRef={editorRef} value={code} onChange={setCode} />
     </div>
   )
 }

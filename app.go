@@ -596,6 +596,7 @@ func (a *App) GetThumbnailBudgetLimit() int {
 
 func (a *App) SetThumbnailBudgetLimit(limitMB int) {
 	thumbnail.SetBudgetLimitMB(limitMB)
+	similarity.SetHashMemoryBudgetMB(limitMB)
 }
 
 func (a *App) StartTerminal(dir string) error {

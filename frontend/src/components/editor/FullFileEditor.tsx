@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { isImage, isCode, isMarkdown, isText, isVideo, isAudio, isPdf, isDocx, isXlsx, isEditableText } from '../../utils/previewHelper'
 import ImagePreview from '../preview/ImagePreview'
 import PdfPreview from '../preview/PdfPreview'
@@ -7,6 +7,7 @@ import XlsxPreview from '../preview/XlsxPreview'
 import MediaPreview from '../preview/MediaPreview'
 import MarkdownPreview from '../preview/MarkdownPreview'
 import CodePreview from '../preview/CodePreview'
+import TextContextMenu from './TextContextMenu'
 import { ReadFileText, WriteFileText } from '../../../wailsjs/go/main/App'
 import { useUIStore } from '../../store/uiStore'
 
@@ -23,6 +24,7 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
   const [content, setContent] = useState('')
   const [originalContent, setOriginalContent] = useState('')
   const [loading, setLoading] = useState(true)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   const { setUnsavedEditorPath } = useUIStore()
 
@@ -80,11 +82,9 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
         return <div className="flex items-center justify-center h-full w-full text-gray-500">加载中...</div>
       }
       return (
-        <div className="w-full h-full flex flex-col relative">
+        <div ref={editorRef} className="w-full h-full flex flex-col relative">
           {content !== originalContent && (
-            <div className="absolute top-2 right-4 z-panel px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full shadow-sm border border-yellow-200">
-              未保存 (Ctrl+S)
-            </div>
+            <div className="absolute top-3 right-4 z-panel w-2 h-2 rounded-full bg-orange-500" />
           )}
           <textarea
             value={content}
@@ -93,6 +93,7 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             spellCheck={false}
           />
+          <TextContextMenu containerRef={editorRef} value={content} onChange={setContent} />
         </div>
       )
     }

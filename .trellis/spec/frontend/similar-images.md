@@ -79,6 +79,20 @@ Frontend listens with `EventsOn('similarity-progress', ...)` and updates `Progre
 
 ---
 
+## Memory Budget
+
+Similar-image hashing shares a single memory budget with thumbnail generation:
+
+- Config key: `thumbnailBudgetMB`
+- Slider label: 高性能计算时的内存占用大小
+- Range: 16 MB – 1024 MB
+- Default: 512 MB
+- Displayed as percentage only in Settings
+
+Both features estimate decode memory as `width × height × 4` bytes (RGBA decoded image) and acquire that weight from a semaphore before decoding. The same limit is applied to both semaphores.
+
+---
+
 ## Frontend Behavior
 
 - Entry: Settings → 高级 → 查找相似图片

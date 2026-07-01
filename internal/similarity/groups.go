@@ -18,9 +18,23 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-const hashMemoryBudget = 512 * 1024 * 1024 // 512MB
-
+var hashMemoryBudget int64 = 512 * 1024 * 1024 // 512MB default
 var hashSem = semaphore.NewWeighted(hashMemoryBudget)
+
+func SetHashMemoryBudgetMB(limitMB int) {
+	if limitMB < 16 {
+		limitMB = 16
+	}
+	if limitMB > 1024 {
+		limitMB = 1024
+	}
+	newLimit := int64(limitMB) * 1024 * 1024
+	diff := newLimit - hashMemoryBudget
+	if diff > 0 {
+		hashSem.Release(diff)
+	}
+	hashMemoryBudget = newLimit
+}
 
 var (
 	currentSearchCtx    context.Context

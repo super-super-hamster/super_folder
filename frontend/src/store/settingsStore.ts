@@ -105,9 +105,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ doubleClickOpenMode: mode })
         get().saveDoubleClickOpenMode()
       },
-      thumbnailBudgetMB: 50,
+      thumbnailBudgetMB: 512,
       setThumbnailBudgetMB: (limit) => {
-        set({ thumbnailBudgetMB: limit })
+        const clamped = Math.min(1024, Math.max(16, Math.round(limit)))
+        set({ thumbnailBudgetMB: clamped })
         get().saveThumbnailBudgetMB()
       },
 
@@ -156,8 +157,11 @@ export const useSettingsStore = create<SettingsState>()(
           const budgetJSON = await GetConfig("thumbnailBudgetMB")
           if (budgetJSON) {
             const mb = JSON.parse(budgetJSON)
-            set({ thumbnailBudgetMB: mb })
-            SetThumbnailBudgetLimit(mb).catch(console.error)
+            const clamped = Math.min(1024, Math.max(16, Math.round(mb)))
+            set({ thumbnailBudgetMB: clamped })
+            SetThumbnailBudgetLimit(clamped).catch(console.error)
+          } else {
+            SetThumbnailBudgetLimit(get().thumbnailBudgetMB).catch(console.error)
           }
         } catch (e) { console.error("Failed to load thumbnailBudgetMB", e) }
       },
@@ -188,7 +192,10 @@ export const useSettingsStore = create<SettingsState>()(
 
       saveThumbnailBudgetMB: async () => {
         try {
-          await SetConfig("thumbnailBudgetMB", JSON.stringify(get().thumbnailBudgetMB))
+          const clamped = Math.min(1024, Math.max(16, Math.round(get().thumbnailBudgetMB)))
+          set({ thumbnailBudgetMB: clamped })
+          await SetConfig("thumbnailBudgetMB", JSON.stringify(clamped))
+          await SetThumbnailBudgetLimit(clamped)
         } catch (e) { console.error("Failed to save thumbnailBudgetMB", e) }
       }
     }),

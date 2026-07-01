@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Reorder } from 'framer-motion'
 import { Select, Slider, ListBox, Label } from '@heroui/react'
 import { useSettingsStore, ShortcutItem } from '../../store/settingsStore'
-import { GetDefaultPaths, SelectDirectory, SetThumbnailBudgetLimit } from '../../../wailsjs/go/main/App'
+import { GetDefaultPaths, SelectDirectory } from '../../../wailsjs/go/main/App'
 
 const SPECIAL_IDS = new Set(['favorite', 'recent', 'smartfolder'])
 
@@ -24,6 +24,11 @@ export default function GeneralSettings() {
   const [items, setItems] = useState<ShortcutItem[]>([])
   const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
   const [dragId, setDragId] = useState<string | null>(null)
+  const [sliderValue, setSliderValue] = useState(thumbnailBudgetMB)
+
+  useEffect(() => {
+    setSliderValue(thumbnailBudgetMB)
+  }, [thumbnailBudgetMB])
 
   useEffect(() => {
     loadFromBackend()
@@ -160,20 +165,26 @@ export default function GeneralSettings() {
           <div className="bg-sf-panel/80 rounded-xl p-5">
             <Slider
               className="w-full max-w-md"
-              minValue={0}
-              maxValue={100}
+              minValue={16}
+              maxValue={1024}
               step={1}
-              value={thumbnailBudgetMB}
+              value={sliderValue}
               onChange={(value) => {
                 const mb = Array.isArray(value) ? value[0] : value
+                setSliderValue(mb)
+              }}
+              onChangeEnd={(value) => {
+                const mb = Array.isArray(value) ? value[0] : value
                 setThumbnailBudgetMB(mb)
-                SetThumbnailBudgetLimit(mb).catch(console.error)
               }}
             >
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-semibold text-gray-700">生成缩略图时内存额度上限</Label>
+                <Label className="text-sm font-semibold text-gray-700">高性能计算时的内存占用大小</Label>
                 <Slider.Output className="text-sm text-gray-500">
-                  {({ state }) => `${state.getThumbValueLabel(0)}%`}
+                  {({ state }) => {
+                    const pct = Math.round(((state.getThumbValue(0) as number) - 16) / (1024 - 16) * 100)
+                    return `${pct}%`
+                  }}
                 </Slider.Output>
               </div>
               <Slider.Track>

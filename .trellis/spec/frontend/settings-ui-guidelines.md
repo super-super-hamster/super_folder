@@ -225,3 +225,81 @@ partialize: (state) => ({
 ```
 
 Only persist what is needed across restarts. UI-only transient state (like `doubleClickOpenMode`) is initialized in `settingsStore` and does not need persistence if the backend also stores it.
+
+---
+
+## Memory Budget Slider (Shared Compute Budget)
+
+Use a single slider for operations that share a memory semaphore (e.g., thumbnail generation + similar-image hashing):
+
+- Label: 高性能计算时的内存占用大小
+- Range: 16 MB – 1024 MB
+- Default: 512 MB
+- Display value as **percentage only**
+- Backend clamps to `[16, 1024]`; frontend store also clamps to match
+- Use local slider state for live thumb feedback; persist only on `onChangeEnd` to avoid spamming the backend during drag
+
+```tsx
+const [sliderValue, setSliderValue] = useState(thumbnailBudgetMB)
+
+useEffect(() => {
+  setSliderValue(thumbnailBudgetMB)
+}, [thumbnailBudgetMB])
+
+<Slider
+  minValue={16}
+  maxValue={1024}
+  step={1}
+  value={sliderValue}
+  onChange={(value) => {
+    const mb = Array.isArray(value) ? value[0] : value
+    setSliderValue(mb)
+  }}
+  onChangeEnd={(value) => {
+    const mb = Array.isArray(value) ? value[0] : value
+    setThumbnailBudgetMB(mb)
+  }}
+>
+  <Slider.Output>
+    {({ state }) => {
+      const pct = Math.round(((state.getThumbValue(0) as number) - 16) / (1024 - 16) * 100)
+      return `${pct}%`
+    }}
+  </Slider.Output>
+</Slider>
+```
+
+Backend memory estimation for image decode: `width × height × 4` bytes (RGBA).
+
+---
+
+## Unsaved Change Indicator
+
+In text/code editors, replace pill/capsule indicators with a small, shadowless orange dot:
+
+```tsx
+{isDirty && <div className="absolute top-3 right-4 z-10 w-2 h-2 rounded-full bg-orange-500" />}
+```
+
+- No text, no border, no shadow
+- Position: top-right of the editor container
+- Color: `bg-orange-500`
+
+---
+
+## Text Editor Context Menu
+
+Editable text/code editors provide a right-click menu inside the editor area with copy/cut/paste.
+
+- Menu width: `w-44` to match the file-list context menu
+- Items: 复制, 剪切, 粘贴
+- Icons:
+  - 复制: Lottie copy animation (same as file-list context menu)
+  - 剪切: `scissors_line.svg`
+  - 粘贴: `paste_line.svg`
+- Copy/Cut disabled when there is no selection
+- Paste disabled when clipboard is empty
+- Read/write clipboard via Wails runtime: `ClipboardGetText()` / `ClipboardSetText(text)`
+- Maintain `selectionStart`/`selectionEnd` correctly after cut/paste
+- Detect selection from the active `<textarea>` element, not `window.getSelection()` (which does not reflect textarea selection)
+

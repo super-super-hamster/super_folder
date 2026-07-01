@@ -89,7 +89,8 @@ export function installDevMocks() {
       BrowserOpenURL: () => {},
       WindowToggleMaximise: async () => {},
       WindowIsMaximised: async () => false,
-      ClipboardSetText: async () => {}
+      ClipboardSetText: async () => {},
+      ClipboardGetText: async () => ''
     }
   }
 }
