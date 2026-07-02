@@ -90,3 +90,77 @@ func (a *App) GetTagUsageCounts() (map[string]int, error) {
     return counts, nil
 }
 ```
+
+## Scenario: Windows Identity Reset Verification
+
+### 1. Scope / Trigger
+
+- Trigger: Any implementation of forgotten privacy password reset on Windows.
+- The app must never read, store, or validate the Windows PIN/password directly.
+- The app may only trust the operating system's identity-verification result.
+
+### 2. Signatures
+
+```go
+func (a *App) VerifyWindowsIdentityForPrivacyReset() (bool, error)
+func (a *App) ResetPrivacyPassword(password string, confirm string) (models.PrivacyState, error)
+
+package winidentity
+
+func Available() bool
+func Verify() (bool, error)
+```
+
+### 3. Contracts
+
+- Windows implementation uses `Windows.Security.Credentials.UI.UserConsentVerifier` through WinRT.
+- `Available()` returns true only when `CheckAvailabilityAsync()` returns `Available`.
+- `Verify()` returns true only when `RequestVerificationAsync(...)` returns `Verified`.
+- `VerifyWindowsIdentityForPrivacyReset` must clear `resetVerified` before every verification attempt.
+- `resetVerified` is same-process state only and must be cleared after password reset, unlock, or lock.
+- Non-Windows builds must return unavailable through a `!windows` stub.
+
+### 4. Validation & Error Matrix
+
+| Condition | Required Result |
+|-----------|-----------------|
+| WinRT availability is not `Available` | Return unavailable; keep reset disabled |
+| Verification result is `Verified` | Set same-process `resetVerified` and allow reset dialog |
+| Verification is canceled, times out, errors, or returns any other result | Return error/false and keep `resetVerified` false |
+| Reset called without verified state | Return error; do not change password |
+
+### 5. Good/Base/Bad Cases
+
+- Good: Launch OS verification UI, accept only `Verified`, then call `ResetPrivacyPassword` with a new app password.
+- Base: If Windows Hello/PIN is unavailable, show disabled reset UI and do not provide an app-level bypass.
+- Bad: Asking the user to type their Windows PIN into the app or comparing it in app code.
+
+### 6. Tests Required
+
+- Add unit coverage around `VerifyWindowsIdentityForPrivacyReset` by injecting/faking `winidentity.Verify` when test seams exist.
+- Add integration/manual coverage for available, canceled, unavailable, timeout, and successful reset paths.
+- Assert that protected paths and protected tags remain after reset.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+func VerifyWindowsPin(pin string) bool {
+    return pin == storedPin
+}
+```
+
+#### Correct
+
+```go
+func (a *App) VerifyWindowsIdentityForPrivacyReset() (bool, error) {
+    a.resetVerified = false
+    verified, err := winidentity.Verify()
+    if err != nil {
+        return false, err
+    }
+    a.resetVerified = verified
+    return verified, nil
+}
+```

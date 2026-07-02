@@ -30,6 +30,7 @@ import (
 	"super_folder/internal/terminal"
 	"super_folder/internal/thumbnail"
 	"super_folder/internal/undo"
+	"super_folder/internal/winidentity"
 )
 
 func init() {
@@ -434,7 +435,7 @@ func (a *App) GetPrivacyState() (models.PrivacyState, error) {
 		HasPassword:              privacy.HasPassword(),
 		RestorePrivacyOnStartup:  privacy.RestoreOnStartup(),
 		ShouldPromptRestore:      privacy.RestoreOnStartup() && privacy.LastMode() == privacy.ModePrivacy && privacy.HasPassword() && !a.isPrivacyMode(),
-		WindowsIdentityAvailable: false,
+		WindowsIdentityAvailable: winidentity.Available(),
 	}, nil
 }
 
@@ -522,7 +523,12 @@ func (a *App) CanAccessPath(path string) (bool, error) {
 
 func (a *App) VerifyWindowsIdentityForPrivacyReset() (bool, error) {
 	a.resetVerified = false
-	return false, fmt.Errorf("当前设备暂不支持 Windows 身份验证重设")
+	verified, err := winidentity.Verify()
+	if err != nil {
+		return false, err
+	}
+	a.resetVerified = verified
+	return verified, nil
 }
 
 func (a *App) ResetPrivacyPassword(password string, confirm string) (models.PrivacyState, error) {
