@@ -5,13 +5,13 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "file-manager"
+    !define INFO_PROJECTNAME "super_folder"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "file-manager"
+    !define INFO_COMPANYNAME "super_folder"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "file-manager"
+    !define INFO_PRODUCTNAME "super_folder"
 !endif
 !ifndef INFO_PRODUCTVERSION
     !define INFO_PRODUCTVERSION "1.0.0"

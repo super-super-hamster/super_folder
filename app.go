@@ -26,6 +26,7 @@ import (
 	"super_folder/internal/models"
 	"super_folder/internal/privacy"
 	"super_folder/internal/rename"
+	searchservice "super_folder/internal/search/service"
 	"super_folder/internal/similarity"
 	"super_folder/internal/terminal"
 	"super_folder/internal/thumbnail"
@@ -817,11 +818,7 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 		return nil, err
 	}
 
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		configDir = os.TempDir()
-	}
-	portFile := filepath.Join(configDir, "super_folder", "search_port.txt")
+	portFile := searchservice.PortFilePath()
 	portBytes, err := os.ReadFile(portFile)
 	if err != nil {
 		return nil, fmt.Errorf("search service is not ready (cannot read port file)")
@@ -834,7 +831,8 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 	url := fmt.Sprintf("http://127.0.0.1:%s/search", port)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {
-		return nil, err
+		_ = os.Remove(portFile)
+		return nil, fmt.Errorf("search service is not ready: %w", err)
 	}
 	defer resp.Body.Close()
 

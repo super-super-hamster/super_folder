@@ -23,6 +23,7 @@ import (
 type Searcher struct {
 	engines map[string]*usn.Engine
 	stopCh  chan struct{}
+	server  *http.Server
 }
 
 func NewSearcher() *Searcher {
@@ -75,6 +76,10 @@ func (s *Searcher) Start() {
 
 func (s *Searcher) Stop() {
 	close(s.stopCh)
+	if s.server != nil {
+		_ = s.server.Close()
+	}
+	_ = os.Remove(PortFilePath())
 	for _, e := range s.engines {
 		e.Close()
 	}
@@ -94,15 +99,13 @@ func (s *Searcher) serveHTTP() {
 	SearchPort = listener.Addr().(*net.TCPAddr).Port
 	log.Printf("Starting Search RPC Server on 127.0.0.1:%d...", SearchPort)
 
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		configDir = os.TempDir()
-	}
-	portFile := filepath.Join(configDir, "super_folder", "search_port.txt")
+	portFile := PortFilePath()
 	os.MkdirAll(filepath.Dir(portFile), 0777)
 	os.WriteFile(portFile, []byte(fmt.Sprintf("%d", SearchPort)), 0666)
+	defer os.Remove(portFile)
 
-	if err := http.Serve(listener, mux); err != nil {
+	s.server = &http.Server{Handler: mux}
+	if err := s.server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		log.Printf("HTTP server error: %v", err)
 	}
 }

@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"log"
@@ -8,6 +8,8 @@ import (
 )
 
 type myService struct{}
+
+const serviceName = "super_folder-search"
 
 func (m *myService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
@@ -28,28 +30,27 @@ loop:
 			break loop
 		}
 	}
-	
+
 	// Shutdown servers cleanly
 	searcher.Stop()
-	
+
 	changes <- svc.Status{State: svc.StopPending}
 	return
 }
 
 func Run() error {
-	log.Println("Starting file-manager-search service...")
-	
+	log.Println("Starting super_folder-search service...")
+
 	isInteractive, err := svc.IsAnInteractiveSession()
 	if err != nil {
 		log.Printf("failed to determine if we are running in an interactive session: %v", err)
 		return err
 	}
-	
+
 	if isInteractive {
 		log.Println("Running in interactive mode...")
-		return debug.Run("file-manager-search", &myService{})
+		return debug.Run(serviceName, &myService{})
 	}
 
-	return svc.Run("file-manager-search", &myService{})
+	return svc.Run(serviceName, &myService{})
 }
-

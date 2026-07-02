@@ -4,11 +4,11 @@ import (
 	"embed"
 
 	"encoding/json"
+	"os"
 	"super_folder/internal/database"
 	"super_folder/internal/rename"
 	"super_folder/internal/search/service"
 	"super_folder/internal/thumbnail"
-	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -60,9 +60,9 @@ func main() {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:  "file-manager",
-		Width:  width,
-		Height: height,
+		Title:     "super_folder",
+		Width:     width,
+		Height:    height,
 		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
