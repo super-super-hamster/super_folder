@@ -42,7 +42,7 @@ export default function ContextMenu() {
   const [convertibleFormats, setConvertibleFormats] = useState<string[]>([])
 
   useEffect(() => {
-    if (isVisible && targetPath) {
+    if (isVisible && targetPath && !isDir) {
       const selectedFiles = Array.from(selectedPaths)
       const targets = selectedFiles.includes(targetPath) ? selectedFiles : [targetPath]
       GetConvertibleFormats(targets).then(formats => {
@@ -51,7 +51,7 @@ export default function ContextMenu() {
     } else {
       setConvertibleFormats([])
     }
-  }, [isVisible, targetPath, selectedPaths])
+  }, [isVisible, targetPath, selectedPaths, isDir])
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -286,7 +286,9 @@ export default function ContextMenu() {
     } else {
       itemCount = 6 // copy, cut, paste, favorite, rename, chinese_conv
       dividerCount++ // after paste
-      itemCount++ // convert
+      if (!isDir) {
+        itemCount++ // convert
+      }
       itemCount++ // delete
       dividerCount++ // before copy-path
       itemCount++ // copy-path
@@ -431,14 +433,16 @@ export default function ContextMenu() {
                 简繁转换
               </button>
             )}
-            <button
-              onClick={() => handleAction('convert')}
-              disabled={convertibleFormats.length === 0 || isRunning}
-              className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-            >
-              <img src="/src/assets/icons/transfer_horizontal_line.svg" className={`w-4 h-4 mr-3 ${convertibleFormats.length === 0 ? 'opacity-40' : 'opacity-70'}`} alt="convert" />
-              <span className={convertibleFormats.length === 0 ? 'text-gray-400' : ''}>转换</span>
-            </button>
+            {!isDir && (
+              <button
+                onClick={() => handleAction('convert')}
+                disabled={convertibleFormats.length === 0 || isRunning}
+                className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              >
+                <img src="/src/assets/icons/transfer_horizontal_line.svg" className={`w-4 h-4 mr-3 ${convertibleFormats.length === 0 ? 'opacity-40' : 'opacity-70'}`} alt="convert" />
+                <span className={convertibleFormats.length === 0 ? 'text-gray-400' : ''}>转换</span>
+              </button>
+            )}
             <button 
               onClick={() => handleAction('delete')} 
               onMouseEnter={() => {
