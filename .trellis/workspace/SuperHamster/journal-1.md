@@ -71,3 +71,36 @@ Adjusted TopNav so tab wrappers no longer shrink and active tab background match
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Fix Tag Search And Undo
+
+**Date**: 2026-07-02
+**Task**: Fix Tag Search And Undo
+**Branch**: `main`
+
+### Summary
+
+Fixed tag-name and typed wildcard search, batched tag add/remove undo and redo, tag refresh after undo/redo, and documented undo payload contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f9451f6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
