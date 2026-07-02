@@ -8,6 +8,7 @@ import { useRef, useState, useEffect } from 'react'
 import { Checkbox, Dropdown, Separator } from '@heroui/react'
 import DynamicBreadcrumb from './DynamicBreadcrumb'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
+import { models } from '../../../wailsjs/go/models'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
 import upAnim from '../../assets/anim/up.json'
@@ -51,7 +52,7 @@ const AnimatedClickIcon = ({ animData, className, autoPlayCount }: { animData: a
 }
 
 export default function TopNav() {
-  const { globalTags } = useTagStore()
+  const { globalTags: allGlobalTags } = useTagStore()
   const { 
     isSearchFocused, setSearchFocused, 
     searchQuery, setSearchQuery, 
@@ -66,16 +67,24 @@ export default function TopNav() {
     availableTags, setAvailableTags,
     viewMode, setViewMode
   } = useUIStore()
+
+  const [globalTags, setGlobalTags] = useState<models.Tag[]>([])
   
   const { tabs, activeTabId, setActiveTab, addTab, removeTab, goBack, goForward } = useTabsStore()
 
   useEffect(() => {
+    if (allGlobalTags && allGlobalTags.length > 0) {
+      setGlobalTags(allGlobalTags)
+      setAvailableTags(allGlobalTags.map(t => t.name))
+      return
+    }
     GetGlobalTags().then((res) => {
       if (res) {
+        setGlobalTags(res)
         setAvailableTags(res.map(t => t.name))
       }
     }).catch(e => console.error(e))
-  }, [])
+  }, [allGlobalTags])
 
   const { tags, remarks, keyword: inputValue } = parseSearchQuery(searchQuery)
   const chips = [...tags, ...remarks]
@@ -116,9 +125,22 @@ export default function TopNav() {
         .map(p => ({ type: 'prefix', text: p.label, matchedPrefix: typed }))
     } else if (typed.startsWith('tag:') || typed.startsWith('标签:')) {
       const isChinese = typed.startsWith('标签:')
-      const tagPrefix = typed.slice(isChinese ? 3 : 4)
-      const matches = availableTags.filter(t => t.toLowerCase().includes(tagPrefix))
-      suggestions = matches.map(t => ({ type: 'tag', text: t, matchedPrefix: tagPrefix }))
+      const prefixLen = isChinese ? 3 : 4
+      const tagPrefix = typed.slice(prefixLen)
+
+      if (tagPrefix.includes(':')) {
+        const typePart = tagPrefix.split(':')[0]
+        const rest = tagPrefix.slice(typePart.length + 1)
+        const matched = globalTags.filter(t => t.type === typePart && t.name.toLowerCase().includes(rest.toLowerCase()))
+        const typeNames = Array.from(new Set(matched.map(t => t.name)))
+        suggestions = [
+          ...(rest === '' ? [{ type: 'tag', text: `${typePart}:*`, matchedPrefix: tagPrefix }] : []),
+          ...typeNames.map(n => ({ type: 'tag', text: `${typePart}:${n}`, matchedPrefix: tagPrefix }))
+        ]
+      } else {
+        const matches = availableTags.filter(t => t.toLowerCase().includes(tagPrefix))
+        suggestions = matches.map(t => ({ type: 'tag', text: t, matchedPrefix: tagPrefix }))
+      }
     }
 
     setSearchSuggestions(suggestions)
@@ -350,6 +372,7 @@ export default function TopNav() {
               setSearchPanelOpen(true)
             }}
             onBlur={() => setSearchFocused(false)}
+            autoComplete="off"
           />
           {searchQuery && (
             <img 

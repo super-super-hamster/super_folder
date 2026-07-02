@@ -142,3 +142,81 @@ func foo() error {
     return nil
 }
 ```
+
+---
+
+## Scenario: Undo/Redo Operation Payloads
+
+### 1. Scope / Trigger
+- Trigger: Adding or changing an `internal/undo.Operation` type, inverse/forward mapping, or batch operation payload.
+
+### 2. Signatures
+
+```go
+type Operation struct {
+    Type       OpType              `json:"type"`
+    SrcPaths   []string            `json:"srcPaths"`
+    DestPaths  []string            `json:"destPaths"`
+    Paths      []string            `json:"paths"`
+    TagIDs     []string            `json:"tagIDs"`
+    PathTagIDs map[string][]string `json:"pathTagIDs"`
+}
+```
+
+### 3. Contracts
+
+| Operation | Undo must | Redo must | Required payload |
+|-----------|-----------|-----------|------------------|
+| `OpAddTag` | Remove `TagIDs` from `Paths` | Add `TagIDs` to `Paths` | `Paths`, `TagIDs` |
+| `OpRemoveTag` | Add removed tags back | Remove removed tags again | `PathTagIDs` for precise batch restore; fallback `Paths` + `TagIDs` only for uniform removals |
+
+Batch operations must capture the original per-target relationship before mutation. Do not assume every selected path had every requested tag.
+
+### 4. Validation & Error Matrix
+
+| Condition | Action |
+|-----------|--------|
+| Handler not registered | Return an error from undo/redo and clear stacks through existing `Undo`/`Redo` flow |
+| Batch remove has no matching existing tags | Return nil and do not push an undo operation |
+| ADS sync fails after DB mutation | Return the sync error so frontend receives a failure instead of silently diverging |
+| `PathTagIDs` is present | Apply handlers per path using only that path's tag IDs |
+
+### 5. Good/Base/Bad Cases
+
+#### Good — Preserve per-path removed tags
+```go
+PathTagIDs: map[string][]string{
+    "a.txt": {"red"},
+    "b.txt": {"blue"},
+}
+```
+
+#### Bad — Restores a Cartesian product during undo
+```go
+Paths:  []string{"a.txt", "b.txt"},
+TagIDs: []string{"red", "blue"},
+```
+
+The bad case would restore both tags to both files even if each file originally had only one.
+
+### 6. Tests Required
+- Undo add: after `OpAddTag`, `Undo` removes tags from all target paths and `Redo` adds them back.
+- Undo remove: after `OpRemoveTag`, `Undo` restores only the tags each path originally had and `Redo` removes them again.
+- Mixed batch: one selected path missing a requested tag must not gain that tag after undo.
+- Failure path: unregistered handler or ADS sync failure returns an error and leaves stacks cleared by existing undo/redo error flow.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+```go
+case OpAddTag, OpRemoveTag:
+    return removeTagHandler(op.Paths, op.TagIDs)
+```
+
+#### Correct
+```go
+case OpAddTag:
+    return applyTagHandler(op, removeTagHandler)
+case OpRemoveTag:
+    return applyTagHandler(op, addTagHandler)
+```

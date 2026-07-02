@@ -163,6 +163,21 @@ func GetTagUsageCounts() (map[string]int, error) {
 	return counts, nil
 }
 
+func GetTagIDsByNames(names []string) ([]string, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	var ids []string
+	err := DB.Model(&models.Tag{}).Where("name IN ?", names).Pluck("id", &ids).Error
+	return ids, err
+}
+
+func GetTagIDsByType(tagType string) ([]string, error) {
+	var ids []string
+	err := DB.Model(&models.Tag{}).Where("type = ?", tagType).Pluck("id", &ids).Error
+	return ids, err
+}
+
 func CreateTag(tag *models.Tag) error {
 	return DB.Create(tag).Error
 }
@@ -248,8 +263,8 @@ func RemoveTagFromFile(path string, tagID string) error {
 	return DB.Where("path = ? AND tag_id = ?", path, tagID).Delete(&models.FileTag{}).Error
 }
 
-func RemoveTagFromFiles(paths []string, tagID string) error {
-	return DB.Where("path IN ? AND tag_id = ?", paths, tagID).Delete(&models.FileTag{}).Error
+func RemoveTagFromFiles(paths []string, tagIDs []string) error {
+	return DB.Where("path IN ? AND tag_id IN ?", paths, tagIDs).Delete(&models.FileTag{}).Error
 }
 
 func SetTagsForFile(path string, tagIDs []string) error {

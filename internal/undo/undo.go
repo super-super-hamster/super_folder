@@ -11,23 +11,35 @@ import (
 type OpType string
 
 const (
-	OpRename OpType = "rename"
-	OpMove   OpType = "move"
-	OpCopy   OpType = "copy"
+	OpRename    OpType = "rename"
+	OpMove      OpType = "move"
+	OpCopy      OpType = "copy"
+	OpAddTag    OpType = "add_tag"
+	OpRemoveTag OpType = "remove_tag"
 )
 
 type Operation struct {
-	Type      OpType   `json:"type"`
-	SrcPaths  []string `json:"srcPaths"`
-	DestPaths []string `json:"destPaths"`
+	Type       OpType              `json:"type"`
+	SrcPaths   []string            `json:"srcPaths"`
+	DestPaths  []string            `json:"destPaths"`
+	Paths      []string            `json:"paths"`
+	TagIDs     []string            `json:"tagIDs"`
+	PathTagIDs map[string][]string `json:"pathTagIDs"`
 }
 
 var (
-	undoStack []Operation
-	redoStack []Operation
-	mutex     sync.Mutex
-	maxStack  = 50
+	undoStack        []Operation
+	redoStack        []Operation
+	mutex            sync.Mutex
+	maxStack         = 50
+	addTagHandler    func(paths []string, tagIDs []string) error
+	removeTagHandler func(paths []string, tagIDs []string) error
 )
+
+func RegisterTagHandlers(add func(paths []string, tagIDs []string) error, remove func(paths []string, tagIDs []string) error) {
+	addTagHandler = add
+	removeTagHandler = remove
+}
 
 // Push adds a new operation to the undo stack and clears the redo stack.
 func Push(op Operation) {
@@ -124,6 +136,16 @@ func performInverse(op Operation) error {
 				return err
 			}
 		}
+	case OpAddTag:
+		if removeTagHandler == nil {
+			return fmt.Errorf("tag remove handler not registered")
+		}
+		return applyTagHandler(op, removeTagHandler)
+	case OpRemoveTag:
+		if addTagHandler == nil {
+			return fmt.Errorf("tag add handler not registered")
+		}
+		return applyTagHandler(op, addTagHandler)
 	}
 	return nil
 }
@@ -149,6 +171,31 @@ func performForward(op Operation) error {
 			if err := copyRecursive(src, dest); err != nil {
 				return err
 			}
+		}
+	case OpAddTag:
+		if addTagHandler == nil {
+			return fmt.Errorf("tag add handler not registered")
+		}
+		return applyTagHandler(op, addTagHandler)
+	case OpRemoveTag:
+		if removeTagHandler == nil {
+			return fmt.Errorf("tag remove handler not registered")
+		}
+		return applyTagHandler(op, removeTagHandler)
+	}
+	return nil
+}
+
+func applyTagHandler(op Operation, handler func(paths []string, tagIDs []string) error) error {
+	if len(op.PathTagIDs) == 0 {
+		return handler(op.Paths, op.TagIDs)
+	}
+	for path, tagIDs := range op.PathTagIDs {
+		if len(tagIDs) == 0 {
+			continue
+		}
+		if err := handler([]string{path}, tagIDs); err != nil {
+			return err
 		}
 	}
 	return nil

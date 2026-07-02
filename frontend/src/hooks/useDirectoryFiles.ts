@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useDebounce } from 'use-debounce'
 import { useUIStore } from '../store/uiStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTagStore } from '../store/tagStore'
@@ -25,6 +26,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
   const [missingPreset, setMissingPreset] = useState(false)
 
   const { refreshKey, searchQuery, searchFilter } = useUIStore()
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const { searchPresets, smartFolders } = useSettingsStore()
   const { tagRefreshKey } = useTagStore()
 
@@ -60,7 +62,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 
     let fetchPromise: Promise<models.FileInfo[]>
 
-    const parsed = parseSearchQuery(searchQuery || '')
+    const parsed = parseSearchQuery(debouncedSearchQuery || '')
     let keyword = parsed.keyword
     const tags = parsed.tags.map(t => {
       const idx = t.indexOf(':')
@@ -70,7 +72,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       const idx = r.indexOf(':')
       return idx >= 0 ? r.slice(idx + 1) : r
     }).filter(Boolean)
-    const tagLogic = (searchQuery && searchQuery.includes('&')) ? 'AND' : 'OR'
+    const tagLogic = (debouncedSearchQuery && debouncedSearchQuery.includes('&')) ? 'AND' : 'OR'
 
     if (currentPath === 'smartfolder://') {
       const virtualItems: models.FileInfo[] = smartFolders.map(sf => ({
@@ -140,7 +142,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       } else {
         fetchPromise = Promise.resolve([])
       }
-    } else if (searchQuery && searchQuery.trim() !== '') {
+    } else if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
       const maxTime = searchFilter?.maxTime
       const unit = searchFilter?.sizeUnit || 'MB'
       const toBytes = (val: number | null) => {
@@ -224,7 +226,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       })
 
     return () => { isMounted = false }
-  }, [currentPath, refreshKey])
+  }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter])
 
   return { files, setFiles, loading, fileTagColors, missingPreset }
 }

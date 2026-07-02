@@ -6,6 +6,10 @@ export function AddTagToFile(arg1, arg2) {
   return window['go']['main']['App']['AddTagToFile'](arg1, arg2);
 }
 
+export function AddTagToFiles(arg1, arg2) {
+  return window['go']['main']['App']['AddTagToFiles'](arg1, arg2);
+}
+
 export function AutoCleanThumbnailCache(arg1) {
   return window['go']['main']['App']['AutoCleanThumbnailCache'](arg1);
 }
@@ -208,6 +212,10 @@ export function RedoOperation() {
 
 export function RemoveTagFromFile(arg1, arg2) {
   return window['go']['main']['App']['RemoveTagFromFile'](arg1, arg2);
+}
+
+export function RemoveTagFromFiles(arg1, arg2) {
+  return window['go']['main']['App']['RemoveTagFromFiles'](arg1, arg2);
 }
 
 export function RenameFile(arg1, arg2, arg3) {

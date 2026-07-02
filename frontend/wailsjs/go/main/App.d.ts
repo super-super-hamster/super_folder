@@ -6,6 +6,8 @@ import {rename} from '../models';
 
 export function AddTagToFile(arg1:string,arg2:models.Tag):Promise<void>;
 
+export function AddTagToFiles(arg1:Array<string>,arg2:models.Tag):Promise<void>;
+
 export function AutoCleanThumbnailCache(arg1:number):Promise<void>;
 
 export function BatchRenameFiles(arg1:Record<string, string>):Promise<void>;
@@ -107,6 +109,8 @@ export function ReadFileText(arg1:string):Promise<string>;
 export function RedoOperation():Promise<void>;
 
 export function RemoveTagFromFile(arg1:string,arg2:string):Promise<void>;
+
+export function RemoveTagFromFiles(arg1:Array<string>,arg2:Array<string>):Promise<void>;
 
 export function RenameFile(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
 

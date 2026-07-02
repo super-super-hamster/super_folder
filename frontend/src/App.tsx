@@ -12,6 +12,7 @@ import { useTabsStore } from './store/tabsStore'
 import SettingsSidebar from './components/settings/SettingsSidebar'
 import SettingsContent from './components/settings/SettingsContent'
 import { useUndoStore } from './store/undoStore'
+import { useTagStore } from './store/tagStore'
 import TerminalPanel from './components/terminal/TerminalPanel'
 import FullFileEditor from './components/editor/FullFileEditor'
 import ChineseConvView from './components/chineseconv/ChineseConvView'
@@ -82,6 +83,7 @@ function App() {
           (window as any).go.main.App.RedoOperation().then(() => {
             useUndoStore.getState().showMessage("已恢复");
             useUIStore.getState().triggerRefresh();
+            useTagStore.getState().triggerTagRefresh();
           }).catch((err: any) => {
             useUndoStore.getState().showMessage(err || "恢复失败", true);
             (window as any).go.main.App.ClearUndoStack();
@@ -90,6 +92,7 @@ function App() {
           (window as any).go.main.App.UndoOperation().then(() => {
             useUndoStore.getState().showMessage("已撤销");
             useUIStore.getState().triggerRefresh();
+            useTagStore.getState().triggerTagRefresh();
           }).catch((err: any) => {
             useUndoStore.getState().showMessage(err || "撤销失败", true);
             (window as any).go.main.App.ClearUndoStack();
@@ -100,6 +103,7 @@ function App() {
         (window as any).go.main.App.RedoOperation().then(() => {
           useUndoStore.getState().showMessage("已恢复");
           useUIStore.getState().triggerRefresh();
+          useTagStore.getState().triggerTagRefresh();
         }).catch((err: any) => {
           useUndoStore.getState().showMessage(err || "恢复失败", true);
           (window as any).go.main.App.ClearUndoStack();

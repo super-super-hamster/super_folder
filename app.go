@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 	"super_folder/internal/chineseconv"
 	"super_folder/internal/converter"
 	"super_folder/internal/database"
@@ -21,14 +23,51 @@ import (
 	"super_folder/internal/terminal"
 	"super_folder/internal/thumbnail"
 	"super_folder/internal/undo"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+func init() {
+	undo.RegisterTagHandlers(
+		func(paths []string, tagIDs []string) error {
+			for _, path := range paths {
+				for _, tagID := range tagIDs {
+					if err := database.AddTagToFile(path, tagID); err != nil {
+						return err
+					}
+				}
+				if err := syncFileTagsToADS(path); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		func(paths []string, tagIDs []string) error {
+			for _, path := range paths {
+				for _, tagID := range tagIDs {
+					if err := database.RemoveTagFromFile(path, tagID); err != nil {
+						return err
+					}
+				}
+				if err := syncFileTagsToADS(path); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func syncFileTagsToADS(path string) error {
+	tags, err := database.GetTagsForFile(path)
+	if err != nil {
+		return err
+	}
+	return fs.WriteTagsToADS(path, tags)
+}
 
 // App struct
 type App struct {
@@ -112,7 +151,7 @@ func (a *App) beforeClose(ctx context.Context) bool {
 	a.termService.Close()
 	width, height := runtime.WindowGetSize(ctx)
 	x, y := runtime.WindowGetPosition(ctx)
-	
+
 	config := struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
@@ -144,6 +183,7 @@ func (a *App) Maximize() {
 func (a *App) Close() {
 	runtime.Quit(a.ctx)
 }
+
 // Dialog bindings
 
 func (a *App) SelectDirectory() (string, error) {
@@ -184,7 +224,7 @@ func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, erro
 
 	var firstChunk []models.FileInfo
 	chunkSize := 50
-	
+
 	processEntry := func(entry os.DirEntry) *models.FileInfo {
 		info, err := entry.Info()
 		if err != nil {
@@ -216,7 +256,7 @@ func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, erro
 				if fi := processEntry(entries[i]); fi != nil {
 					currentChunk = append(currentChunk, *fi)
 				}
-				
+
 				if len(currentChunk) >= 200 {
 					runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, currentChunk)
 					currentChunk = nil
@@ -293,13 +333,13 @@ func (a *App) RenameFile(oldPath string, newPath string, overwrite bool) (bool, 
 	if err != nil {
 		return false, err
 	}
-	
+
 	undo.Push(undo.Operation{
 		Type:      undo.OpRename,
 		SrcPaths:  []string{oldPath},
 		DestPaths: []string{newPath},
 	})
-	
+
 	return true, nil
 }
 
@@ -377,7 +417,7 @@ func (a *App) GetFileTags(path string) ([]models.Tag, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if len(tags) == 0 {
 		adsTags, adsErr := fs.ReadTagsFromADS(path)
 		if adsErr == nil && len(adsTags) > 0 {
@@ -395,24 +435,79 @@ func (a *App) GetFileTags(path string) ([]models.Tag, error) {
 }
 
 func (a *App) AddTagToFile(path string, tag models.Tag) error {
-	err := database.AddTagToFile(path, tag.ID)
+	return a.AddTagToFiles([]string{path}, tag)
+}
+
+func (a *App) AddTagToFiles(paths []string, tag models.Tag) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	err := database.AddTagToFiles(paths, tag.ID)
 	if err != nil {
 		return err
 	}
-	
-	tags, _ := database.GetTagsForFile(path)
-	_ = fs.WriteTagsToADS(path, tags)
+
+	for _, path := range paths {
+		if err := syncFileTagsToADS(path); err != nil {
+			return err
+		}
+	}
+
+	undo.Push(undo.Operation{
+		Type:   undo.OpAddTag,
+		Paths:  append([]string(nil), paths...),
+		TagIDs: []string{tag.ID},
+	})
 	return nil
 }
 
 func (a *App) RemoveTagFromFile(path string, tagID string) error {
-	err := database.RemoveTagFromFile(path, tagID)
+	return a.RemoveTagFromFiles([]string{path}, []string{tagID})
+}
+
+func (a *App) RemoveTagFromFiles(paths []string, tagIDs []string) error {
+	if len(paths) == 0 || len(tagIDs) == 0 {
+		return nil
+	}
+
+	existingTags, err := database.GetTagsForFiles(paths)
+	if err != nil {
+		return err
+	}
+	tagSet := make(map[string]struct{}, len(tagIDs))
+	for _, tagID := range tagIDs {
+		tagSet[tagID] = struct{}{}
+	}
+	pathTagIDs := make(map[string][]string)
+	for _, path := range paths {
+		for _, tag := range existingTags[path] {
+			if _, ok := tagSet[tag.ID]; ok {
+				pathTagIDs[path] = append(pathTagIDs[path], tag.ID)
+			}
+		}
+	}
+	if len(pathTagIDs) == 0 {
+		return nil
+	}
+
+	err = database.RemoveTagFromFiles(paths, tagIDs)
 	if err != nil {
 		return err
 	}
 
-	tags, _ := database.GetTagsForFile(path)
-	_ = fs.WriteTagsToADS(path, tags)
+	for _, path := range paths {
+		if err := syncFileTagsToADS(path); err != nil {
+			return err
+		}
+	}
+
+	undo.Push(undo.Operation{
+		Type:       undo.OpRemoveTag,
+		Paths:      append([]string(nil), paths...),
+		TagIDs:     append([]string(nil), tagIDs...),
+		PathTagIDs: pathTagIDs,
+	})
 	return nil
 }
 
@@ -423,7 +518,7 @@ func (a *App) GetTagsForFiles(paths []string) (map[string][]models.Tag, error) {
 // GetRecentItems returns recent files and folders from Windows Recent folder
 func (a *App) GetRecentItems() ([]models.FileInfo, error) {
 	recentDir := filepath.Join(os.Getenv("APPDATA"), "Microsoft", "Windows", "Recent")
-	
+
 	entries, err := os.ReadDir(recentDir)
 	if err != nil {
 		return nil, err
@@ -474,7 +569,7 @@ func (a *App) GetRecentItems() ([]models.FileInfo, error) {
 			continue
 		}
 		shortcut := cs.ToIDispatch()
-		
+
 		targetPathVar, err := oleutil.GetProperty(shortcut, "TargetPath")
 		if err != nil || targetPathVar.Value() == nil {
 			shortcut.Release()
@@ -747,4 +842,3 @@ func (a *App) ConvertChineseFiles(paths []string, baseScheme string, customPairs
 	}
 	return results, nil
 }
-

@@ -202,6 +202,61 @@ func matchingRemarkPaths(terms []string) map[string]bool {
 	return result
 }
 
+func resolveTagIDGroups(tags []string) ([][]string, error) {
+	groups := make([][]string, 0, len(tags))
+	for _, t := range tags {
+		var ids []string
+		var err error
+		if strings.HasSuffix(t, ":*") && len(t) > 2 {
+			ids, err = database.GetTagIDsByType(t[:len(t)-2])
+		} else {
+			ids, err = database.GetTagIDsByNames([]string{t})
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(ids) == 0 {
+			return nil, nil
+		}
+		groups = append(groups, ids)
+	}
+	return groups, nil
+}
+
+func flattenTagIDGroups(groups [][]string) []string {
+	idSet := make(map[string]struct{})
+	for _, group := range groups {
+		for _, id := range group {
+			idSet[id] = struct{}{}
+		}
+	}
+	ids := make([]string, 0, len(idSet))
+	for id := range idSet {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func intersectPathSets(groups []map[string]struct{}) []string {
+	if len(groups) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(groups[0]))
+	for path := range groups[0] {
+		matched := true
+		for i := 1; i < len(groups); i++ {
+			if _, ok := groups[i][path]; !ok {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			result = append(result, path)
+		}
+	}
+	return result
+}
+
 func matchesImageShape(path, shape string) bool {
 	if shape == "" {
 		return true
@@ -264,19 +319,43 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 	hasTagFilter := len(req.Tags) > 0
 
 	if hasTagFilter {
+		tagGroups, err := resolveTagIDGroups(req.Tags)
+		if err != nil {
+			log.Printf("Failed to resolve tag IDs: %v", err)
+			return nil
+		}
+		if len(tagGroups) == 0 {
+			return nil
+		}
+
 		var paths []string
 		if req.TagLogic == "AND" {
-			database.DB.Table("file_tags").
-				Select("path").
-				Where("tag_id IN ?", req.Tags).
-				Group("path").
-				Having("count(distinct tag_id) = ?", len(req.Tags)).
-				Pluck("path", &paths)
+			pathSets := make([]map[string]struct{}, 0, len(tagGroups))
+			for _, tagIDs := range tagGroups {
+				var groupPaths []string
+				if err := database.DB.Table("file_tags").
+					Select("distinct path").
+					Where("tag_id IN ?", tagIDs).
+					Pluck("path", &groupPaths).Error; err != nil {
+					log.Printf("Failed to search tag paths: %v", err)
+					return nil
+				}
+				pathSet := make(map[string]struct{}, len(groupPaths))
+				for _, path := range groupPaths {
+					pathSet[path] = struct{}{}
+				}
+				pathSets = append(pathSets, pathSet)
+			}
+			paths = intersectPathSets(pathSets)
 		} else {
-			database.DB.Table("file_tags").
+			tagIDs := flattenTagIDGroups(tagGroups)
+			if err := database.DB.Table("file_tags").
 				Select("distinct path").
-				Where("tag_id IN ?", req.Tags).
-				Pluck("path", &paths)
+				Where("tag_id IN ?", tagIDs).
+				Pluck("path", &paths).Error; err != nil {
+				log.Printf("Failed to search tag paths: %v", err)
+				return nil
+			}
 		}
 		validPathsWithTags = paths
 	}
@@ -288,16 +367,16 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			if len(results) >= req.Limit {
 				break
 			}
-			
+
 			if len(fullPath) < 3 {
 				continue
 			}
 			drive := strings.ToUpper(fullPath[0:1])
 			_, exists := s.engines[drive]
-			
+
 			name := fullPath[strings.LastIndex(fullPath, `\`)+1:]
 			isFolder := false
-			
+
 			if exists {
 				// Fallback to name-based logic since full resolve is slow
 			}
@@ -333,7 +412,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 					if part == "" || strings.HasSuffix(part, ":") {
 						continue
 					}
-					
+
 					pMatch := false
 					for _, ef := range req.ExcludedFolders {
 						if strings.EqualFold(part, ef) {
@@ -459,7 +538,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 					if part == "" || strings.HasSuffix(part, ":") {
 						continue
 					}
-					
+
 					pMatch := false
 					for _, ef := range req.ExcludedFolders {
 						if strings.EqualFold(part, ef) {
@@ -534,4 +613,3 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 
 	return results
 }
-
