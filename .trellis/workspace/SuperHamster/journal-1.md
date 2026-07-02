@@ -104,3 +104,37 @@ Fixed tag-name and typed wildcard search, batched tag add/remove undo and redo, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: Privacy mode protection
+
+**Date**: 2026-07-02
+**Task**: Privacy mode protection
+**Branch**: `main`
+
+### Summary
+
+Implemented privacy mode protection with public-mode filtering for protected paths, tags, search, favorites, recent items, startup unlock flow, password setup/unlock UI, lock badges, and Windows identity verification for password reset.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6232e42` | (see git log) |
+| `646be39` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
