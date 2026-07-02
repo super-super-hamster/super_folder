@@ -4,7 +4,9 @@ import { useUIStore } from '../store/uiStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTagStore } from '../store/tagStore'
 import { useModalStore } from '../store/modalStore'
-import { ReadDirChunked, SearchFiles, GetFavorites, GetRecentItems, GetTagsForFiles } from '../../wailsjs/go/main/App'
+import { usePrivacyStore } from '../store/privacyStore'
+import { useTabsStore } from '../store/tabsStore'
+import { ReadDirChunked, SearchFiles, GetFavorites, GetRecentItems, GetTagsForFiles, CanAccessPath, GetProtectedPaths } from '../../wailsjs/go/main/App'
 import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime'
 import { models } from '../../wailsjs/go/models'
 import { parseSearchQuery } from '../utils/searchQuery'
@@ -14,21 +16,24 @@ export interface UseDirectoryFilesResult {
   setFiles: React.Dispatch<React.SetStateAction<models.FileInfo[]>>
   loading: boolean
   fileTagColors: Record<string, string>
+  protectedPathMap: Record<string, boolean>
   missingPreset: boolean
 }
 
-const prevPathRef = { current: '' as string | undefined }
+const prevLoadKeyRef = { current: '' as string | undefined }
 
 export function useDirectoryFiles(currentPath: string | undefined): UseDirectoryFilesResult {
   const [files, setFiles] = useState<models.FileInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [fileTagColors, setFileTagColors] = useState<Record<string, string>>({})
+  const [protectedPathMap, setProtectedPathMap] = useState<Record<string, boolean>>({})
   const [missingPreset, setMissingPreset] = useState(false)
 
   const { refreshKey, searchQuery, searchFilter } = useUIStore()
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const { searchPresets, smartFolders } = useSettingsStore()
   const { tagRefreshKey } = useTagStore()
+  const privacyMode = usePrivacyStore(state => state.state?.mode)
 
   useEffect(() => {
     if (files.length === 0) {
@@ -48,16 +53,43 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
   }, [files, tagRefreshKey])
 
   useEffect(() => {
+    if (privacyMode !== 'privacy' || files.length === 0) {
+      setProtectedPathMap({})
+      return
+    }
+    const paths = files.map(f => f.path)
+    GetProtectedPaths(paths).then(res => {
+      const next: Record<string, boolean> = {}
+      for (const path of paths) {
+        if (res[path] === true) next[path] = true
+      }
+      setProtectedPathMap(next)
+    }).catch(console.error)
+  }, [files, privacyMode])
+
+  useEffect(() => {
     if (!currentPath || currentPath.endsWith('\\转换')) {
       return
     }
     let isMounted = true
     setMissingPreset(false)
 
-    if (prevPathRef.current !== currentPath) {
+    if (!currentPath.includes('://') && privacyMode !== 'privacy') {
+      CanAccessPath(currentPath).then((canAccess) => {
+        if (!canAccess && isMounted) {
+          useModalStore.getState().openModal('warning', { message: '当前内容在公开模式下不可访问。' })
+          useTabsStore.getState().navigate('C:\\', 'C:\\', true, true)
+        }
+      }).catch(console.error)
+    }
+
+    const loadKey = `${currentPath}|${privacyMode || 'public'}`
+    if (prevLoadKeyRef.current !== loadKey) {
       setLoading(true)
       setFiles([])
-      prevPathRef.current = currentPath
+      setFileTagColors({})
+      setProtectedPathMap({})
+      prevLoadKeyRef.current = loadKey
     }
 
     let fetchPromise: Promise<models.FileInfo[]>
@@ -226,7 +258,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       })
 
     return () => { isMounted = false }
-  }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter])
+  }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter, privacyMode])
 
-  return { files, setFiles, loading, fileTagColors, missingPreset }
+  return { files, setFiles, loading, fileTagColors, protectedPathMap, missingPreset }
 }

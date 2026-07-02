@@ -12,11 +12,12 @@ import (
 	"regexp"
 	"strings"
 
+	_ "golang.org/x/image/webp"
+
 	"super_folder/internal/database"
 	"super_folder/internal/models"
+	"super_folder/internal/privacy"
 	"super_folder/internal/search/usn"
-
-	_ "golang.org/x/image/webp"
 )
 
 type Searcher struct {
@@ -126,6 +127,7 @@ type SearchRequest struct {
 	MinTime         *int64   `json:"minTime"`
 	MaxTime         *int64   `json:"maxTime"`
 	ImageShape      string   `json:"imageShape"`
+	PrivacyMode     string   `json:"privacyMode"`
 }
 
 type SearchResponse struct {
@@ -202,7 +204,7 @@ func matchingRemarkPaths(terms []string) map[string]bool {
 	return result
 }
 
-func resolveTagIDGroups(tags []string) ([][]string, error) {
+func resolveTagIDGroups(tags []string, includeProtected bool) ([][]string, error) {
 	groups := make([][]string, 0, len(tags))
 	for _, t := range tags {
 		var ids []string
@@ -214,6 +216,13 @@ func resolveTagIDGroups(tags []string) ([][]string, error) {
 		}
 		if err != nil {
 			return nil, err
+		}
+		if !includeProtected {
+			var visibleIDs []string
+			if err := database.DB.Model(&models.Tag{}).Where("id IN ? AND is_protected = ?", ids, false).Pluck("id", &visibleIDs).Error; err != nil {
+				return nil, err
+			}
+			ids = visibleIDs
 		}
 		if len(ids) == 0 {
 			return nil, nil
@@ -295,6 +304,7 @@ func matchesImageShape(path, shape string) bool {
 }
 
 func (s *Searcher) executeSearch(req *SearchRequest) []string {
+	includeProtected := req.PrivacyMode == privacy.ModePrivacy
 	var regex *regexp.Regexp
 	if req.IsRegex && req.Keyword != "" {
 		flag := ""
@@ -319,7 +329,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 	hasTagFilter := len(req.Tags) > 0
 
 	if hasTagFilter {
-		tagGroups, err := resolveTagIDGroups(req.Tags)
+		tagGroups, err := resolveTagIDGroups(req.Tags, includeProtected)
 		if err != nil {
 			log.Printf("Failed to resolve tag IDs: %v", err)
 			return nil
@@ -465,6 +475,13 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
+			if !includeProtected {
+				hidden, err := privacy.IsPathHiddenInPublic(fullPath)
+				if err != nil || hidden {
+					continue
+				}
+			}
+
 			results = append(results, fullPath)
 		}
 		return results
@@ -600,6 +617,13 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 
 			if !matchesImageShape(fullPath, req.ImageShape) {
 				continue
+			}
+
+			if !includeProtected {
+				hidden, err := privacy.IsPathHiddenInPublic(fullPath)
+				if err != nil || hidden {
+					continue
+				}
 			}
 
 			results = append(results, fullPath)

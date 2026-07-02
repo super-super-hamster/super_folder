@@ -19,6 +19,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Error Handling](./error-handling.md) | Error types, handling strategies | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | Filled |
 | [Logging Guidelines](./logging-guidelines.md) | Logging practices (fmt.Println / log.Printf conventions) | Filled |
+| [Privacy Mode](./privacy-mode.md) | Public/privacy filtering contracts and protected metadata boundaries | Filled |
 
 ---
 

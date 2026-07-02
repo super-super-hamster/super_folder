@@ -4,14 +4,17 @@ import { ComboBox, Input, ListBox } from '@heroui/react'
 import { useTagStore } from '../../store/tagStore'
 import { GetTagUsageCounts, UpdateTag, DeleteTag } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
+import { usePrivacyStore } from '../../store/privacyStore'
 
 const TagSettings = () => {
   const { globalTags, fetchGlobalTags, createTag } = useTagStore()
+  const { state: privacyState, setTagProtected } = usePrivacyStore()
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({})
   const [editingTagId, setEditingTagId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const inputRef = useRef<HTMLInputElement>(null)
   
   // Custom confirm modal state
@@ -99,6 +102,7 @@ const TagSettings = () => {
   const renderTagRow = (tag: models.Tag, isTypeChild = false) => {
     const isEditing = editingTagId === tag.id
     const count = usageCounts[tag.id] || 0
+    const isPrivacyMode = privacyState?.mode === 'privacy'
     return (
       <div 
         key={tag.id}
@@ -127,20 +131,34 @@ const TagSettings = () => {
           <span className="text-gray-300">|</span>
           <span className="text-sm text-gray-500">{count} 个文件</span>
         </div>
-        <button 
-          onClick={(e) => { e.stopPropagation(); handleDelete(tag.id) }}
-          className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
-          title="删除标签"
-        >
-          <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
-        </button>
+        <div className="flex items-center gap-2">
+          {isPrivacyMode && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setTagProtected(tag.id, !tag.isProtected).catch(console.error)
+              }}
+              className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+              title={tag.isProtected ? '解除保护' : '保护标签'}
+            >
+              <img src={`/src/assets/icons/${tag.isProtected ? 'lock_line.svg' : 'unlock_line.svg'}`} className="w-4 h-4" alt={tag.isProtected ? 'protected' : 'unprotected'} />
+            </button>
+          )}
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleDelete(tag.id) }}
+            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
+            title="删除标签"
+          >
+            <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
+          </button>
+        </div>
       </div>
     )
   }
 
   const TypeGroup = ({ type, tags }: { type: string, tags: models.Tag[] }) => {
-    const [expanded, setExpanded] = useState(false)
     const colorHex = tags[0]?.colorHex || '#9ca3af'
+    const expanded = expandedTypes.has(type)
     
     if (type === '未分类') {
       return (
@@ -153,7 +171,12 @@ const TagSettings = () => {
     return (
       <div className="flex flex-col gap-2">
         <div 
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setExpandedTypes(prev => {
+            const next = new Set(prev)
+            if (next.has(type)) next.delete(type)
+            else next.add(type)
+            return next
+          })}
           className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 rounded-xl group transition-colors hover:bg-sf-item cursor-pointer"
         >
           <div className="flex items-center gap-3">

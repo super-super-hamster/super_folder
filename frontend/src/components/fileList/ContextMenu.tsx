@@ -13,9 +13,10 @@ import { useModalStore } from '../../store/modalStore'
 import { useTaskStore } from '../../store/taskStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useConversionStore, ConversionFile } from '../../store/conversionStore'
+import { usePrivacyStore } from '../../store/privacyStore'
 import { isImage } from '../../utils/fileFormatting'
 import { buildSimilarPath } from '../similar/SimilarImages'
-import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal, GetSimilarImageThresholds } from '../../../wailsjs/go/main/App'
+import { PasteFiles, DeleteToRecycleBin, CreateFolder, CreateFile, ReadDir, GetConvertibleFormats, OpenFileWithDefault, OpenInExplorer, OpenInTerminal, GetSimilarImageThresholds, GetProtectedPaths } from '../../../wailsjs/go/main/App'
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
@@ -30,6 +31,7 @@ export default function ContextMenu() {
   const { setFiles: setBatchRenameFiles } = useBatchRenameStore()
   const { addFiles: addChineseConvFiles } = useChineseConvStore()
   const { favorites, toggleFavorite } = useFavoriteStore()
+  const { state: privacyState, setPathProtected } = usePrivacyStore()
   const { triggerRefresh } = useUIStore()
   const { tabs, activeTabId, navigate } = useTabsStore()
   const { smartFolders, setSmartFolders, doubleClickOpenMode } = useSettingsStore()
@@ -40,6 +42,7 @@ export default function ContextMenu() {
   const trashLottieRef = useRef<LottieRefCurrentProps>(null)
 
   const [convertibleFormats, setConvertibleFormats] = useState<string[]>([])
+  const [targetProtected, setTargetProtected] = useState(false)
 
   useEffect(() => {
     if (isVisible && targetPath && !isDir) {
@@ -52,6 +55,14 @@ export default function ContextMenu() {
       setConvertibleFormats([])
     }
   }, [isVisible, targetPath, selectedPaths, isDir])
+
+  useEffect(() => {
+    if (isVisible && targetPath && privacyState?.mode === 'privacy' && !targetPath.startsWith('smartfolder://')) {
+      GetProtectedPaths([targetPath]).then(res => setTargetProtected(!!res[targetPath])).catch(() => setTargetProtected(false))
+    } else {
+      setTargetProtected(false)
+    }
+  }, [isVisible, targetPath, privacyState?.mode])
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -184,6 +195,11 @@ export default function ContextMenu() {
           toggleFavorite(targetPath, isDir).catch(console.error)
         }
         break
+      case 'protect':
+        if (targetPath) {
+          setPathProtected(targetPath, isDir, !targetProtected).catch(console.error)
+        }
+        break
       case 'copy-path':
         if (targetPath) {
           ClipboardSetText(targets.length === 1 ? targets[0] : targets.join('\n'))
@@ -286,6 +302,9 @@ export default function ContextMenu() {
     } else {
       itemCount = 6 // copy, cut, paste, favorite, rename, chinese_conv
       dividerCount++ // after paste
+      if (privacyState?.mode === 'privacy') {
+        itemCount++
+      }
       if (!isDir) {
         itemCount++ // convert
       }
@@ -417,6 +436,12 @@ export default function ContextMenu() {
                 </>
               )}
             </button>
+            {privacyState?.mode === 'privacy' && (
+              <button onClick={() => handleAction('protect')} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
+                <img src={`/src/assets/icons/${targetProtected ? 'unlock_line.svg' : 'lock_line.svg'}`} className="w-4 h-4 mr-3 opacity-70" alt="protect" />
+                {targetProtected ? '解除保护' : '保护'}
+              </button>
+            )}
             <button onClick={() => handleAction('rename')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
               <div className="flex items-center">
                 {renderIcon("M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z")}

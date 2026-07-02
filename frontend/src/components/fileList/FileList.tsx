@@ -42,7 +42,7 @@ export default function FileList() {
   const activeTab = tabs.find((t) => t.id === activeTabId)
   const currentPath = activeTab?.currentPath
 
-  const { files, setFiles, loading, fileTagColors, missingPreset } = useDirectoryFiles(currentPath)
+  const { files, setFiles, loading, fileTagColors, protectedPathMap, missingPreset } = useDirectoryFiles(currentPath)
   useBatchRenameTrigger(currentPath, files)
 
   const [localPort, setLocalPort] = useState<number | null>(null)
@@ -483,6 +483,7 @@ export default function FileList() {
                   <FileListItem
                     key={file.path}
                     file={file}
+                    isProtected={protectedPathMap[file.path] === true}
                     viewMode={viewMode}
                     isSelectionMode={isSelectionMode}
                     selectedPaths={selectedPaths}

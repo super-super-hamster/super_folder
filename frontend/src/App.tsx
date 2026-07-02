@@ -17,11 +17,18 @@ import TerminalPanel from './components/terminal/TerminalPanel'
 import FullFileEditor from './components/editor/FullFileEditor'
 import ChineseConvView from './components/chineseconv/ChineseConvView'
 import ContextMenu from './components/fileList/ContextMenu'
+import PrivacyModal from './components/privacy/PrivacyModal'
+import PrivacyStartupGate from './components/privacy/PrivacyStartupGate'
+import { usePrivacyStore } from './store/privacyStore'
 
 function App() {
   const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
   const { tabs, activeTabId } = useTabsStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
+
+  useEffect(() => {
+    usePrivacyStore.getState().load().catch(console.error)
+  }, [])
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -181,6 +188,8 @@ function App() {
         </div>
       </div>
       <ModalManager />
+      <PrivacyModal />
+      <PrivacyStartupGate />
       <ContextMenu />
     </>
   )

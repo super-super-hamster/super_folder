@@ -18,6 +18,10 @@ export function BatchRenameFiles(arg1) {
   return window['go']['main']['App']['BatchRenameFiles'](arg1);
 }
 
+export function CanAccessPath(arg1) {
+  return window['go']['main']['App']['CanAccessPath'](arg1);
+}
+
 export function CancelPaste(arg1) {
   return window['go']['main']['App']['CancelPaste'](arg1);
 }
@@ -134,6 +138,14 @@ export function GetLocalServerPort() {
   return window['go']['main']['App']['GetLocalServerPort']();
 }
 
+export function GetPrivacyState() {
+  return window['go']['main']['App']['GetPrivacyState']();
+}
+
+export function GetProtectedPaths(arg1) {
+  return window['go']['main']['App']['GetProtectedPaths'](arg1);
+}
+
 export function GetRecentItems() {
   return window['go']['main']['App']['GetRecentItems']();
 }
@@ -164,6 +176,14 @@ export function GetThumbnailBudgetLimit() {
 
 export function GetThumbnailCacheSize() {
   return window['go']['main']['App']['GetThumbnailCacheSize']();
+}
+
+export function IsPathProtected(arg1) {
+  return window['go']['main']['App']['IsPathProtected'](arg1);
+}
+
+export function LockPrivacyMode() {
+  return window['go']['main']['App']['LockPrivacyMode']();
 }
 
 export function Maximize() {
@@ -222,6 +242,10 @@ export function RenameFile(arg1, arg2, arg3) {
   return window['go']['main']['App']['RenameFile'](arg1, arg2, arg3);
 }
 
+export function ResetPrivacyPassword(arg1, arg2) {
+  return window['go']['main']['App']['ResetPrivacyPassword'](arg1, arg2);
+}
+
 export function ResolvePasteConflict(arg1, arg2, arg3) {
   return window['go']['main']['App']['ResolvePasteConflict'](arg1, arg2, arg3);
 }
@@ -250,8 +274,24 @@ export function SetFileRemark(arg1, arg2) {
   return window['go']['main']['App']['SetFileRemark'](arg1, arg2);
 }
 
+export function SetPathProtected(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetPathProtected'](arg1, arg2, arg3);
+}
+
+export function SetRestorePrivacyModeOnStartup(arg1) {
+  return window['go']['main']['App']['SetRestorePrivacyModeOnStartup'](arg1);
+}
+
+export function SetTagProtected(arg1, arg2) {
+  return window['go']['main']['App']['SetTagProtected'](arg1, arg2);
+}
+
 export function SetThumbnailBudgetLimit(arg1) {
   return window['go']['main']['App']['SetThumbnailBudgetLimit'](arg1);
+}
+
+export function SetupPrivacyPassword(arg1, arg2) {
+  return window['go']['main']['App']['SetupPrivacyPassword'](arg1, arg2);
 }
 
 export function StartTerminal(arg1) {
@@ -266,12 +306,20 @@ export function UndoOperation() {
   return window['go']['main']['App']['UndoOperation']();
 }
 
+export function UnlockPrivacyMode(arg1) {
+  return window['go']['main']['App']['UnlockPrivacyMode'](arg1);
+}
+
 export function UpdateTag(arg1) {
   return window['go']['main']['App']['UpdateTag'](arg1);
 }
 
 export function UpdateTagsOrder(arg1) {
   return window['go']['main']['App']['UpdateTagsOrder'](arg1);
+}
+
+export function VerifyWindowsIdentityForPrivacyReset() {
+  return window['go']['main']['App']['VerifyWindowsIdentityForPrivacyReset']();
 }
 
 export function WriteFileText(arg1, arg2) {

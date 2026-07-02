@@ -13,21 +13,23 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"super_folder/internal/chineseconv"
-	"super_folder/internal/converter"
-	"super_folder/internal/database"
-	"super_folder/internal/fs"
-	"super_folder/internal/models"
-	"super_folder/internal/rename"
-	"super_folder/internal/similarity"
-	"super_folder/internal/terminal"
-	"super_folder/internal/thumbnail"
-	"super_folder/internal/undo"
 	"time"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"super_folder/internal/chineseconv"
+	"super_folder/internal/converter"
+	"super_folder/internal/database"
+	"super_folder/internal/fs"
+	"super_folder/internal/models"
+	"super_folder/internal/privacy"
+	"super_folder/internal/rename"
+	"super_folder/internal/similarity"
+	"super_folder/internal/terminal"
+	"super_folder/internal/thumbnail"
+	"super_folder/internal/undo"
 )
 
 func init() {
@@ -75,6 +77,8 @@ type App struct {
 	localHttpPort  int
 	localAuthToken string
 	termService    *terminal.TerminalService
+	privacyMode    string
+	resetVerified  bool
 }
 
 func generateToken() string {
@@ -88,7 +92,30 @@ func NewApp() *App {
 	return &App{
 		localAuthToken: generateToken(),
 		termService:    terminal.NewTerminalService(),
+		privacyMode:    privacy.ModePublic,
 	}
+}
+
+func (a *App) isPrivacyMode() bool {
+	return a.privacyMode == privacy.ModePrivacy
+}
+
+func (a *App) filterFiles(files []models.FileInfo) ([]models.FileInfo, error) {
+	return privacy.FilterVisibleFiles(files, a.isPrivacyMode())
+}
+
+func (a *App) ensurePublicCanAccess(path string) error {
+	if a.isPrivacyMode() || path == "" || strings.Contains(path, "://") {
+		return nil
+	}
+	hidden, err := privacy.IsPathHiddenInPublic(path)
+	if err != nil {
+		return err
+	}
+	if hidden {
+		return fmt.Errorf("当前内容在公开模式下不可访问")
+	}
+	return nil
 }
 
 // GetLocalServerPort returns the dynamic port assigned for the local file server
@@ -117,6 +144,10 @@ func (a *App) startup(ctx context.Context) {
 			}
 			path := r.URL.Query().Get("path")
 			if path != "" {
+				if err := a.ensurePublicCanAccess(path); err != nil {
+					http.Error(w, "Forbidden", http.StatusForbidden)
+					return
+				}
 				http.ServeFile(w, r, path)
 			}
 		})
@@ -149,6 +180,7 @@ func (a *App) startup(ctx context.Context) {
 // beforeClose is called right before the application closes
 func (a *App) beforeClose(ctx context.Context) bool {
 	a.termService.Close()
+	_ = privacy.SetLastMode(a.privacyMode)
 	width, height := runtime.WindowGetSize(ctx)
 	x, y := runtime.WindowGetPosition(ctx)
 
@@ -213,10 +245,20 @@ func (a *App) SelectFiles() ([]string, error) {
 // File system bindings
 
 func (a *App) ReadDir(path string) ([]models.FileInfo, error) {
-	return fs.ReadDir(path)
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return nil, err
+	}
+	files, err := fs.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	return a.filterFiles(files)
 }
 
 func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, error) {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return nil, err
+	}
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -247,6 +289,10 @@ func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, erro
 			firstChunk = append(firstChunk, *fi)
 		}
 	}
+	firstChunk, err = a.filterFiles(firstChunk)
+	if err != nil {
+		return nil, err
+	}
 
 	// Process the rest asynchronously
 	if len(entries) > chunkSize {
@@ -258,13 +304,21 @@ func (a *App) ReadDirChunked(path string, reqId string) ([]models.FileInfo, erro
 				}
 
 				if len(currentChunk) >= 200 {
-					runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, currentChunk)
+					filtered, err := a.filterFiles(currentChunk)
+					if err != nil {
+						runtime.EventsEmit(a.ctx, "directory:done:"+reqId, nil)
+						return
+					}
+					runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, filtered)
 					currentChunk = nil
 					time.Sleep(5 * time.Millisecond)
 				}
 			}
 			if len(currentChunk) > 0 {
-				runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, currentChunk)
+				filtered, err := a.filterFiles(currentChunk)
+				if err == nil {
+					runtime.EventsEmit(a.ctx, "directory:chunk:"+reqId, filtered)
+				}
 			}
 			runtime.EventsEmit(a.ctx, "directory:done:"+reqId, nil)
 		}()
@@ -374,10 +428,118 @@ func (a *App) SetConfig(key string, valueJSON string) error {
 	return database.SetConfig(key, valueJSON)
 }
 
+func (a *App) GetPrivacyState() (models.PrivacyState, error) {
+	return models.PrivacyState{
+		Mode:                     a.privacyMode,
+		HasPassword:              privacy.HasPassword(),
+		RestorePrivacyOnStartup:  privacy.RestoreOnStartup(),
+		ShouldPromptRestore:      privacy.RestoreOnStartup() && privacy.LastMode() == privacy.ModePrivacy && privacy.HasPassword() && !a.isPrivacyMode(),
+		WindowsIdentityAvailable: false,
+	}, nil
+}
+
+func (a *App) SetupPrivacyPassword(password string, confirm string) (models.PrivacyState, error) {
+	if privacy.HasPassword() && !a.resetVerified {
+		return models.PrivacyState{}, fmt.Errorf("请先验证当前身份")
+	}
+	if password != confirm {
+		return models.PrivacyState{}, fmt.Errorf("两次输入的密码不一致")
+	}
+	if err := privacy.SetPassword(password); err != nil {
+		return models.PrivacyState{}, err
+	}
+	a.privacyMode = privacy.ModePrivacy
+	a.resetVerified = false
+	_ = privacy.SetLastMode(privacy.ModePrivacy)
+	return a.GetPrivacyState()
+}
+
+func (a *App) UnlockPrivacyMode(password string) (models.PrivacyState, error) {
+	if !privacy.HasPassword() {
+		return models.PrivacyState{}, fmt.Errorf("请先设置隐私密码")
+	}
+	if !privacy.VerifyPassword(password) {
+		return models.PrivacyState{}, fmt.Errorf("密码错误")
+	}
+	a.privacyMode = privacy.ModePrivacy
+	a.resetVerified = false
+	_ = privacy.SetLastMode(privacy.ModePrivacy)
+	return a.GetPrivacyState()
+}
+
+func (a *App) LockPrivacyMode() (models.PrivacyState, error) {
+	a.privacyMode = privacy.ModePublic
+	a.resetVerified = false
+	_ = privacy.SetLastMode(privacy.ModePublic)
+	return a.GetPrivacyState()
+}
+
+func (a *App) SetRestorePrivacyModeOnStartup(enabled bool) (models.PrivacyState, error) {
+	if err := privacy.SetRestoreOnStartup(enabled); err != nil {
+		return models.PrivacyState{}, err
+	}
+	return a.GetPrivacyState()
+}
+
+func (a *App) GetProtectedPaths(paths []string) (map[string]bool, error) {
+	if !a.isPrivacyMode() {
+		return map[string]bool{}, nil
+	}
+	return privacy.DirectProtectedPaths(paths)
+}
+
+func (a *App) SetPathProtected(path string, isDir bool, protected bool) error {
+	if !a.isPrivacyMode() {
+		return fmt.Errorf("请先进入隐私模式")
+	}
+	return privacy.SetPathProtected(path, isDir, protected)
+}
+
+func (a *App) SetTagProtected(tagID string, protected bool) error {
+	if !a.isPrivacyMode() {
+		return fmt.Errorf("请先进入隐私模式")
+	}
+	return privacy.SetTagProtected(tagID, protected)
+}
+
+func (a *App) IsPathProtected(path string) (bool, error) {
+	if !a.isPrivacyMode() {
+		return false, nil
+	}
+	return privacy.IsDirectPathProtected(path)
+}
+
+func (a *App) CanAccessPath(path string) (bool, error) {
+	if a.isPrivacyMode() {
+		return true, nil
+	}
+	hidden, err := privacy.IsPathHiddenInPublic(path)
+	if err != nil {
+		return false, err
+	}
+	return !hidden, nil
+}
+
+func (a *App) VerifyWindowsIdentityForPrivacyReset() (bool, error) {
+	a.resetVerified = false
+	return false, fmt.Errorf("当前设备暂不支持 Windows 身份验证重设")
+}
+
+func (a *App) ResetPrivacyPassword(password string, confirm string) (models.PrivacyState, error) {
+	if !a.resetVerified {
+		return models.PrivacyState{}, fmt.Errorf("请先通过 Windows 身份验证")
+	}
+	return a.SetupPrivacyPassword(password, confirm)
+}
+
 // Tag bindings
 
 func (a *App) GetGlobalTags() ([]models.Tag, error) {
-	return database.GetGlobalTags()
+	tags, err := database.GetGlobalTags()
+	if err != nil {
+		return nil, err
+	}
+	return privacy.FilterVisibleTags(tags, a.isPrivacyMode()), nil
 }
 
 func (a *App) CreateTag(tag models.Tag) error {
@@ -413,6 +575,9 @@ func (a *App) UpdateTagsOrder(orderedIDs []string) error {
 }
 
 func (a *App) GetFileTags(path string) ([]models.Tag, error) {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return nil, err
+	}
 	tags, err := database.GetTagsForFile(path)
 	if err != nil {
 		return nil, err
@@ -431,7 +596,7 @@ func (a *App) GetFileTags(path string) ([]models.Tag, error) {
 		}
 	}
 
-	return tags, nil
+	return privacy.FilterVisibleTags(tags, a.isPrivacyMode()), nil
 }
 
 func (a *App) AddTagToFile(path string, tag models.Tag) error {
@@ -439,6 +604,9 @@ func (a *App) AddTagToFile(path string, tag models.Tag) error {
 }
 
 func (a *App) AddTagToFiles(paths []string, tag models.Tag) error {
+	if !a.isPrivacyMode() && tag.IsProtected {
+		return fmt.Errorf("公开模式下不可使用受保护标签")
+	}
 	if len(paths) == 0 {
 		return nil
 	}
@@ -512,7 +680,24 @@ func (a *App) RemoveTagFromFiles(paths []string, tagIDs []string) error {
 }
 
 func (a *App) GetTagsForFiles(paths []string) (map[string][]models.Tag, error) {
-	return database.GetTagsForFiles(paths)
+	if !a.isPrivacyMode() {
+		visiblePaths, err := privacy.FilterVisiblePaths(paths)
+		if err != nil {
+			return nil, err
+		}
+		paths = visiblePaths
+	}
+	result, err := database.GetTagsForFiles(paths)
+	if err != nil {
+		return nil, err
+	}
+	if a.isPrivacyMode() {
+		return result, nil
+	}
+	for path, tags := range result {
+		result[path] = privacy.FilterVisibleTags(tags, false)
+	}
+	return result, nil
 }
 
 // GetRecentItems returns recent files and folders from Windows Recent folder
@@ -605,7 +790,7 @@ func (a *App) GetRecentItems() ([]models.FileInfo, error) {
 		})
 	}
 
-	return result, nil
+	return a.filterFiles(result)
 }
 
 // Format Conversion bindings
@@ -620,6 +805,7 @@ func (a *App) ConvertFile(sourcePath string, targetExt string) (string, error) {
 
 // Search bindings
 func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error) {
+	req["privacyMode"] = a.privacyMode
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -659,6 +845,12 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 
 	var fileInfos []models.FileInfo
 	for _, p := range result.Paths {
+		if !a.isPrivacyMode() {
+			hidden, err := privacy.IsPathHiddenInPublic(p)
+			if err != nil || hidden {
+				continue
+			}
+		}
 		info, err := os.Stat(p)
 		if err != nil {
 			continue
@@ -673,32 +865,50 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 		})
 	}
 
-	return fileInfos, nil
+	return a.filterFiles(fileInfos)
 }
 
 func (a *App) GetFileRemark(path string) (string, error) {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return "", err
+	}
 	return database.GetRemark(path)
 }
 
 func (a *App) SetFileRemark(path string, content string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	return database.SetRemark(path, content)
 }
 
 func (a *App) DeleteFileRemark(path string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	return database.DeleteRemark(path)
 }
 
 func (a *App) OpenFileWithDefault(path string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	cmd := exec.Command("cmd", "/c", "start", "", path)
 	return cmd.Start()
 }
 
 func (a *App) OpenInExplorer(path string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	cmd := exec.Command("cmd", "/c", "start", "", "explorer", path)
 	return cmd.Start()
 }
 
 func (a *App) OpenInTerminal(path string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	cmd := exec.Command("cmd", "/c", "start", "powershell")
 	cmd.Dir = path
 	return cmd.Start()
@@ -714,10 +924,16 @@ func (a *App) SetThumbnailBudgetLimit(limitMB int) {
 }
 
 func (a *App) StartTerminal(dir string) error {
+	if err := a.ensurePublicCanAccess(dir); err != nil {
+		return err
+	}
 	return a.termService.Start(dir)
 }
 
 func (a *App) ReadFileText(path string) (string, error) {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return "", err
+	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -726,6 +942,9 @@ func (a *App) ReadFileText(path string) (string, error) {
 }
 
 func (a *App) WriteFileText(path string, content string) error {
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return err
+	}
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
@@ -780,6 +999,26 @@ func (a *App) GetSimilarImageThresholds() map[string]int {
 }
 
 func (a *App) GetTagUsageCounts() (map[string]int, error) {
+	if !a.isPrivacyMode() {
+		var rows []struct {
+			TagID string
+			Path  string
+		}
+		if err := database.DB.Table("file_tags").Select("file_tags.tag_id, file_tags.path").Joins("JOIN tags ON tags.id = file_tags.tag_id").Where("tags.is_protected = ?", false).Scan(&rows).Error; err != nil {
+			return nil, err
+		}
+		counts := make(map[string]int)
+		for _, row := range rows {
+			hidden, err := privacy.IsPathHiddenInPublic(row.Path)
+			if err != nil {
+				return nil, err
+			}
+			if !hidden {
+				counts[row.TagID]++
+			}
+		}
+		return counts, nil
+	}
 	return database.GetTagUsageCounts()
 }
 
@@ -805,6 +1044,9 @@ func (a *App) GetFavoritePaths() ([]string, error) {
 	for _, f := range favs {
 		paths = append(paths, f.Path)
 	}
+	if !a.isPrivacyMode() {
+		return privacy.FilterVisiblePaths(paths)
+	}
 	return paths, nil
 }
 
@@ -828,7 +1070,7 @@ func (a *App) GetFavorites() ([]models.FileInfo, error) {
 			Ext:     filepath.Ext(info.Name()),
 		})
 	}
-	return files, nil
+	return a.filterFiles(files)
 }
 
 func (a *App) ConvertChineseFiles(paths []string, baseScheme string, customPairs []chineseconv.CustomPair) ([]string, error) {

@@ -12,6 +12,8 @@ export function AutoCleanThumbnailCache(arg1:number):Promise<void>;
 
 export function BatchRenameFiles(arg1:Record<string, string>):Promise<void>;
 
+export function CanAccessPath(arg1:string):Promise<boolean>;
+
 export function CancelPaste(arg1:string):Promise<void>;
 
 export function CancelSimilarImageSearch():Promise<void>;
@@ -70,6 +72,10 @@ export function GetLocalAuthToken():Promise<string>;
 
 export function GetLocalServerPort():Promise<number>;
 
+export function GetPrivacyState():Promise<models.PrivacyState>;
+
+export function GetProtectedPaths(arg1:Array<string>):Promise<Record<string, boolean>>;
+
 export function GetRecentItems():Promise<Array<models.FileInfo>>;
 
 export function GetRenameSchemes():Promise<Array<rename.Scheme>>;
@@ -85,6 +91,10 @@ export function GetTagsForFiles(arg1:Array<string>):Promise<Record<string, Array
 export function GetThumbnailBudgetLimit():Promise<number>;
 
 export function GetThumbnailCacheSize():Promise<number>;
+
+export function IsPathProtected(arg1:string):Promise<boolean>;
+
+export function LockPrivacyMode():Promise<models.PrivacyState>;
 
 export function Maximize():Promise<void>;
 
@@ -114,6 +124,8 @@ export function RemoveTagFromFiles(arg1:Array<string>,arg2:Array<string>):Promis
 
 export function RenameFile(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
 
+export function ResetPrivacyPassword(arg1:string,arg2:string):Promise<models.PrivacyState>;
+
 export function ResolvePasteConflict(arg1:string,arg2:string,arg3:boolean):Promise<void>;
 
 export function SaveRenameScheme(arg1:string,arg2:string):Promise<void>;
@@ -128,7 +140,15 @@ export function SetConfig(arg1:string,arg2:string):Promise<void>;
 
 export function SetFileRemark(arg1:string,arg2:string):Promise<void>;
 
+export function SetPathProtected(arg1:string,arg2:boolean,arg3:boolean):Promise<void>;
+
+export function SetRestorePrivacyModeOnStartup(arg1:boolean):Promise<models.PrivacyState>;
+
+export function SetTagProtected(arg1:string,arg2:boolean):Promise<void>;
+
 export function SetThumbnailBudgetLimit(arg1:number):Promise<void>;
+
+export function SetupPrivacyPassword(arg1:string,arg2:string):Promise<models.PrivacyState>;
 
 export function StartTerminal(arg1:string):Promise<void>;
 
@@ -136,8 +156,12 @@ export function ToggleFavorite(arg1:string,arg2:boolean):Promise<void>;
 
 export function UndoOperation():Promise<void>;
 
+export function UnlockPrivacyMode(arg1:string):Promise<models.PrivacyState>;
+
 export function UpdateTag(arg1:models.Tag):Promise<void>;
 
 export function UpdateTagsOrder(arg1:Array<string>):Promise<void>;
+
+export function VerifyWindowsIdentityForPrivacyReset():Promise<boolean>;
 
 export function WriteFileText(arg1:string,arg2:string):Promise<void>;

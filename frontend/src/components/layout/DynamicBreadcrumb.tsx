@@ -1,11 +1,25 @@
+import { useEffect, useState } from 'react'
 import { Select, ListBox } from '@heroui/react'
 import { useTabsStore } from '../../store/tabsStore'
+import { usePrivacyStore } from '../../store/privacyStore'
+import { IsPathProtected } from '../../../wailsjs/go/main/App'
 
 interface Props {
   path: string
 }
 
 export default function DynamicBreadcrumb({ path }: Props) {
+  const privacyMode = usePrivacyStore(state => state.state?.mode)
+  const [isProtected, setIsProtected] = useState(false)
+
+  useEffect(() => {
+    if (!path || path.includes('://') || privacyMode !== 'privacy') {
+      setIsProtected(false)
+      return
+    }
+    IsPathProtected(path).then(setIsProtected).catch(() => setIsProtected(false))
+  }, [path, privacyMode])
+
   if (path === 'favorite://') {
     return <span className="truncate">收藏</span>
   }
@@ -27,6 +41,7 @@ export default function DynamicBreadcrumb({ path }: Props) {
 
   return (
     <div className="flex items-center w-full whitespace-nowrap">
+      {isProtected && <img src="/src/assets/icons/lock_line.svg" className="w-4 h-4 mr-1 shrink-0" alt="protected" />}
       {showEllipsis && (
         <div key="ellipsis" className="flex items-center">
           <Select

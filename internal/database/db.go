@@ -1,7 +1,6 @@
 package database
 
 import (
-	"super_folder/internal/models"
 	"errors"
 	"os"
 	"path/filepath"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+
+	"super_folder/internal/models"
 )
 
 var DB *gorm.DB
@@ -53,6 +54,7 @@ func InitDB() error {
 		&models.Config{},
 		&models.Thumbnail{},
 		&models.Tag{},
+		&models.ProtectedPath{},
 		&models.FileTag{},
 		&models.Remark{},
 		&models.Favorite{},
@@ -222,7 +224,7 @@ func GetTagsForFiles(paths []string) (map[string][]models.Tag, error) {
 		Path string
 		models.Tag
 	}
-	
+
 	err := DB.Table("file_tags").
 		Select("file_tags.path, tags.*").
 		Joins("JOIN tags ON file_tags.tag_id = tags.id").
@@ -400,5 +402,3 @@ func GetSimilarFolderState(folderPath string, threshold int, useMax bool) (*mode
 func SaveSimilarFolderState(state *models.SimilarFolderState) error {
 	return DB.Save(state).Error
 }
-
-

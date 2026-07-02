@@ -18,6 +18,7 @@ This directory contains frontend-specific coding conventions and patterns. These
 | [Settings & UI Conventions](./settings-ui-guidelines.md) | Card backgrounds, HeroUI patterns, cache settings, confirm modal | Filled |
 | [Similar Image Detection](./similar-images.md) | Perceptual hashing, virtual paths, progress events | Filled |
 | [File List Context Menu](./filelist-contextmenu.md) | Boundary clamping, view-mode-sensitive items, auto-scroll to new items | Filled |
+| [Privacy Mode](./privacy-mode.md) | Privacy state, startup unlock, directory refresh, and lock badge contracts | Filled |
 
 ---
 

@@ -27,6 +27,7 @@ export namespace models {
 	    // Go type: time
 	    modTime: any;
 	    ext: string;
+	    isProtected: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new FileInfo(source);
@@ -40,6 +41,7 @@ export namespace models {
 	        this.size = source["size"];
 	        this.modTime = this.convertValues(source["modTime"], null);
 	        this.ext = source["ext"];
+	        this.isProtected = source["isProtected"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -60,12 +62,33 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class PrivacyState {
+	    mode: string;
+	    hasPassword: boolean;
+	    restorePrivacyOnStartup: boolean;
+	    shouldPromptRestore: boolean;
+	    windowsIdentityAvailable: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PrivacyState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
+	        this.hasPassword = source["hasPassword"];
+	        this.restorePrivacyOnStartup = source["restorePrivacyOnStartup"];
+	        this.shouldPromptRestore = source["shouldPromptRestore"];
+	        this.windowsIdentityAvailable = source["windowsIdentityAvailable"];
+	    }
+	}
 	export class Tag {
 	    id: string;
 	    name: string;
 	    type: string;
 	    colorHex: string;
 	    sortOrder: number;
+	    isProtected: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Tag(source);
@@ -78,6 +101,7 @@ export namespace models {
 	        this.type = source["type"];
 	        this.colorHex = source["colorHex"];
 	        this.sortOrder = source["sortOrder"];
+	        this.isProtected = source["isProtected"];
 	    }
 	}
 

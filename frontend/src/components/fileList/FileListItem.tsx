@@ -7,6 +7,7 @@ import { isImage, getFileIcon, formatSize, formatDate } from '../../utils/fileFo
 
 export interface FileListItemProps {
   file: models.FileInfo
+  isProtected?: boolean
   viewMode: 'list' | 'grid' | 'album'
   isSelectionMode?: boolean
   selectedPaths?: Set<string>
@@ -25,6 +26,7 @@ export interface FileListItemProps {
 
 export default function FileListItem({
   file,
+  isProtected = false,
   viewMode,
   isSelectionMode = false,
   selectedPaths = new Set(),
@@ -83,13 +85,16 @@ export default function FileListItem({
               </Checkbox>
             </div>
           )}
-          <div className="w-6 h-6 flex items-center justify-center text-blue-900">
+          <div className="w-6 h-6 flex items-center justify-center text-blue-900 relative">
             {file.isDir ? (
               <AnimatedFolderIcon className="w-6 h-6" />
             ) : getFileIcon(file) === 'document_line.svg' ? (
               <AnimatedDocumentIcon className="w-6 h-6" />
             ) : (
               <img src={`/src/assets/icons/${getFileIcon(file)}`} className="w-5 h-5 object-contain" draggable={false} alt="file icon" />
+            )}
+            {isProtected && (
+              <img src="/src/assets/icons/lock_line.svg" className="absolute -bottom-1 -left-1 w-3.5 h-3.5 bg-white/90 rounded-full" alt="protected" />
             )}
           </div>
           <div className="text-sm font-medium text-gray-700 truncate text-left" title={file.name}>
@@ -123,6 +128,11 @@ export default function FileListItem({
             {fileTagColors[file.path] && (
               <div className="absolute -bottom-1 -right-1 z-10 flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ color: fileTagColors[file.path] }}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+              </div>
+            )}
+            {isProtected && (
+              <div className="absolute -bottom-1 -left-1 z-10 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-white/90">
+                <img src="/src/assets/icons/lock_line.svg" className="w-4 h-4" alt="protected" />
               </div>
             )}
           </div>
