@@ -149,15 +149,18 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       const rect = scrollRef.current.getBoundingClientRect()
       const clientY = lastMousePosRef.current.y
 
-      const SCROLL_MARGIN = 50
-      const SCROLL_SPEED = 15
+      const SCROLL_MARGIN = 80
+      const MIN_SCROLL_SPEED = 4
+      const MAX_SCROLL_SPEED = 28
 
       let didScroll = false
       if (clientY < rect.top + SCROLL_MARGIN) {
-        scrollRef.current.scrollTop -= SCROLL_SPEED
+        const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
+        scrollRef.current.scrollTop -= MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
         didScroll = true
       } else if (clientY > rect.bottom - SCROLL_MARGIN) {
-        scrollRef.current.scrollTop += SCROLL_SPEED
+        const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
+        scrollRef.current.scrollTop += MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
         didScroll = true
       }
 

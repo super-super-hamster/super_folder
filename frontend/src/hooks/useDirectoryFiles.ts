@@ -29,7 +29,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
   const [protectedPathMap, setProtectedPathMap] = useState<Record<string, boolean>>({})
   const [missingPreset, setMissingPreset] = useState(false)
 
-  const { refreshKey, searchQuery, searchFilter } = useUIStore()
+  const { refreshKey, searchQuery, searchFilter, setSearchLoading } = useUIStore()
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const { searchPresets, smartFolders } = useSettingsStore()
   const { tagRefreshKey } = useTagStore()
@@ -93,6 +93,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
     }
 
     let fetchPromise: Promise<models.FileInfo[]>
+    let isSearchRequest = false
 
     const parsed = parseSearchQuery(debouncedSearchQuery || '')
     let keyword = parsed.keyword
@@ -145,6 +146,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
             rootPaths: sf.rootPaths,
             limit: 2000
           }
+          isSearchRequest = true
           fetchPromise = SearchFiles(req)
         } else {
           setMissingPreset(true)
@@ -170,6 +172,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
           rootPath: '',
           limit: 2000
         }
+        isSearchRequest = true
         fetchPromise = SearchFiles(req)
       } else {
         fetchPromise = Promise.resolve([])
@@ -202,6 +205,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null,
         imageShape: searchFilter?.isImageShapeFilter ? searchFilter?.imageShape : undefined
       }
+      isSearchRequest = true
       fetchPromise = SearchFiles(req)
     } else if (currentPath === 'favorite://') {
       fetchPromise = GetFavorites()
@@ -242,6 +246,8 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       })
     }
 
+    if (isSearchRequest) setSearchLoading(true)
+
     fetchPromise
       .then((res) => {
         if (isMounted && res !== null) setFiles(res || [])
@@ -255,10 +261,14 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       })
       .finally(() => {
         if (isMounted) setLoading(false)
+        if (isSearchRequest) setSearchLoading(false)
       })
 
-    return () => { isMounted = false }
-  }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter, privacyMode])
+    return () => {
+      isMounted = false
+      if (isSearchRequest) setSearchLoading(false)
+    }
+  }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter, privacyMode, setSearchLoading])
 
   return { files, setFiles, loading, fileTagColors, protectedPathMap, missingPreset }
 }

@@ -48,6 +48,7 @@ export default function FileList() {
   const currentPath = activeTab?.currentPath
 
   const { files, setFiles, loading, fileTagColors, protectedPathMap, missingPreset } = useDirectoryFiles(currentPath)
+  const fileDirMap = useMemo(() => Object.fromEntries(files.map(f => [f.path, f.isDir])), [files])
   useBatchRenameTrigger(currentPath, files)
 
   const [localPort, setLocalPort] = useState<number | null>(null)
@@ -391,7 +392,7 @@ export default function FileList() {
       onContextMenu={(e) => {
         e.preventDefault()
         if (currentPath && scrollRef.current) {
-          openMenu(e.clientX, e.clientY, '', '', false, scrollRef.current.getBoundingClientRect())
+          openMenu(e.clientX, e.clientY, '', '', false, scrollRef.current.getBoundingClientRect(), fileDirMap)
         }
       }}
     >
@@ -501,7 +502,7 @@ export default function FileList() {
                     onContextMenu={(e, f) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      openMenu(e.clientX, e.clientY, f.path, f.name, f.isDir, scrollRef.current?.getBoundingClientRect())
+                      openMenu(e.clientX, e.clientY, f.path, f.name, f.isDir, scrollRef.current?.getBoundingClientRect(), fileDirMap)
                     }}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}

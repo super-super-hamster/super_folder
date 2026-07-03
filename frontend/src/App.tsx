@@ -22,7 +22,7 @@ import PrivacyStartupGate from './components/privacy/PrivacyStartupGate'
 import { usePrivacyStore } from './store/privacyStore'
 
 function App() {
-  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
+  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen, searchQuery } = useUIStore()
   const { tabs, activeTabId } = useTabsStore()
   const { initialized, dialogMode } = usePrivacyStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
@@ -165,7 +165,7 @@ function App() {
           { /* Search Panel Island (Conditionally rendered) */ }
           {!isSettingsOpen && (
             <AnimatePresence>
-              {isSearchPanelOpen && <SearchPanel />}
+              {(isSearchPanelOpen || searchQuery !== '') && <SearchPanel />}
             </AnimatePresence>
           )}
 

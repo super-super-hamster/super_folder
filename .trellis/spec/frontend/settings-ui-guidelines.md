@@ -220,6 +220,19 @@ Secondary feature pages (batch rename, conversion, similar images, Chinese conve
 navigate(currentPath + '\\功能名', '功能名', false)
 ```
 
+When launching from virtual roots such as `favorite://`, derive the feature page base from the selected file's real parent path instead of the active tab path. This keeps breadcrumbs on real filesystem paths.
+
+Search UI conventions:
+
+- The search input leading icon is status only: HeroUI `Spinner` while a search request is active, otherwise `check_line.svg`.
+- Search panel expand/collapse belongs at the bottom center of the search panel using `up_line.svg` when open and `down_line.svg` when collapsed.
+- If the panel is collapsed but a search query exists, keep the panel wrapper mounted so the bottom-center expand button remains available.
+
+Shared color conventions:
+
+- Sidebar hover and selected states use `bg-sf-item-hover` and `bg-sf-selected` from `tailwind.config.js`.
+- Do not hard-code one-off `gray-*` backgrounds for sidebar selected/hover states when a matching `sf` token exists.
+
 The view is rendered by matching `currentPath.endsWith('\\功能名')` in `App.tsx` / `FileList.tsx`. The `DynamicBreadcrumb` then naturally renders the parent folder chain followed by the feature label, e.g. `D: > fileGe > 批量重命名`.
 
 Avoid custom URI schemes for folder-relative feature pages. Only use schemes for top-level special views that have no parent folder (e.g. `favorite://`, `recent://`).
@@ -354,4 +367,3 @@ Editable text/code editors provide a right-click menu inside the editor area wit
 - Read/write clipboard via Wails runtime: `ClipboardGetText()` / `ClipboardSetText(text)`
 - Maintain `selectionStart`/`selectionEnd` correctly after cut/paste
 - Detect selection from the active `<textarea>` element, not `window.getSelection()` (which does not reflect textarea selection)
-

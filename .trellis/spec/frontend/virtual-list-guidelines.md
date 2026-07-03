@@ -70,15 +70,20 @@ setDragBox(null)
 
 ### Auto-scroll integration
 
-The same `computeDragBox` + `updateDragSelection` pattern applies in the `requestAnimationFrame` scroll loop:
+The same `computeDragBox` + `updateDragSelection` pattern applies in the `requestAnimationFrame` scroll loop. Auto-scroll speed must scale with pointer proximity to the top/bottom edge so near-edge dragging is faster than dragging at the edge threshold:
 
 ```tsx
+const distanceRatio = Math.min(1, Math.max(0, edgeDistance / SCROLL_MARGIN))
+const speed = MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
+
 if (didScroll) {
   const coords = getContainerCoords(lastMousePosRef.current.x, lastMousePosRef.current.y)
   setDragBox(computeDragBox(coords, dragStartPos))
   updateDragSelection(coords, dragStartPos)
 }
 ```
+
+Use the same speed calculation for upward and downward scroll. Keep the drag box and selection recomputed after every scroll tick.
 
 ---
 

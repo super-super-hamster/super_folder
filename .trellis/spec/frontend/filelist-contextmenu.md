@@ -86,6 +86,30 @@ const targetFolderPath = targetPath && targetPath.includes('\\')
 navigate((targetFolderPath || currentPath || 'C:\\') + '\\简繁转换', '简繁转换', false)
 ```
 
+### General Conversion
+
+Only show `转换` when all selected targets are files and `GetConvertibleFormats(targets)` returns at least one common output format. Hide the action entirely when:
+
+- The current target is not convertible.
+- Multiple selected files have no common conversion format.
+- Any selected target is a directory.
+
+Because `GetConvertibleFormats` is asynchronous, clear old format state before each request and key the result to the exact target set. Never render `转换` from stale formats returned for a previous right-click.
+
+```tsx
+const key = targets.join('\n')
+setConvertibleFormats([])
+setConvertibleFormatsKey(includesDirectory ? '' : key)
+
+GetConvertibleFormats(targets).then(formats => {
+  if (isCurrent) setConvertibleFormats(formats || [])
+})
+
+const canShowConvert = !selectedIncludesDirectory &&
+  convertibleFormatsKey === selectedTargetsKey &&
+  convertibleFormats.length > 0
+```
+
 ---
 
 ## Auto-Scroll to Newly Created Items

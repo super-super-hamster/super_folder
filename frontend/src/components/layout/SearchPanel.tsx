@@ -7,7 +7,7 @@ import SimpleDatePicker from '../common/SimpleDatePicker'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 
 export default function SearchPanel() {
-  const { searchFilter, setSearchFilter, isSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
+  const { searchFilter, setSearchFilter, isSearchPanelOpen, setSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
   const { searchPresets } = useSettingsStore()
   const [isResizing, setIsResizing] = useState(false)
   const [isAddingExt, setIsAddingExt] = useState(false)
@@ -110,12 +110,12 @@ export default function SearchPanel() {
     <motion.div 
       id="search-panel"
       initial={{ height: 0, opacity: 0 }}
-      animate={{ height: isSearchPanelOpen ? searchPanelHeight : 0, opacity: isSearchPanelOpen ? 1 : 0 }}
+      animate={{ height: isSearchPanelOpen ? searchPanelHeight : 0, opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: isResizing ? 0 : 0.2, ease: 'easeInOut' }}
       className="flex-shrink-0 wails-no-drag relative z-20"
     >
-      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 w-full h-full flex flex-col">
+      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 w-full h-full flex flex-col transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
         <div className="p-6 h-full flex">
         {/* Left Filter Panel */}
         <div className="w-[200px] border-r border-gray-300 pr-6 flex flex-col gap-3 overflow-y-auto">
@@ -529,15 +529,22 @@ export default function SearchPanel() {
           })}
         </div>
       </div>
+      <button
+        className="absolute left-1/2 -bottom-4 z-[60] -translate-x-1/2 w-9 h-9 rounded-full bg-white border border-gray-100 shadow-md flex items-center justify-center hover:bg-sf-item-hover transition-colors focus:outline-none wails-no-drag"
+        onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
+        title={isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}
+      >
+        <img src={`/src/assets/icons/${isSearchPanelOpen ? 'up_line.svg' : 'down_line.svg'}`} className="w-4 h-4 opacity-70" alt="切换搜索面板" />
+      </button>
       </div>
       {/* Resizer Handle */}
-      <div 
+      {isSearchPanelOpen && <div 
         className="h-3 w-full absolute -bottom-3 left-0 cursor-ns-resize z-50 wails-no-drag"
         onMouseDown={(e) => {
           e.preventDefault()
           setIsResizing(true)
         }}
-      />
+      />}
     </motion.div>
   )
 }

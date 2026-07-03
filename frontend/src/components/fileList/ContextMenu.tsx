@@ -24,7 +24,7 @@ import copyAnim from '../../assets/anim/copy.json'
 import trashAnim from '../../assets/anim/trash.json'
 
 export default function ContextMenu() {
-  const { isVisible, x, y, targetPath, targetName, isDir, closeMenu, containerRect } = useContextMenuStore()
+  const { isVisible, x, y, targetPath, targetName, isDir, closeMenu, containerRect, fileDirMap } = useContextMenuStore()
   const { copy, cut, items: clipboardItems, operation } = useClipboardStore()
   const { selectedPaths, clearSelection } = useSelectionStore()
   const { startRename } = useRenameStore()
@@ -42,19 +42,30 @@ export default function ContextMenu() {
   const trashLottieRef = useRef<LottieRefCurrentProps>(null)
 
   const [convertibleFormats, setConvertibleFormats] = useState<string[]>([])
+  const [convertibleFormatsKey, setConvertibleFormatsKey] = useState('')
   const [targetProtected, setTargetProtected] = useState(false)
 
   useEffect(() => {
     if (isVisible && targetPath && !isDir) {
       const selectedFiles = Array.from(selectedPaths)
       const targets = selectedFiles.includes(targetPath) ? selectedFiles : [targetPath]
+      const includesDirectory = targets.some(path => path === targetPath ? isDir : fileDirMap[path] === true)
+      const key = targets.join('\n')
+      setConvertibleFormats([])
+      setConvertibleFormatsKey(includesDirectory ? '' : key)
+      if (includesDirectory) return
+      let isCurrent = true
       GetConvertibleFormats(targets).then(formats => {
-        setConvertibleFormats(formats || [])
-      }).catch(() => setConvertibleFormats([]))
+        if (isCurrent) setConvertibleFormats(formats || [])
+      }).catch(() => {
+        if (isCurrent) setConvertibleFormats([])
+      })
+      return () => { isCurrent = false }
     } else {
       setConvertibleFormats([])
+      setConvertibleFormatsKey('')
     }
-  }, [isVisible, targetPath, selectedPaths, isDir])
+  }, [isVisible, targetPath, selectedPaths, isDir, fileDirMap])
 
   useEffect(() => {
     if (isVisible && targetPath && privacyState?.mode === 'privacy' && !targetPath.startsWith('smartfolder://')) {
@@ -86,6 +97,10 @@ export default function ContextMenu() {
   const targetExt = targetPath && !isDir ? targetPath.substring(targetPath.lastIndexOf('.')).toLowerCase() : ''
   const canChineseConvert = targetExt === '.txt' || targetExt === '.epub'
   const targetFolderPath = targetPath && targetPath.includes('\\') ? targetPath.substring(0, targetPath.lastIndexOf('\\')) : currentPath
+  const selectedTargets = targetPath ? (Array.from(selectedPaths).includes(targetPath) ? Array.from(selectedPaths) : [targetPath]) : []
+  const selectedTargetsKey = selectedTargets.join('\n')
+  const selectedIncludesDirectory = selectedTargets.some(path => path === targetPath ? isDir : fileDirMap[path] === true)
+  const canShowConvert = !isDir && !selectedIncludesDirectory && convertibleFormatsKey === selectedTargetsKey && convertibleFormats.length > 0
 
   const handleAction = (action: string) => {
     const selectedFiles = Array.from(selectedPaths)
@@ -311,7 +326,7 @@ export default function ContextMenu() {
       if (!isDir && canChineseConvert) {
         itemCount++ // chinese_conv
       }
-      if (!isDir) {
+      if (canShowConvert) {
         itemCount++ // convert
       }
       itemCount++ // delete
@@ -464,7 +479,7 @@ export default function ContextMenu() {
                 简繁转换
               </button>
             )}
-            {!isDir && (
+            {canShowConvert && (
               <button
                 onClick={() => handleAction('convert')}
                 disabled={convertibleFormats.length === 0 || isRunning}

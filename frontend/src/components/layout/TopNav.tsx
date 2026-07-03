@@ -5,14 +5,12 @@ import { useTagStore, generateColorFromName } from '../../store/tagStore'
 import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags } from '../../../wailsjs/go/main/App'
 import { WindowToggleMaximise, WindowIsMaximised } from '../../../wailsjs/runtime/runtime'
 import { useRef, useState, useEffect } from 'react'
-import { Checkbox, Dropdown, Separator } from '@heroui/react'
+import { Checkbox, Dropdown, Separator, Spinner } from '@heroui/react'
 import DynamicBreadcrumb from './DynamicBreadcrumb'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 import { models } from '../../../wailsjs/go/models'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 const Lottie = (LottieLib as any).default || LottieLib
-import upAnim from '../../assets/anim/up.json'
-import downAnim from '../../assets/anim/down.json'
 import leftAnim from '../../assets/anim/left.json'
 import rightAnim from '../../assets/anim/right.json'
 import refreshAnim from '../../assets/anim/refresh.json'
@@ -62,6 +60,7 @@ export default function TopNav() {
     recentSortOption, setRecentSortOption, 
     isGrouped, setIsGrouped, 
     isSearchPanelOpen, setSearchPanelOpen,
+    isSearchLoading,
     searchSuggestions, setSearchSuggestions,
     selectedSuggestionIndex, setSelectedSuggestionIndex,
     availableTags, setAvailableTags,
@@ -341,12 +340,12 @@ export default function TopNav() {
           className={`relative flex items-center bg-gray-100 rounded-full focus-within:bg-gray-200/80 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
         >
           {isSearchActive && (
-            <div 
-              className="w-4 h-4 mr-2 cursor-pointer shrink-0 hover:opacity-80 transition-opacity flex items-center justify-center" 
-              onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <AnimatedClickIcon animData={isSearchPanelOpen ? upAnim : downAnim} className="w-4 h-4 text-gray-500" />
+            <div className="w-4 h-4 mr-2 shrink-0 flex items-center justify-center">
+              {isSearchLoading ? (
+                <Spinner className="w-4 h-4" />
+              ) : (
+                <img src="/src/assets/icons/check_line.svg" className="w-4 h-4 opacity-70" alt="搜索状态" />
+              )}
             </div>
           )}
           
@@ -402,7 +401,7 @@ export default function TopNav() {
         <Dropdown>
           <Dropdown.Trigger>
             <button
-              className="w-8 h-8 shrink-0 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
               title="视图选项"
             >
               <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
@@ -451,7 +450,7 @@ export default function TopNav() {
 
         <Dropdown>
           <Dropdown.Trigger>
-            <button className="w-8 h-8 shrink-0 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none">
+            <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
               {(() => {
                 const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
                 if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
@@ -509,20 +508,20 @@ export default function TopNav() {
           </Dropdown.Popover>
         </Dropdown>
 
-        <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none">
+        <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
           <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" autoPlayCount={refreshAnimationCount} />
         </button>
         
         <div className="w-[1px] h-4 bg-gray-300 mx-1 shrink-0"></div>
 
         <div className="flex items-center gap-1 text-gray-600 shrink-0">
-          <button className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none" onClick={() => Minimize()}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" onClick={() => Minimize()}>
             <img src="/src/assets/icons/minimize_line.svg" className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none" onClick={handleMaximize}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" onClick={handleMaximize}>
             <img src={isMaximized ? "/src/assets/icons/fullscreen_exit_line.svg" : "/src/assets/icons/fullscreen_line.svg"} className="w-4 h-4" />
           </button>
-          <button className="w-7 h-7 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors focus:outline-none" onClick={() => Close()}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500 hover:text-white transition-colors focus:outline-none" onClick={() => Close()}>
             <img src="/src/assets/icons/close_line.svg" className="w-4 h-4" />
           </button>
         </div>

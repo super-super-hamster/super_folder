@@ -34,6 +34,8 @@ interface UIState {
   setSearchFocused: (focused: boolean) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
+  isSearchLoading: boolean
+  setSearchLoading: (loading: boolean) => void
   searchFilter: SearchFilter
   setSearchFilter: (filter: Partial<SearchFilter>) => void
   isSidebarExpanded: boolean
@@ -89,6 +91,8 @@ export const useUIStore = create<UIState>()(
       setSearchFocused: (focused) => set({ isSearchFocused: focused }),
       searchQuery: '',
       setSearchQuery: (query) => set({ searchQuery: query }),
+      isSearchLoading: false,
+      setSearchLoading: (loading) => set({ isSearchLoading: loading }),
       searchFilter: {
       isCaseSensitive: false,
       isRegex: false,

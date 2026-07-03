@@ -18,6 +18,11 @@ Fix two frontend startup regressions introduced around privacy mode and release 
 - File context menu rename action should use `edit_3_line.svg`.
 - Entering feature pages from virtual roots such as favorites should preserve the underlying original path in breadcrumbs, not show `favorite:// > ...`.
 - Similar image pages should keep the previous folder path in breadcrumbs before the final feature segment.
+- File context menu should hide conversion when no convertible format is available, selected files have no common convertible format, or the selection includes folders.
+- Left sidebar selected and hover colors should use shared, darker theme tokens.
+- Top window/control buttons should have rounded hover backgrounds.
+- Search input should show search status, while search panel expand/collapse lives at the bottom center of the panel.
+- Marquee selection auto-scroll should accelerate as the pointer approaches the top or bottom edge.
 
 ## Acceptance Criteria
 
@@ -27,5 +32,9 @@ Fix two frontend startup regressions introduced around privacy mode and release 
 - [ ] Simplified/Traditional conversion appears only for `.txt` and `.epub` files.
 - [ ] Feature page breadcrumbs show the requested leading icons.
 - [ ] Feature page breadcrumbs preserve the original source path when launched from favorites or other shortcut views.
+- [ ] Conversion action is hidden unless the current selection has a common convertible file format and contains only files.
+- [ ] Sidebar hover/selected colors use the shared `sf` Tailwind tokens.
+- [ ] Search status uses Spinner/check icon and panel toggle uses up/down icons at panel bottom center.
+- [ ] Marquee auto-scroll speed varies by edge proximity.
 - [ ] Frontend build succeeds.
 - [ ] Go build succeeds if backend files are touched.
