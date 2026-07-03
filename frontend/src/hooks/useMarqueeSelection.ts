@@ -153,6 +153,12 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       setIsDragging(false)
       setDragBox(null)
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current)
+      if (edgeTimeoutRef.current) {
+        clearTimeout(edgeTimeoutRef.current)
+        edgeTimeoutRef.current = null
+      }
+      setEdgeFeedback(null)
+      triggeredEdgeRef.current = null
 
       setDragSelectedPaths(prev => {
         if (prev.size > 0) {

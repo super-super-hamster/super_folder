@@ -452,6 +452,7 @@ export default function FileList() {
                 backgroundColor: 'rgba(156, 163, 175, 0.3)',
                 border: '2px solid #4b5563',
                 borderRadius: '12px',
+                boxSizing: 'border-box',
                 pointerEvents: 'none',
                 zIndex: 50
               }}
