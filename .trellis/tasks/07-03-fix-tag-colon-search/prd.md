@@ -6,18 +6,18 @@ Searching for tag values that contain a colon, such as tag:a:b, currently behave
 
 ## Requirements
 
-- Searching `tag:<value>` must treat the token as a tag filter when the token is at the end of the search string.
+- Searching `tag:<value>` must not become a tag filter until the token is explicitly terminated by whitespace or `&`.
 - Tag values may contain additional colons, e.g. `tag:a:b` should search for tag name `a:b`.
 - Existing tag, Chinese tag prefix, note/remark prefix, `&` separators, and keyword behavior must keep working.
 - The fix should stay in the frontend query parser unless backend behavior is proven to be the cause.
 
 ## Acceptance Criteria
 
-- [ ] `tag:a:b` parses as tag token `tag:a:b` with empty keyword.
+- [ ] `tag:a:b` remains keyword input until the user types a delimiter.
 - [ ] `tag:a:b ` parses as tag token `tag:a:b` with empty keyword.
-- [ ] `tag:a:b & tag:c` parses both tag tokens.
-- [ ] `note:a:b` / `备注:a:b` parse as remark tokens when they end the input.
-- [ ] Searching `tag:a:b` sends backend tag filter `a:b` instead of falling back to unfiltered directory contents.
+- [ ] `tag:a:b & tag:c ` parses both tag tokens.
+- [ ] `note:a:b` / `备注:a:b` remain keyword input until the user types a delimiter.
+- [ ] Searching `tag:a:b ` sends backend tag filter `a:b` instead of falling back to unfiltered directory contents.
 - [ ] Frontend build succeeds.
 
 ## Notes

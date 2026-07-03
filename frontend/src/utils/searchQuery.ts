@@ -6,7 +6,7 @@ export interface ParsedSearchQuery {
 
 export function parseSearchQuery(query: string): ParsedSearchQuery {
   const tokens: { type: 'tag' | 'remark'; raw: string; start: number; end: number }[] = []
-  const regex = /(^|[\s&])(tag|标签|备注|note):([^\s&]+)(?=\s|&|$)/gi
+  const regex = /(^|[\s&])(tag|标签|备注|note):([^\s&]+)(?=\s|&)/gi
   let match: RegExpExecArray | null
   while ((match = regex.exec(query)) !== null) {
     const separator = match[1]
