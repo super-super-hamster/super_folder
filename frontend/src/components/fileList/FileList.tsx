@@ -415,9 +415,9 @@ export default function FileList() {
         {edgeFeedback && (
           <motion.div
             key={edgeFeedback.key}
-            initial={{ y: edgeFeedback.edge === 'top' ? -24 - edgeFeedback.intensity * 16 : 24 + edgeFeedback.intensity * 16, opacity: 0 }}
+            initial={{ y: edgeFeedback.edge === 'top' ? -24 - edgeFeedback.intensity * 16 : 18 + edgeFeedback.intensity * 12, opacity: 0 }}
             animate={{ y: 0, opacity: 1, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
-            exit={{ y: 40, opacity: 0, transition: { duration: 0.45, ease: 'easeOut' } }}
+            exit={{ y: edgeFeedback.edge === 'top' ? -40 : 40, opacity: 0, transition: { duration: 0.45, ease: 'easeOut' } }}
             className={`absolute left-0 right-0 mx-auto w-4/5 h-0.5 rounded-full bg-gray-400/50 pointer-events-none drop-shadow-md z-30 ${
               edgeFeedback.edge === 'top' ? 'top-3' : 'bottom-3'
             }`}

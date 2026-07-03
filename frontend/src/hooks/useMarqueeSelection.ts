@@ -219,12 +219,16 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       }
       const atTop = scrollTop <= 0
       const atBottom = scrollTop >= maxScrollTop - 1
+      const nearTop = clientY < rect.top + SCROLL_MARGIN
+      const nearBottom = clientY > rect.bottom - SCROLL_MARGIN
+      const topEdgeActive = atTop && clientY < rect.top
+      const bottomEdgeActive = atBottom && clientY > rect.bottom
 
       let didScroll = false
-      if (clientY < rect.top + SCROLL_MARGIN) {
-        if (atTop) {
+      if (nearTop) {
+        if (topEdgeActive) {
           if (triggeredEdgeRef.current !== 'top') {
-            const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
+            const distanceRatio = Math.min(1, Math.max(0, (rect.top - clientY) / SCROLL_MARGIN))
             triggerEdgeFeedback('top', distanceRatio)
             triggeredEdgeRef.current = 'top'
           }
@@ -237,10 +241,10 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
           scrollRef.current.scrollTop = nextScrollTop
           didScroll = nextScrollTop !== scrollTop
         }
-      } else if (clientY > rect.bottom - SCROLL_MARGIN) {
-        if (atBottom) {
+      } else if (nearBottom) {
+        if (bottomEdgeActive) {
           if (triggeredEdgeRef.current !== 'bottom') {
-            const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
+            const distanceRatio = Math.min(1, Math.max(0, (clientY - rect.bottom) / SCROLL_MARGIN))
             triggerEdgeFeedback('bottom', distanceRatio)
             triggeredEdgeRef.current = 'bottom'
           }
