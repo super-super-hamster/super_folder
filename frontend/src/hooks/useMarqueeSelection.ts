@@ -16,14 +16,26 @@ export interface UseMarqueeSelectionOptions {
   viewMode: 'list' | 'grid' | 'album'
 }
 
+export interface EdgeFeedback {
+  edge: 'top' | 'bottom'
+  key: number
+  intensity: number
+}
+
 export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }: UseMarqueeSelectionOptions) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStartPos, setDragStartPos] = useState<{ x: number, y: number } | null>(null)
   const [dragBox, setDragBox] = useState<DragBox | null>(null)
   const [dragSelectedPaths, setDragSelectedPaths] = useState<Set<string>>(new Set())
+  const [edgeFeedback, setEdgeFeedback] = useState<EdgeFeedback | null>(null)
   const lastMousePosRef = useRef<{ x: number, y: number } | null>(null)
   const autoScrollRafRef = useRef<number | null>(null)
   const isCtrlPressedRef = useRef(false)
+  const triggeredEdgeRef = useRef<'top' | 'bottom' | null>(null)
+
+  const clearEdgeFeedback = useCallback(() => {
+    setEdgeFeedback(null)
+  }, [])
 
   const getContainerCoords = useCallback((clientX: number, clientY: number) => {
     if (!scrollRef.current) return { x: 0, y: 0 }
@@ -153,15 +165,45 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       const MIN_SCROLL_SPEED = 4
       const MAX_SCROLL_SPEED = 28
 
+      const scrollTop = scrollRef.current.scrollTop
+      const clientHeight = scrollRef.current.clientHeight
+      const scrollHeight = scrollRef.current.scrollHeight
+      const atTop = scrollTop <= 0
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1
+
       let didScroll = false
       if (clientY < rect.top + SCROLL_MARGIN) {
-        const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
-        scrollRef.current.scrollTop -= MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
-        didScroll = true
+        if (atTop) {
+          if (triggeredEdgeRef.current !== 'top') {
+            const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
+            setEdgeFeedback({ edge: 'top', key: Date.now(), intensity: distanceRatio })
+            triggeredEdgeRef.current = 'top'
+          }
+        } else {
+          triggeredEdgeRef.current = null
+        }
+        if (!atTop) {
+          const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
+          scrollRef.current.scrollTop -= MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
+          didScroll = true
+        }
       } else if (clientY > rect.bottom - SCROLL_MARGIN) {
-        const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
-        scrollRef.current.scrollTop += MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
-        didScroll = true
+        if (atBottom) {
+          if (triggeredEdgeRef.current !== 'bottom') {
+            const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
+            setEdgeFeedback({ edge: 'bottom', key: Date.now(), intensity: distanceRatio })
+            triggeredEdgeRef.current = 'bottom'
+          }
+        } else {
+          triggeredEdgeRef.current = null
+        }
+        if (!atBottom) {
+          const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
+          scrollRef.current.scrollTop += MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
+          didScroll = true
+        }
+      } else {
+        triggeredEdgeRef.current = null
       }
 
       if (didScroll) {
@@ -179,8 +221,9 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current)
+      triggeredEdgeRef.current = null
     }
   }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef])
 
-  return { isDragging, dragBox, dragSelectedPaths, onPointerDown: handlePointerDown }
+  return { isDragging, dragBox, dragSelectedPaths, edgeFeedback, clearEdgeFeedback, onPointerDown: handlePointerDown }
 }

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useSelectionStore } from '../../store/selectionStore'
@@ -174,7 +175,7 @@ export default function FileList() {
 
   const [lastClickedPath, setLastClickedPath] = useState<string | null>(null)
 
-  const { isDragging, dragBox, dragSelectedPaths, onPointerDown: handlePointerDown } = useMarqueeSelection({ scrollRef, listItems, columns, viewMode })
+  const { isDragging, dragBox, dragSelectedPaths, edgeFeedback, clearEdgeFeedback, onPointerDown: handlePointerDown } = useMarqueeSelection({ scrollRef, listItems, columns, viewMode })
 
   const rowVirtualizer = useVirtualizer({
     count: listItems.length,
@@ -410,6 +411,33 @@ export default function FileList() {
         className="flex-1 w-full overflow-y-auto px-6 pt-4 no-scrollbar pb-20 relative"
         onPointerDown={handlePointerDown}
       >
+      <AnimatePresence onExitComplete={clearEdgeFeedback}>
+        {edgeFeedback && (
+          <motion.div
+            key={edgeFeedback.key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className={`absolute left-0 right-0 h-16 pointer-events-none z-30 ${
+              edgeFeedback.edge === 'top' ? 'top-0 bg-gradient-to-b from-gray-400/10 to-transparent' : 'bottom-0 bg-gradient-to-t from-gray-400/10 to-transparent'
+            }`}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence onExitComplete={clearEdgeFeedback}>
+        {edgeFeedback && (
+          <motion.div
+            key={`line-${edgeFeedback.key}`}
+            initial={{ y: edgeFeedback.edge === 'top' ? -24 - edgeFeedback.intensity * 16 : 24 + edgeFeedback.intensity * 16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+            exit={{ y: edgeFeedback.edge === 'top' ? 40 : -40, opacity: 0, transition: { duration: 0.55, ease: 'easeOut' } }}
+            className={`absolute left-0 right-0 mx-auto w-4/5 h-0.5 rounded-full bg-gray-400/50 pointer-events-none z-40 ${
+              edgeFeedback.edge === 'top' ? 'top-3' : 'bottom-3'
+            }`}
+          />
+        )}
+      </AnimatePresence>
       {loading ? (
         <div className="flex items-center justify-center h-36 text-gray-400">正在加载文件...</div>
       ) : files.length === 0 ? (
