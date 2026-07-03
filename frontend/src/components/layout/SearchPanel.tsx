@@ -530,7 +530,7 @@ export default function SearchPanel() {
         </div>
       </div>
       <button
-        className="absolute left-1/2 -bottom-4 z-[60] -translate-x-1/2 w-9 h-9 rounded-full bg-white border border-gray-100 shadow-md flex items-center justify-center hover:bg-sf-item-hover transition-colors focus:outline-none wails-no-drag"
+        className="absolute left-1/2 -bottom-4 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-b-md transition-colors focus:outline-none wails-no-drag"
         onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
         title={isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}
       >

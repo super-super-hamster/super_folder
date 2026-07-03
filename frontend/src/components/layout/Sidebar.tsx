@@ -82,7 +82,7 @@ export default function Sidebar() {
             className={`flex items-center py-2 rounded-lg cursor-pointer transition-colors ${
               isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
             } ${
-              isItemActive(item.path) ? 'bg-sf-selected text-primary font-medium' : 'hover:bg-sf-item-hover text-gray-700'
+              isItemActive(item.path) ? 'bg-sf-panel/80 hover:bg-sf-item text-primary font-medium' : 'hover:bg-sf-item text-gray-700'
             }`}
           >
             <img src={`/src/assets/icons/${item.icon}`} alt={item.name} className="w-6 h-6 shrink-0" />
@@ -111,7 +111,7 @@ export default function Sidebar() {
             className={`flex items-center py-2 rounded-lg cursor-pointer transition-colors ${
               isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
             } ${
-              isItemActive(drive) ? 'bg-sf-selected text-primary font-medium' : 'hover:bg-sf-item-hover text-gray-700'
+              isItemActive(drive) ? 'bg-sf-panel/80 hover:bg-sf-item text-primary font-medium' : 'hover:bg-sf-item text-gray-700'
             }`}
           >
             <img src="/src/assets/icons/hard_drive.svg" alt="Drive" className="w-6 h-6 shrink-0" />
@@ -135,7 +135,7 @@ export default function Sidebar() {
       <div className="mt-auto wails-no-drag">
         <div 
           onClick={() => setSettingsOpen(true)}
-          className={`flex items-center py-2 rounded-lg hover:bg-sf-item-hover cursor-pointer text-gray-700 transition-colors ${
+          className={`flex items-center py-2 rounded-lg hover:bg-sf-item cursor-pointer text-gray-700 transition-colors ${
           isSidebarExpanded ? 'px-4 mx-2' : 'justify-center mx-1'
         }`}>
           <img src="/src/assets/icons/settings_5_line.svg" alt="Settings" className="w-6 h-6 shrink-0" />
