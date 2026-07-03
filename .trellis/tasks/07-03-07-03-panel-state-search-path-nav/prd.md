@@ -12,7 +12,7 @@ Keep left action panel state when collapsed and let the search box navigate to e
 - If the typed path points to a directory, navigate to that directory.
 - If the typed path points to a file, navigate to the file's containing folder only.
 - Path navigation must not trigger for incomplete or invalid paths.
-- In public mode, protected folders/files must be treated as inaccessible; the UI should show the same "path does not exist" style feedback instead of navigating.
+- In public mode, protected folders/files must behave as if they do not exist; the UI should show only "path does not exist" style feedback instead of navigating.
 - Existing tag/note search query behavior must continue to work.
 
 ## Acceptance Criteria
@@ -22,7 +22,7 @@ Keep left action panel state when collapsed and let the search box navigate to e
 - [ ] Typing an existing directory path into the search box navigates to that directory automatically.
 - [ ] Typing an existing file path into the search box navigates to that file's parent directory automatically.
 - [ ] Typing a non-existent path does not navigate.
-- [ ] Typing a protected path in public mode does not navigate and reports it as not existing/inaccessible.
+- [ ] Typing a protected path in public mode does not navigate and reports it as not existing.
 - [ ] Normal keyword, tag, and note searches still behave as before.
 - [ ] Frontend build succeeds.
 

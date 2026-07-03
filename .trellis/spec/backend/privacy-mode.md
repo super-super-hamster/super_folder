@@ -56,7 +56,7 @@ type PathInspection struct {
 | Public mode path has a protected ancestor | Hide path |
 | Public mode path or ancestor has a protected tag | Hide path |
 | Public mode visible tag count includes hidden path | Bug; count must exclude it |
-| Public mode path inspection targets protected content | Return inaccessible/non-existent inspection; do not leak `IsDir` |
+| Public mode path inspection targets protected content | Return a non-existent inspection (`Exists=false` / `Accessible=false`); do not leak `IsDir` |
 
 ### 5. Good/Base/Bad Cases
 
@@ -70,7 +70,7 @@ type PathInspection struct {
 - Add integration coverage when tests exist for: protected folder hides descendants, protected tag hides tagged files, public tag usage excludes hidden paths, and privacy tag usage includes them.
 - Add binding coverage for: setup cannot overwrite an existing password, reset can overwrite only after verified reset state.
 - Add search-service coverage for: public requests filter protected paths and privacy requests do not.
-- Add binding/manual coverage for: `InspectPathForNavigation` returns a directory/file result in privacy mode and returns inaccessible for protected content in public mode.
+- Add binding/manual coverage for: `InspectPathForNavigation` returns a directory/file result in privacy mode and returns a non-existent-style result for protected content in public mode.
 
 ### 7. Wrong vs Correct
 

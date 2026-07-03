@@ -194,7 +194,7 @@ export default function TopNav() {
           if (currentKeyword !== typedPath) return
 
           if (!info?.exists || !info.accessible) {
-            setPathLookupMessage('路径不存在或不可访问')
+            setPathLookupMessage('路径不存在')
             return
           }
 
@@ -212,7 +212,7 @@ export default function TopNav() {
         })
         .catch(() => {
           const currentKeyword = normalizeLocalPathInput(parseSearchQuery(useUIStore.getState().searchQuery).keyword)
-          if (currentKeyword === typedPath) setPathLookupMessage('路径不存在或不可访问')
+          if (currentKeyword === typedPath) setPathLookupMessage('路径不存在')
         })
     }, 350)
 
