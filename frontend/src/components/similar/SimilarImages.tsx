@@ -27,11 +27,11 @@ interface ProgressData {
 
 function parseSimilarPath(path: string) {
   const suffix = '\\相似图片'
-  if (!path.endsWith(suffix)) {
+  const [pathPart, queryString] = path.split('?')
+  if (!pathPart.endsWith(suffix)) {
     return { folderPath: path, queryImagePath: undefined, includeSubfolders: false, threshold: 5, useMax: false }
   }
-  const rest = path.slice(0, -suffix.length)
-  const [folderPath, queryString] = rest.split('?')
+  const folderPath = pathPart.slice(0, -suffix.length)
   const params = new URLSearchParams(queryString || '')
   return {
     folderPath,
@@ -44,7 +44,7 @@ function parseSimilarPath(path: string) {
 
 export function buildSimilarPath(folderPath: string, query: URLSearchParams) {
   const params = query.toString()
-  return folderPath + (params ? `?${params}` : '') + '\\相似图片'
+  return folderPath + '\\相似图片' + (params ? `?${params}` : '')
 }
 
 function fakeFile(path: string): models.FileInfo {

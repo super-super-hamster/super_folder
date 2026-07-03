@@ -59,6 +59,35 @@ Use the current `viewMode` from `uiStore` to conditionally render the items.
 
 ---
 
+## File-Type-Sensitive Feature Actions
+
+File-only feature actions must be gated by the target file type before rendering the menu item. Do not render a disabled feature row for unsupported file types unless the action is intentionally discoverable.
+
+### Simplified/Traditional Conversion
+
+Only show `简繁转换` for `.txt` and `.epub` files. The handler should still filter selected paths defensively before adding them to `chineseConvStore`.
+
+```tsx
+const targetExt = targetPath && !isDir ? targetPath.substring(targetPath.lastIndexOf('.')).toLowerCase() : ''
+const canChineseConvert = targetExt === '.txt' || targetExt === '.epub'
+
+{!isDir && canChineseConvert && (
+  <button onClick={() => handleAction('chinese_conv')}>简繁转换</button>
+)}
+```
+
+When launching a feature page from virtual roots such as `favorite://`, derive the feature page base from the real target file path, not `currentPath`. Otherwise breadcrumbs become `favorite:// > 简繁转换` instead of the source folder path.
+
+```tsx
+const targetFolderPath = targetPath && targetPath.includes('\\')
+  ? targetPath.substring(0, targetPath.lastIndexOf('\\'))
+  : currentPath
+
+navigate((targetFolderPath || currentPath || 'C:\\') + '\\简繁转换', '简繁转换', false)
+```
+
+---
+
 ## Auto-Scroll to Newly Created Items
 
 After creating a new file or folder, the list must scroll the new item into view before showing the inline rename box.

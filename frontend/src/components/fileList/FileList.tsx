@@ -25,6 +25,11 @@ import { useBatchRenameTrigger } from '../../hooks/useBatchRenameTrigger'
 import { useFileListShortcuts } from '../../hooks/useFileListShortcuts'
 import { useMarqueeSelection } from '../../hooks/useMarqueeSelection'
 
+function parentPath(path: string) {
+  const idx = path.lastIndexOf('\\')
+  return idx > 0 ? path.slice(0, idx) : ''
+}
+
 export default function FileList() {
   const { tabs, activeTabId, navigate } = useTabsStore()
   const { isRightSidebarOpen, setRightSidebarOpen, refreshKey, setSearchFocused, sortOption, recentSortOption, isGrouped, scrollToPath, setScrollToPath, searchQuery, searchFilter, viewMode } = useUIStore()
@@ -123,8 +128,9 @@ export default function FileList() {
       } else if (selectedArr.length > 1) {
         const selectedFiles = files.filter(f => selectedPaths.has(f.path))
         setBatchRenameFiles(selectedFiles)
-        if (currentPath) {
-          navigate(currentPath + '\\批量重命名', '批量重命名', true)
+        const basePath = parentPath(selectedFiles[0]?.path || '') || currentPath
+        if (basePath) {
+          navigate(basePath + '\\批量重命名', '批量重命名', true)
         }
       }
     },

@@ -11,6 +11,7 @@ interface Props {
 export default function DynamicBreadcrumb({ path }: Props) {
   const privacyMode = usePrivacyStore(state => state.state?.mode)
   const [isProtected, setIsProtected] = useState(false)
+  const cleanPath = path.split('?')[0]
 
   useEffect(() => {
     if (!path || path.includes('://') || privacyMode !== 'privacy') {
@@ -29,7 +30,7 @@ export default function DynamicBreadcrumb({ path }: Props) {
   if (path === 'smartfolder://' || path.startsWith('smartfolder://')) {
     return <span className="truncate">虚拟文件夹</span>
   }
-  const allSegments = path.replace(/\\$/, '').split('\\')
+  const allSegments = cleanPath.replace(/\\$/, '').split('\\')
 
   if (allSegments.length === 0) return null
 

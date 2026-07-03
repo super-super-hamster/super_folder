@@ -3,6 +3,7 @@ import { Select, ListBox } from '@heroui/react'
 import TagPanel from './TagPanel'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
+import { useSelectionStore } from '../../store/selectionStore'
 import { GetSimilarImageThresholds } from '../../../wailsjs/go/main/App'
 import { buildSimilarPath } from '../similar/SimilarImages'
 
@@ -16,6 +17,7 @@ const thresholdOrder = ['极度相似', '高度相似', '部分相似']
 export default function RightSidebarAdvanced() {
   const { activeTabId, tabs, navigate } = useTabsStore()
   const { setSettingsOpen } = useUIStore()
+  const selectedPaths = useSelectionStore(state => state.selectedPaths)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const currentPath = activeTab?.currentPath || 'C:\\'
 
@@ -28,8 +30,16 @@ export default function RightSidebarAdvanced() {
   }, [])
 
   const getRealFolderPath = () => {
-    if (currentPath.endsWith('\\相似图片')) {
-      return currentPath.split('?')[0].slice(0, -'\\相似图片'.length)
+    const pathPart = currentPath.split('?')[0]
+    if (pathPart.endsWith('\\相似图片')) {
+      return pathPart.slice(0, -'\\相似图片'.length)
+    }
+    if (pathPart.includes('://')) {
+      const selectedPath = Array.from(selectedPaths).find(path => path.includes('\\'))
+      if (selectedPath) {
+        return selectedPath.slice(0, selectedPath.lastIndexOf('\\')) || 'C:\\'
+      }
+      return 'C:\\'
     }
     return currentPath
   }
@@ -46,7 +56,7 @@ export default function RightSidebarAdvanced() {
       useMax: useMax.toString()
     })
     const targetPath = buildSimilarPath(folderPath, query)
-    const replace = currentPath.endsWith('\\相似图片')
+    const replace = currentPath.split('?')[0].endsWith('\\相似图片')
     setSettingsOpen(false)
     navigate(targetPath, '相似图片', false, replace)
   }

@@ -83,6 +83,9 @@ export default function ContextMenu() {
   if (!isVisible) return null
 
   const currentPath = tabs.find(t => t.id === activeTabId)?.currentPath
+  const targetExt = targetPath && !isDir ? targetPath.substring(targetPath.lastIndexOf('.')).toLowerCase() : ''
+  const canChineseConvert = targetExt === '.txt' || targetExt === '.epub'
+  const targetFolderPath = targetPath && targetPath.includes('\\') ? targetPath.substring(0, targetPath.lastIndexOf('\\')) : currentPath
 
   const handleAction = (action: string) => {
     const selectedFiles = Array.from(selectedPaths)
@@ -142,7 +145,7 @@ export default function ContextMenu() {
           })
           if (filePaths.length > 0) {
             addChineseConvFiles(filePaths)
-            navigate(currentPath + '\\简繁转换', '简繁转换', false)
+            navigate((targetFolderPath || currentPath || 'C:\\') + '\\简繁转换', '简繁转换', false)
           }
         }
         break
@@ -300,10 +303,13 @@ export default function ContextMenu() {
     if (targetPath.startsWith('smartfolder://')) {
       itemCount = 1
     } else {
-      itemCount = 6 // copy, cut, paste, favorite, rename, chinese_conv
+      itemCount = 5 // copy, cut, paste, favorite, rename
       dividerCount++ // after paste
       if (privacyState?.mode === 'privacy') {
         itemCount++
+      }
+      if (!isDir && canChineseConvert) {
+        itemCount++ // chinese_conv
       }
       if (!isDir) {
         itemCount++ // convert
@@ -444,12 +450,12 @@ export default function ContextMenu() {
             )}
             <button onClick={() => handleAction('rename')} className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left">
               <div className="flex items-center">
-                {renderIcon("M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z")}
+                <img src="/src/assets/icons/edit_3_line.svg" className="w-4 h-4 mr-3 opacity-70" alt="rename" />
                 重命名
               </div>
               <span className="text-gray-400 text-xs tracking-wider">F2</span>
             </button>
-            {!isDir && (
+            {!isDir && canChineseConvert && (
               <button
                 onClick={() => handleAction('chinese_conv')}
                 className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors text-left"

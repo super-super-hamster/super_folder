@@ -7,22 +7,23 @@ export interface HistoryEntry {
 }
 
 export const getSpecialTitle = (path: string) => {
+  const pathPart = path.split('?')[0]
   if (path === 'favorite://') return '收藏'
   if (path === 'recent://') return '最近访问'
   if (path === 'smartfolder://') return '虚拟文件夹'
   if (path.startsWith('smartfolder://')) {
     return '虚拟文件夹'
   }
-  if (path.endsWith('\\相似图片')) {
+  if (pathPart.endsWith('\\相似图片')) {
     return '相似图片'
   }
-  if (path.endsWith('\\批量重命名')) {
+  if (pathPart.endsWith('\\批量重命名')) {
     return '批量重命名'
   }
-  if (path.endsWith('\\转换')) {
+  if (pathPart.endsWith('\\转换')) {
     return '转换'
   }
-  if (path.endsWith('\\简繁转换')) {
+  if (pathPart.endsWith('\\简繁转换')) {
     return '简繁转换'
   }
   return path.split('\\').pop() || path

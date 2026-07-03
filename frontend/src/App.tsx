@@ -26,6 +26,7 @@ function App() {
   const { tabs, activeTabId } = useTabsStore()
   const { initialized, dialogMode } = usePrivacyStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
+  const activePath = activeTab?.currentPath?.split('?')[0]
 
   useEffect(() => {
     usePrivacyStore.getState().load().catch(console.error)
@@ -181,9 +182,9 @@ function App() {
 
                 { /* FileList Island or File Editor */ }
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag min-w-0">
-                  {activeTab?.currentPath?.endsWith('\\相似图片') ? (
+                  {activePath?.endsWith('\\相似图片') ? (
                     <SimilarImages />
-                  ) : activeTab?.currentPath?.endsWith('\\简繁转换') ? (
+                  ) : activePath?.endsWith('\\简繁转换') ? (
                     <ChineseConvView />
                   ) : activeTab && !activeTab.isDir ? (
                     <FullFileEditor path={activeTab.currentPath} />

@@ -27,19 +27,31 @@ Library: `github.com/corona10/goimagehash` (pure Go).
 
 ---
 
-## Virtual Path Convention
+## Feature Path Convention
 
-Similar-image mode uses a virtual path:
+Similar-image mode uses a feature path based on the real filesystem folder:
 
 ```
-similar://C:\folder\path?subfolders=true&threshold=5&useMax=false
+C:\folder\path\相似图片?subfolders=true&threshold=5&useMax=false
 ```
 
-- `similar://` prefix tells `App.tsx` to render the `SimilarImages` component
-- The actual folder path is before `?`
-- Query parameters carry scope and threshold
-- `DynamicBreadcrumb` renders the folder breadcrumb followed by `> 相似图片`
+- `App.tsx` must strip any query string before checking `endsWith('\\相似图片')`
+- The actual folder path is before the trailing `\\相似图片` segment
+- Query parameters carry scope and threshold after the feature segment
+- `DynamicBreadcrumb` must strip any query string before splitting path segments
+- `DynamicBreadcrumb` renders the source folder breadcrumb followed by `> 相似图片`
+- `TopNav` owns the leading feature icon for the active tab; similar images uses `pic_2_fill.svg`
 - `tabsStore.getSpecialTitle` returns `相似图片`
+
+Do not put query parameters between the folder path and `\\相似图片`. That makes breadcrumb splitting treat the folder as part of the query and can collapse the breadcrumb to only `相似图片`.
+
+```tsx
+// Wrong
+return folderPath + (params ? `?${params}` : '') + '\\相似图片'
+
+// Correct
+return folderPath + '\\相似图片' + (params ? `?${params}` : '')
+```
 
 ---
 
@@ -108,4 +120,5 @@ Both features estimate decode memory as `width × height × 4` bytes (RGBA decod
 - `SimilarImages` no longer forces a global `viewMode`; it renders results in its own album-style layout using `FileListItem`
 - Right-click context menu must be rendered at the top level (e.g. `App.tsx`) so it stays available when `SimilarImages` replaces `FileList`
 - Recursive breadcrumb for `similar://` must use the raw folder path, not the full virtual path
+- Feature page breadcrumbs must use the query-stripped filesystem path, not virtual roots such as `favorite://`
 - `SimilarPair` must store the `use_max` value used during comparison; queries are scoped by (`folder_path`, `threshold`, `use_max`)

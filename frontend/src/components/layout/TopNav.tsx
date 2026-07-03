@@ -258,6 +258,15 @@ export default function TopNav() {
               const isActive = tab.id === activeTabId
               if (isSearchActive && !isActive) return null
 
+              const pathPart = tab.currentPath?.split('?')[0]
+              const leadingIcon = pathPart?.endsWith('\\批量重命名')
+                ? 'edit_3_line.svg'
+                : pathPart?.endsWith('\\相似图片')
+                  ? 'pic_2_fill.svg'
+                  : pathPart?.endsWith('\\简繁转换')
+                    ? 'transfer_horizontal_line.svg'
+                    : 'folder_line.svg'
+
               return (
                 <motion.div
                   key={tab.id}
@@ -273,9 +282,9 @@ export default function TopNav() {
                 >
                   {isActive ? (
                     <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink-0 min-w-0 font-medium text-primary relative z-panel">
-                      <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
+                      <img src={`/src/assets/icons/${leadingIcon}`} className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full shrink-0 min-w-0">
-                          {tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片') ? (
+                          {tab.currentPath === 'batch-rename://' ? (
                             <span className="truncate">{tab.title}</span>
                           ) : (
                             <DynamicBreadcrumb path={tab.currentPath || tab.title} />
@@ -296,10 +305,10 @@ export default function TopNav() {
                     </div>
                   ) : (
                     <div className="relative z-panel flex items-center shrink-0">
-                      <img src="/src/assets/icons/folder_line.svg" className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
+                      <img src={`/src/assets/icons/${leadingIcon}`} className="w-4 h-4 mr-2 opacity-70" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full shrink-0 min-w-0">
                             {(() => {
-                              if (tab.currentPath === 'batch-rename://' || tab.currentPath?.endsWith('\\相似图片')) return <span className="truncate">{tab.title}</span>
+                              if (tab.currentPath === 'batch-rename://' || pathPart?.endsWith('\\相似图片')) return <span className="truncate">{tab.title}</span>
                               const parts = tab.title.replace(/\\$/, '').split('\\')
                               if (parts.length > 3) {
                                 return '... > ' + parts.slice(-2).join(' > ')
