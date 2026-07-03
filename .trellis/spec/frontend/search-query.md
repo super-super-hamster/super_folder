@@ -37,3 +37,10 @@ a:b
 ```
 
 Do not use a regex that stops token values at the second colon. Values end at whitespace or `&`, and only become active tokens after one of those delimiters is typed.
+
+For tag filters, the backend must treat `a:b` as both:
+
+- a plain tag name `a:b`
+- a typed tag with `type = a` and `name = b`
+
+This matches how the UI displays typed tags while still supporting plain tag names that contain colons.

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/glebarez/sqlite"
@@ -170,7 +171,15 @@ func GetTagIDsByNames(names []string) ([]string, error) {
 		return nil, nil
 	}
 	var ids []string
-	err := DB.Model(&models.Tag{}).Where("name IN ?", names).Pluck("id", &ids).Error
+	query := DB.Model(&models.Tag{}).Where("name IN ?", names)
+	for _, name := range names {
+		if idx := strings.Index(name, ":"); idx > 0 && idx < len(name)-1 {
+			tagType := name[:idx]
+			tagName := name[idx+1:]
+			query = query.Or("type = ? AND name = ?", tagType, tagName)
+		}
+	}
+	err := query.Pluck("id", &ids).Error
 	return ids, err
 }
 

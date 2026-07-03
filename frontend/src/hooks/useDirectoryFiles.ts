@@ -11,6 +11,19 @@ import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime'
 import { models } from '../../wailsjs/go/models'
 import { parseSearchQuery } from '../utils/searchQuery'
 
+function mergeFilesByPath(base: models.FileInfo[], next: models.FileInfo[]): models.FileInfo[] {
+  if (next.length === 0) return base
+  const seen = new Set(base.map(file => file.path))
+  const merged = [...base]
+  for (const file of next) {
+    if (!seen.has(file.path)) {
+      seen.add(file.path)
+      merged.push(file)
+    }
+  }
+  return merged
+}
+
 export interface UseDirectoryFilesResult {
   files: models.FileInfo[]
   setFiles: React.Dispatch<React.SetStateAction<models.FileInfo[]>>
@@ -83,7 +96,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       }).catch(console.error)
     }
 
-    const loadKey = `${currentPath}|${privacyMode || 'public'}`
+    const loadKey = `${currentPath}|${privacyMode || 'public'}|${debouncedSearchQuery || ''}|${JSON.stringify(searchFilter)}`
     if (prevLoadKeyRef.current !== loadKey) {
       setLoading(true)
       setFiles([])
@@ -94,6 +107,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 
     let fetchPromise: Promise<models.FileInfo[]>
     let isSearchRequest = false
+    let cleanupDirectoryEvents: (() => void) | null = null
 
     const parsed = parseSearchQuery(debouncedSearchQuery || '')
     let keyword = parsed.keyword
@@ -215,32 +229,33 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       fetchPromise = Promise.resolve([])
     } else {
       const reqId = Date.now().toString() + Math.random().toString()
-      let isFirstUpdate = true
+      let receivedChunk = false
+      let directoryEventsActive = true
+      cleanupDirectoryEvents = () => {
+        directoryEventsActive = false
+        EventsOff('directory:chunk:' + reqId)
+        EventsOff('directory:done:' + reqId)
+      }
       EventsOn('directory:chunk:' + reqId, (chunk: models.FileInfo[]) => {
-        if (isMounted) {
+        if (isMounted && directoryEventsActive) {
+          receivedChunk = true
           setFiles(prev => {
-            if (isFirstUpdate) {
-              isFirstUpdate = false
-              return [...(chunk || [])]
-            }
-            return [...prev, ...(chunk || [])]
+            return mergeFilesByPath(prev, chunk || [])
           })
         }
       })
       EventsOn('directory:done:' + reqId, () => {
-        EventsOff('directory:chunk:' + reqId)
-        EventsOff('directory:done:' + reqId)
+        cleanupDirectoryEvents?.()
       })
 
       fetchPromise = ReadDirChunked(currentPath, reqId).then(res => {
         if (isMounted) {
-          setFiles(prev => {
-            if (isFirstUpdate) {
-              isFirstUpdate = false
-              return [...(res || [])]
-            }
-            return [...(res || []), ...prev]
-          })
+          const files = res || []
+          if (receivedChunk) {
+            setFiles(prev => mergeFilesByPath(files, prev))
+          } else {
+            setFiles([...files])
+          }
         }
         return null as unknown as models.FileInfo[]
       })
@@ -266,6 +281,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 
     return () => {
       isMounted = false
+      cleanupDirectoryEvents?.()
       if (isSearchRequest) setSearchLoading(false)
     }
   }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter, privacyMode, setSearchLoading])
