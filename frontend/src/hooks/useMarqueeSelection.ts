@@ -32,9 +32,17 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
   const autoScrollRafRef = useRef<number | null>(null)
   const isCtrlPressedRef = useRef(false)
   const triggeredEdgeRef = useRef<'top' | 'bottom' | null>(null)
+  const edgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const clearEdgeFeedback = useCallback(() => {
-    setEdgeFeedback(null)
+  const triggerEdgeFeedback = useCallback((edge: 'top' | 'bottom', intensity: number) => {
+    if (edgeTimeoutRef.current) {
+      clearTimeout(edgeTimeoutRef.current)
+    }
+    setEdgeFeedback({ edge, key: Date.now(), intensity })
+    edgeTimeoutRef.current = setTimeout(() => {
+      setEdgeFeedback(null)
+      edgeTimeoutRef.current = null
+    }, 800)
   }, [])
 
   const getContainerCoords = useCallback((clientX: number, clientY: number) => {
@@ -176,7 +184,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         if (atTop) {
           if (triggeredEdgeRef.current !== 'top') {
             const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
-            setEdgeFeedback({ edge: 'top', key: Date.now(), intensity: distanceRatio })
+            triggerEdgeFeedback('top', distanceRatio)
             triggeredEdgeRef.current = 'top'
           }
         } else {
@@ -191,7 +199,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         if (atBottom) {
           if (triggeredEdgeRef.current !== 'bottom') {
             const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
-            setEdgeFeedback({ edge: 'bottom', key: Date.now(), intensity: distanceRatio })
+            triggerEdgeFeedback('bottom', distanceRatio)
             triggeredEdgeRef.current = 'bottom'
           }
         } else {
@@ -222,8 +230,12 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       window.removeEventListener('pointercancel', handlePointerUp)
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current)
       triggeredEdgeRef.current = null
+      if (edgeTimeoutRef.current) {
+        clearTimeout(edgeTimeoutRef.current)
+        edgeTimeoutRef.current = null
+      }
     }
-  }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef])
+  }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef, triggerEdgeFeedback])
 
-  return { isDragging, dragBox, dragSelectedPaths, edgeFeedback, clearEdgeFeedback, onPointerDown: handlePointerDown }
+  return { isDragging, dragBox, dragSelectedPaths, edgeFeedback, onPointerDown: handlePointerDown }
 }
