@@ -6,12 +6,13 @@ export interface ParsedSearchQuery {
 
 export function parseSearchQuery(query: string): ParsedSearchQuery {
   const tokens: { type: 'tag' | 'remark'; raw: string; start: number; end: number }[] = []
-  const regex = /(tag|标签|备注|note):([^\s&]+)(?=\s|&)/gi
+  const regex = /(^|[\s&])(tag|标签|备注|note):([^\s&]+)(?=\s|&|$)/gi
   let match: RegExpExecArray | null
   while ((match = regex.exec(query)) !== null) {
-    const prefix = match[1].toLowerCase()
+    const separator = match[1]
+    const prefix = match[2].toLowerCase()
     const type = prefix === 'tag' || prefix === '标签' ? 'tag' : 'remark'
-    tokens.push({ type, raw: match[0], start: match.index, end: match.index + match[0].length })
+    tokens.push({ type, raw: match[0].slice(separator.length), start: match.index + separator.length, end: match.index + match[0].length })
   }
   tokens.sort((a, b) => a.start - b.start)
 

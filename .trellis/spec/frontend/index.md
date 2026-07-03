@@ -19,6 +19,7 @@ This directory contains frontend-specific coding conventions and patterns. These
 | [Similar Image Detection](./similar-images.md) | Perceptual hashing, virtual paths, progress events | Filled |
 | [File List Context Menu](./filelist-contextmenu.md) | Boundary clamping, view-mode-sensitive items, auto-scroll to new items | Filled |
 | [Privacy Mode](./privacy-mode.md) | Privacy state, startup unlock, directory refresh, and lock badge contracts | Filled |
+| [Search Query Parsing](./search-query.md) | Token boundaries, tag/remark prefixes, colon-containing values | Filled |
 
 ---
 
