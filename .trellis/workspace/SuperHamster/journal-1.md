@@ -211,3 +211,48 @@ Fixed colon-containing tag search parsing and typed tag matching, deduped direct
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: Preserve panel state, search path nav, public mode protection, marquee edge feedback
+
+**Date**: 2026-07-03
+**Task**: Preserve panel state, search path nav, public mode protection, marquee edge feedback
+**Branch**: `main`
+
+### Summary
+
+This session: (1) left-side panel toggling preserves mounted state instead of unmounting; (2) search path navigation via InspectPathForNavigation; (3) public mode hides protected path existence; (4) marquee edge feedback fully reworked — bottom animation with enter/exit, direction gating (top up-only, bottom down-only), content-height-based scroll clamp, no DOM scrollHeight usage.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e968541` | (see git log) |
+| `294a054` | (see git log) |
+| `bd0d4e3` | (see git log) |
+| `555768d` | (see git log) |
+| `910a3a9` | (see git log) |
+| `1771d82` | (see git log) |
+| `2e8990c` | (see git log) |
+| `8552ecd` | (see git log) |
+| `0e8a46a` | (see git log) |
+| `cca7929` | (see git log) |
+| `ad75fa9` | (see git log) |
+| `042e8ca` | (see git log) |
+| `bd0c2bd` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

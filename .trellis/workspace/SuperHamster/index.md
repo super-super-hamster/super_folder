@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
+- **Total Sessions**: 7
 - **Last Active**: 2026-07-03
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~213 | Active |
+| `journal-1.md` | ~258 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-07-03 | Preserve panel state, search path nav, public mode protection, marquee edge feedback | `e968541`, `294a054`, `bd0d4e3`, `555768d`, `910a3a9`, `1771d82`, `2e8990c`, `8552ecd`, `0e8a46a`, `cca7929`, `ad75fa9`, `042e8ca`, `bd0c2bd` | `main` |
 | 6 | 2026-07-03 | Fix tag search and tag management | `d46085c`, `aa97925`, `15172b7`, `7783727`, `7a0c100` | `main` |
 | 5 | 2026-07-03 | Startup privacy and UI polish | `1478a9f`, `3087076`, `964fbc5`, `2eca0d6` | `main` |
 | 4 | 2026-07-02 | Privacy mode protection | `6232e42`, `646be39` | `main` |
