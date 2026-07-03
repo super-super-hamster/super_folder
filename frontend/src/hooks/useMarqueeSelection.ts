@@ -74,19 +74,28 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     return listItems.reduce((total, item) => total + getItemSize(item, viewMode), 0)
   }, [listItems, viewMode])
 
+  const getScrollPadding = useCallback(() => {
+    const scrollEl = scrollRef.current
+    if (!scrollEl) return { top: 0, bottom: 0 }
+    const styles = window.getComputedStyle(scrollEl)
+    return {
+      top: Number.parseFloat(styles.paddingTop) || 0,
+      bottom: Number.parseFloat(styles.paddingBottom) || 0
+    }
+  }, [scrollRef])
+
   const clampContentY = useCallback((y: number) => {
-    return Math.max(0, Math.min(y, getContentHeight()))
-  }, [getContentHeight])
+    const { bottom } = getScrollPadding()
+    return Math.max(0, Math.min(y, getContentHeight() + bottom))
+  }, [getContentHeight, getScrollPadding])
 
   const getRealMaxScrollTop = useCallback(() => {
     const scrollEl = scrollRef.current
     if (!scrollEl) return 0
-    const styles = window.getComputedStyle(scrollEl)
-    const paddingTop = Number.parseFloat(styles.paddingTop) || 0
-    const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0
+    const { top: paddingTop, bottom: paddingBottom } = getScrollPadding()
     const realScrollHeight = getContentHeight() + paddingTop + paddingBottom
     return Math.max(0, realScrollHeight - scrollEl.clientHeight)
-  }, [getContentHeight, scrollRef])
+  }, [getContentHeight, getScrollPadding, scrollRef])
 
   const updateDragSelection = useCallback((currentPos: { x: number, y: number }, startPos: { x: number, y: number }) => {
     const boxLeft = Math.min(startPos.x, currentPos.x)
