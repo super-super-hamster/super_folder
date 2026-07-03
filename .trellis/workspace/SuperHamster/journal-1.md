@@ -138,3 +138,39 @@ Implemented privacy mode protection with public-mode filtering for protected pat
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: Startup privacy and UI polish
+
+**Date**: 2026-07-03
+**Task**: Startup privacy and UI polish
+**Branch**: `main`
+
+### Summary
+
+Fixed startup privacy gate timing, duplicate initial icon/file loading, feature page breadcrumbs and icons, context-menu conversion visibility, search controls, sidebar styling, and marquee auto-scroll behavior.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1478a9f` | (see git log) |
+| `3087076` | (see git log) |
+| `964fbc5` | (see git log) |
+| `2eca0d6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
