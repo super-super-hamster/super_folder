@@ -19,12 +19,20 @@ func (a *App) GetProtectedPaths(paths []string) (map[string]bool, error)
 func (a *App) SetPathProtected(path string, isDir bool, protected bool) error
 func (a *App) SetTagProtected(tagID string, protected bool) error
 func (a *App) GetTagUsageCounts() (map[string]int, error)
+func (a *App) InspectPathForNavigation(path string) (models.PathInspection, error)
 
 type ProtectedPath struct {
     Path      string `gorm:"primaryKey"`
     IsDir     bool
     CreatedAt int64
     UpdatedAt int64
+}
+
+type PathInspection struct {
+    Path       string `json:"path"`
+    Exists     bool   `json:"exists"`
+    Accessible bool   `json:"accessible"`
+    IsDir      bool   `json:"isDir"`
 }
 ```
 
@@ -36,6 +44,7 @@ type ProtectedPath struct {
 - Public mode filters must apply before returning or emitting directory chunks, search results, favorites, recent items, tags, file tag colors, and tag usage counts.
 - `GetTagUsageCounts` in public mode must count only visible file paths for visible tags; it must not reveal hidden item counts.
 - `GetProtectedPaths` returns direct protection state only in privacy mode; public mode returns an empty map.
+- `InspectPathForNavigation` is a navigation preflight. In public mode it must treat protected paths as `Exists=false` / `Accessible=false`, matching the app rule that protected content behaves as if it does not exist.
 
 ### 4. Validation & Error Matrix
 
@@ -47,18 +56,21 @@ type ProtectedPath struct {
 | Public mode path has a protected ancestor | Hide path |
 | Public mode path or ancestor has a protected tag | Hide path |
 | Public mode visible tag count includes hidden path | Bug; count must exclude it |
+| Public mode path inspection targets protected content | Return inaccessible/non-existent inspection; do not leak `IsDir` |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: In public mode, query `file_tags` for visible tags, then call `privacy.IsPathHiddenInPublic(path)` before incrementing each count.
 - Base: In privacy mode, `database.GetTagUsageCounts()` may return raw counts because protected content is intentionally visible.
 - Bad: Returning grouped `count(*)` from `file_tags` directly in public mode leaks hidden item counts.
+- Bad: Calling `os.Stat` and returning `Exists=true` before applying public-mode protection leaks protected paths through search navigation.
 
 ### 6. Tests Required
 
 - Add integration coverage when tests exist for: protected folder hides descendants, protected tag hides tagged files, public tag usage excludes hidden paths, and privacy tag usage includes them.
 - Add binding coverage for: setup cannot overwrite an existing password, reset can overwrite only after verified reset state.
 - Add search-service coverage for: public requests filter protected paths and privacy requests do not.
+- Add binding/manual coverage for: `InspectPathForNavigation` returns a directory/file result in privacy mode and returns inaccessible for protected content in public mode.
 
 ### 7. Wrong vs Correct
 

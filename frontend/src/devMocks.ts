@@ -41,6 +41,7 @@ export function installDevMocks() {
           SetTagProtected: async () => {},
           IsPathProtected: async () => false,
           CanAccessPath: async () => true,
+          InspectPathForNavigation: async (path: string) => ({ path, exists: false, accessible: false, isDir: false }),
           VerifyWindowsIdentityForPrivacyReset: async () => false,
           ResetPrivacyPassword: async () => ({ mode: 'privacy', hasPassword: true, restorePrivacyOnStartup: false, shouldPromptRestore: false, windowsIdentityAvailable: false }),
           GetConfig: async () => '',

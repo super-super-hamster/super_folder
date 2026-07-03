@@ -82,6 +82,24 @@ export namespace models {
 	        this.windowsIdentityAvailable = source["windowsIdentityAvailable"];
 	    }
 	}
+	export class PathInspection {
+	    path: string;
+	    exists: boolean;
+	    accessible: boolean;
+	    isDir: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PathInspection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.exists = source["exists"];
+	        this.accessible = source["accessible"];
+	        this.isDir = source["isDir"];
+	    }
+	}
 	export class Tag {
 	    id: string;
 	    name: string;
@@ -127,4 +145,3 @@ export namespace rename {
 	}
 
 }
-

@@ -91,6 +91,13 @@ type PrivacyState struct {
 	WindowsIdentityAvailable bool   `json:"windowsIdentityAvailable"`
 }
 
+type PathInspection struct {
+	Path       string `json:"path"`
+	Exists     bool   `json:"exists"`
+	Accessible bool   `json:"accessible"`
+	IsDir      bool   `json:"isDir"`
+}
+
 // FileTag represents the mapping of a file path to a Tag
 type FileTag struct {
 	Path  string `json:"path" gorm:"primaryKey;index"` // The full path of the file

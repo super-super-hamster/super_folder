@@ -523,6 +523,27 @@ func (a *App) CanAccessPath(path string) (bool, error) {
 	return !hidden, nil
 }
 
+func (a *App) InspectPathForNavigation(path string) (models.PathInspection, error) {
+	result := models.PathInspection{Path: path}
+	if strings.TrimSpace(path) == "" || strings.Contains(path, "://") {
+		return result, nil
+	}
+	if err := a.ensurePublicCanAccess(path); err != nil {
+		return result, nil
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) || os.IsPermission(err) {
+			return result, nil
+		}
+		return result, nil
+	}
+	result.Exists = true
+	result.Accessible = true
+	result.IsDir = info.IsDir()
+	return result, nil
+}
+
 func (a *App) VerifyWindowsIdentityForPrivacyReset() (bool, error) {
 	a.resetVerified = false
 	verified, err := winidentity.Verify()

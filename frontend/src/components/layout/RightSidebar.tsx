@@ -5,7 +5,11 @@ import RemarkPanel from '../preview/RemarkPanel'
 import { useUIStore } from '../../store/uiStore'
 import RightSidebarAdvanced from './RightSidebarAdvanced'
 
-export default function RightSidebar() {
+interface RightSidebarProps {
+  isOpen: boolean
+}
+
+export default function RightSidebar({ isOpen }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState('预览')
   const { rightSidebarWidth, setRightSidebarWidth } = useUIStore()
   const [isResizing, setIsResizing] = useState(false)
@@ -42,11 +46,11 @@ export default function RightSidebar() {
   return (
     <div className="relative shrink-0 flex h-full">
       <motion.div 
-        initial={{ opacity: 0, width: 0, marginLeft: 0 }}
-        animate={{ opacity: 1, width: rightSidebarWidth, marginLeft: 0 }}
-        exit={{ opacity: 0, width: 0, marginLeft: -12 }}
+        initial={false}
+        animate={{ opacity: isOpen ? 1 : 0, width: isOpen ? rightSidebarWidth : 0, marginLeft: isOpen ? 0 : -12 }}
         transition={{ type: 'tween', duration: isResizing ? 0 : 0.2, ease: 'easeOut' }}
-        className="h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-text"
+        className={`h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-text ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        aria-hidden={!isOpen}
       >
       <div className="p-4">
         {/* Toggle Pill */}
@@ -90,7 +94,7 @@ export default function RightSidebar() {
       </div>
     </motion.div>
     <div 
-      className="w-3 h-full absolute -right-3 top-0 cursor-ew-resize z-50 wails-no-drag"
+      className={`w-3 h-full absolute -right-3 top-0 cursor-ew-resize z-50 wails-no-drag ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
       onMouseDown={(e) => {
         e.preventDefault()
         setIsResizing(true)

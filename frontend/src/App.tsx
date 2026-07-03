@@ -176,9 +176,7 @@ function App() {
             ) : (
               <>
                 { /* Left Sidebar Island (formerly RightSidebar) */ }
-                <AnimatePresence>
-                  {isRightSidebarOpen && <RightSidebar />}
-                </AnimatePresence>
+                <RightSidebar isOpen={isRightSidebarOpen} />
 
                 { /* FileList Island or File Editor */ }
                 <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag min-w-0">

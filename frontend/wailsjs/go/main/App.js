@@ -182,6 +182,10 @@ export function IsPathProtected(arg1) {
   return window['go']['main']['App']['IsPathProtected'](arg1);
 }
 
+export function InspectPathForNavigation(arg1) {
+  return window['go']['main']['App']['InspectPathForNavigation'](arg1);
+}
+
 export function LockPrivacyMode() {
   return window['go']['main']['App']['LockPrivacyMode']();
 }

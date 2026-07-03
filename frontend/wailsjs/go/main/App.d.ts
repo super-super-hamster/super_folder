@@ -94,6 +94,8 @@ export function GetThumbnailCacheSize():Promise<number>;
 
 export function IsPathProtected(arg1:string):Promise<boolean>;
 
+export function InspectPathForNavigation(arg1:string):Promise<models.PathInspection>;
+
 export function LockPrivacyMode():Promise<models.PrivacyState>;
 
 export function Maximize():Promise<void>;

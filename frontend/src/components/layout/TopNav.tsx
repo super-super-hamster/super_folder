@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore, type SortOption } from '../../store/uiStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { useTagStore, generateColorFromName } from '../../store/tagStore'
-import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags } from '../../../wailsjs/go/main/App'
+import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags, InspectPathForNavigation } from '../../../wailsjs/go/main/App'
 import { WindowToggleMaximise, WindowIsMaximised } from '../../../wailsjs/runtime/runtime'
 import { useRef, useState, useEffect } from 'react'
 import { Checkbox, Dropdown, Separator, Spinner } from '@heroui/react'
@@ -49,6 +49,25 @@ const AnimatedClickIcon = ({ animData, className, autoPlayCount }: { animData: a
   )
 }
 
+const normalizeLocalPathInput = (value: string) => value.trim().replace(/\//g, '\\')
+
+const isLikelyAbsoluteLocalPath = (value: string) => {
+  const path = normalizeLocalPathInput(value)
+  if (/^[a-zA-Z]:\\$/.test(path)) return true
+  if (/^[a-zA-Z]:\\.+/.test(path)) return true
+  return /^\\\\[^\\]+\\[^\\]+(?:\\.*)?$/.test(path)
+}
+
+const getParentPath = (path: string) => {
+  const normalized = normalizeLocalPathInput(path).replace(/\\+$/, '')
+  const driveRootMatch = normalized.match(/^[a-zA-Z]:$/)
+  if (driveRootMatch) return `${normalized}\\`
+  const lastSlash = normalized.lastIndexOf('\\')
+  if (lastSlash <= 2 && /^[a-zA-Z]:/.test(normalized)) return normalized.slice(0, 3)
+  if (lastSlash <= 1) return normalized
+  return normalized.slice(0, lastSlash)
+}
+
 export default function TopNav() {
   const { globalTags: allGlobalTags } = useTagStore()
   const { 
@@ -68,6 +87,8 @@ export default function TopNav() {
   } = useUIStore()
 
   const [globalTags, setGlobalTags] = useState<models.Tag[]>([])
+  const [pathLookupMessage, setPathLookupMessage] = useState('')
+  const lastPathLookupRef = useRef('')
   
   const { tabs, activeTabId, setActiveTab, addTab, removeTab, goBack, goForward } = useTabsStore()
 
@@ -105,6 +126,7 @@ export default function TopNav() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
+    setPathLookupMessage('')
     setSearchQuery(buildSearchQuery({ tags, remarks, keyword: val }))
 
     const { keyword: remaining } = parseSearchQuery(val)
@@ -147,6 +169,55 @@ export default function TopNav() {
 
     if (!isSearchPanelOpen) setSearchPanelOpen(true)
   }
+
+  useEffect(() => {
+    const typedPath = normalizeLocalPathInput(inputValue)
+    if (tags.length > 0 || remarks.length > 0 || typedPath === '') {
+      setPathLookupMessage('')
+      lastPathLookupRef.current = ''
+      return
+    }
+
+    if (!isLikelyAbsoluteLocalPath(typedPath)) {
+      setPathLookupMessage('')
+      lastPathLookupRef.current = ''
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      if (lastPathLookupRef.current === typedPath) return
+      lastPathLookupRef.current = typedPath
+
+      InspectPathForNavigation(typedPath)
+        .then((info) => {
+          const currentKeyword = normalizeLocalPathInput(parseSearchQuery(useUIStore.getState().searchQuery).keyword)
+          if (currentKeyword !== typedPath) return
+
+          if (!info?.exists || !info.accessible) {
+            setPathLookupMessage('路径不存在或不可访问')
+            return
+          }
+
+          const targetPath = info.isDir ? normalizeLocalPathInput(info.path || typedPath) : getParentPath(info.path || typedPath)
+          if (!targetPath) return
+
+          setPathLookupMessage('')
+          const tabsState = useTabsStore.getState()
+          const activeTab = tabsState.tabs.find((tab) => tab.id === tabsState.activeTabId)
+          if (activeTab?.currentPath !== targetPath) {
+            tabsState.navigate(targetPath, undefined, true)
+          }
+          setSearchQuery('')
+          setSearchPanelOpen(false)
+        })
+        .catch(() => {
+          const currentKeyword = normalizeLocalPathInput(parseSearchQuery(useUIStore.getState().searchQuery).keyword)
+          if (currentKeyword === typedPath) setPathLookupMessage('路径不存在或不可访问')
+        })
+    }, 350)
+
+    return () => window.clearTimeout(timer)
+  }, [inputValue, tags.length, remarks.length, setSearchPanelOpen, setSearchQuery])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && inputValue === '' && chips.length > 0) {
@@ -382,6 +453,11 @@ export default function TopNav() {
             onBlur={() => setSearchFocused(false)}
             autoComplete="off"
           />
+          {pathLookupMessage && (
+            <div className="absolute left-9 top-full mt-2 px-2 py-1 rounded-md bg-white border border-red-100 shadow-sm text-[11px] text-red-500 whitespace-nowrap z-dropdown">
+              {pathLookupMessage}
+            </div>
+          )}
           {searchQuery && (
             <img 
               src="/src/assets/icons/close_line.svg" 

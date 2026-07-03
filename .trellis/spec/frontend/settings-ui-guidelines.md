@@ -227,6 +227,7 @@ Search UI conventions:
 - The search input leading icon is status only: HeroUI `Spinner` while a search request is active, otherwise `check_line.svg`.
 - Search panel expand/collapse belongs at the bottom center of the search panel using `up_line.svg` when open and `down_line.svg` when collapsed.
 - If the panel is collapsed but a search query exists, keep the panel wrapper mounted so the bottom-center expand button remains available.
+- When the top search keyword is a likely absolute local path, inspect it through the backend before navigating. Do not navigate from raw string syntax alone, because public-mode protection must be applied before the path is revealed.
 
 Shared color conventions:
 
@@ -236,6 +237,31 @@ Shared color conventions:
 The view is rendered by matching `currentPath.endsWith('\\功能名')` in `App.tsx` / `FileList.tsx`. The `DynamicBreadcrumb` then naturally renders the parent folder chain followed by the feature label, e.g. `D: > fileGe > 批量重命名`.
 
 Avoid custom URI schemes for folder-relative feature pages. Only use schemes for top-level special views that have no parent folder (e.g. `favorite://`, `recent://`).
+
+---
+
+## Collapsible Stateful Panels
+
+Panels with local interaction state must stay mounted when collapsed. Collapse them through animated width/opacity and disable pointer events while hidden.
+
+This applies to operation panels such as `RightSidebar`, where local state includes the active tab and nested advanced panel state.
+
+```tsx
+<RightSidebar isOpen={isRightSidebarOpen} />
+```
+
+```tsx
+<motion.div
+  initial={false}
+  animate={{ opacity: isOpen ? 1 : 0, width: isOpen ? panelWidth : 0 }}
+  className={isOpen ? 'pointer-events-auto' : 'pointer-events-none'}
+  aria-hidden={!isOpen}
+>
+  ...stateful content...
+</motion.div>
+```
+
+Do not conditionally render the panel with `{isOpen && <Panel />}` if the user's expectation is that reopening restores the same UI state.
 
 ---
 
