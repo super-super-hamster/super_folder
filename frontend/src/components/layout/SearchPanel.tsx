@@ -115,7 +115,7 @@ export default function SearchPanel() {
       transition={{ duration: isResizing ? 0 : 0.2, ease: 'easeInOut' }}
       className="flex-shrink-0 wails-no-drag relative z-20"
     >
-      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 w-full h-full flex flex-col relative">
+      <div className="bg-white rounded-2xl shadow-panel overflow-hidden border border-gray-100 w-full h-full flex flex-col relative">
         <div className="p-6 h-full flex transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
         {/* Left Filter Panel */}
         <div className="w-[200px] border-r border-gray-300 pr-6 flex flex-col gap-3 overflow-y-auto">
@@ -530,7 +530,7 @@ export default function SearchPanel() {
         </div>
         </div>
         <button
-          className="absolute left-1/2 bottom-0 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-b-md transition-colors focus:outline-none wails-no-drag"
+          className="absolute left-1/2 bottom-0 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-t-md transition-colors focus:outline-none wails-no-drag"
           onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
           title={isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}
         >
