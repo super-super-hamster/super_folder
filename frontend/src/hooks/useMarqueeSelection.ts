@@ -22,6 +22,13 @@ export interface EdgeFeedback {
   intensity: number
 }
 
+function getItemSize(item: VirtualListItem, viewMode: 'list' | 'grid' | 'album') {
+  if (item.type === 'header') return 45
+  if (viewMode === 'list') return 40
+  if (viewMode === 'album') return item.items[0]?.isDir ? 112 : 80
+  return 144
+}
+
 export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }: UseMarqueeSelectionOptions) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStartPos, setDragStartPos] = useState<{ x: number, y: number } | null>(null)
@@ -63,6 +70,24 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     }
   }, [])
 
+  const getContentHeight = useCallback(() => {
+    return listItems.reduce((total, item) => total + getItemSize(item, viewMode), 0)
+  }, [listItems, viewMode])
+
+  const clampContentY = useCallback((y: number) => {
+    return Math.max(0, Math.min(y, getContentHeight()))
+  }, [getContentHeight])
+
+  const getRealMaxScrollTop = useCallback(() => {
+    const scrollEl = scrollRef.current
+    if (!scrollEl) return 0
+    const styles = window.getComputedStyle(scrollEl)
+    const paddingTop = Number.parseFloat(styles.paddingTop) || 0
+    const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0
+    const realScrollHeight = getContentHeight() + paddingTop + paddingBottom
+    return Math.max(0, realScrollHeight - scrollEl.clientHeight)
+  }, [getContentHeight, scrollRef])
+
   const updateDragSelection = useCallback((currentPos: { x: number, y: number }, startPos: { x: number, y: number }) => {
     const boxLeft = Math.min(startPos.x, currentPos.x)
     const boxRight = Math.max(startPos.x, currentPos.x)
@@ -78,16 +103,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
 
     for (let index = 0; index < listItems.length; index++) {
       const item = listItems[index]
-      let size: number
-      if (item.type === 'header') {
-        size = 45
-      } else if (viewMode === 'list') {
-        size = 40
-      } else if (viewMode === 'album') {
-        size = item.items[0]?.isDir ? 112 : 80
-      } else {
-        size = 144
-      }
+      const size = getItemSize(item, viewMode)
       const start = currentYOffset
       const end = start + size
 
@@ -120,7 +136,11 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     e.preventDefault()
     target.focus?.()
 
-    const coords = getContainerCoords(e.clientX, e.clientY)
+    const rawCoords = getContainerCoords(e.clientX, e.clientY)
+    const coords = {
+      x: rawCoords.x,
+      y: clampContentY(rawCoords.y)
+    }
     setIsDragging(true)
     setDragStartPos(coords)
     setDragBox({ left: coords.x, top: coords.y, width: 0, height: 0 })
@@ -132,7 +152,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     }
 
     lastMousePosRef.current = { x: e.clientX, y: e.clientY }
-  }, [getContainerCoords, scrollRef])
+  }, [getContainerCoords, scrollRef, clampContentY])
 
   useEffect(() => {
     if (!isDragging || !dragStartPos) return
@@ -140,10 +160,9 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     const handlePointerMove = (e: PointerEvent) => {
       lastMousePosRef.current = { x: e.clientX, y: e.clientY }
       const rawCoords = getContainerCoords(e.clientX, e.clientY)
-      const maxY = scrollRef.current ? scrollRef.current.scrollHeight : rawCoords.y
       const coords = {
         x: rawCoords.x,
-        y: Math.max(0, Math.min(rawCoords.y, maxY))
+        y: clampContentY(rawCoords.y)
       }
       setDragBox(computeDragBox(coords, dragStartPos))
       updateDragSelection(coords, dragStartPos)
@@ -184,13 +203,14 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       const MIN_SCROLL_SPEED = 4
       const MAX_SCROLL_SPEED = 28
 
-      const scrollTop = scrollRef.current.scrollTop
-      const clientHeight = scrollRef.current.clientHeight
-      const scrollHeight = scrollRef.current.scrollHeight
+      const maxScrollTop = getRealMaxScrollTop()
+      const scrollTop = Math.min(scrollRef.current.scrollTop, maxScrollTop)
+      if (scrollRef.current.scrollTop !== scrollTop) {
+        scrollRef.current.scrollTop = scrollTop
+      }
       const atTop = scrollTop <= 0
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1
+      const atBottom = scrollTop >= maxScrollTop - 1
 
-      const maxScrollTop = Math.max(0, scrollHeight - clientHeight)
       let didScroll = false
       if (clientY < rect.top + SCROLL_MARGIN) {
         if (atTop) {
@@ -204,8 +224,9 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         }
         if (!atTop) {
           const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
-          scrollRef.current.scrollTop = Math.max(0, scrollRef.current.scrollTop - (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
-          didScroll = true
+          const nextScrollTop = Math.max(0, scrollTop - (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
+          scrollRef.current.scrollTop = nextScrollTop
+          didScroll = nextScrollTop !== scrollTop
         }
       } else if (clientY > rect.bottom - SCROLL_MARGIN) {
         if (atBottom) {
@@ -219,8 +240,9 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         }
         if (!atBottom) {
           const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
-          scrollRef.current.scrollTop = Math.min(maxScrollTop, scrollRef.current.scrollTop + (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
-          didScroll = true
+          const nextScrollTop = Math.min(maxScrollTop, scrollTop + (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
+          scrollRef.current.scrollTop = nextScrollTop
+          didScroll = nextScrollTop !== scrollTop
         }
       } else {
         triggeredEdgeRef.current = null
@@ -230,7 +252,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         const rawCoords = getContainerCoords(lastMousePosRef.current.x, lastMousePosRef.current.y)
         const coords = {
           x: rawCoords.x,
-          y: Math.max(0, Math.min(rawCoords.y, scrollRef.current.scrollHeight))
+          y: clampContentY(rawCoords.y)
         }
         setDragBox(computeDragBox(coords, dragStartPos))
         updateDragSelection(coords, dragStartPos)
@@ -251,7 +273,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         edgeTimeoutRef.current = null
       }
     }
-  }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef, triggerEdgeFeedback])
+  }, [isDragging, dragStartPos, getContainerCoords, computeDragBox, updateDragSelection, scrollRef, triggerEdgeFeedback, clampContentY, getRealMaxScrollTop])
 
   return { isDragging, dragBox, dragSelectedPaths, edgeFeedback, onPointerDown: handlePointerDown }
 }

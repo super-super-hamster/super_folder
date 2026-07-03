@@ -85,6 +85,14 @@ if (didScroll) {
 
 Use the same speed calculation for upward and downward scroll. Keep the drag box and selection recomputed after every scroll tick.
 
+Do not use DOM `scrollHeight` as the bottom bound during marquee auto-scroll. The drag selection box is absolutely positioned inside the virtual content container, and if it extends beyond the real virtual content height it can temporarily inflate DOM overflow. Compute the real max scroll from the virtual row sizes plus scroll container padding, clamp `scrollTop` to that max on every auto-scroll frame, and clamp drag-box Y coordinates to the real virtual content height.
+
+```tsx
+const realScrollHeight = listItems.reduce((total, item) => total + getItemSize(item, viewMode), 0) + paddingTop + paddingBottom
+const maxScrollTop = Math.max(0, realScrollHeight - scrollEl.clientHeight)
+scrollEl.scrollTop = Math.min(scrollEl.scrollTop, maxScrollTop)
+```
+
 ---
 
 ## Container Coordinates

@@ -14,6 +14,7 @@ Keep left action panel state when collapsed and let the search box navigate to e
 - Path navigation must not trigger for incomplete or invalid paths.
 - In public mode, protected folders/files must behave as if they do not exist; the UI should show only "path does not exist" style feedback instead of navigating.
 - Existing tag/note search query behavior must continue to work.
+- File panel marquee selection auto-scroll must stop at the real bottom of the virtualized content and must not create a temporary larger scroll range while dragging.
 
 ## Acceptance Criteria
 
@@ -24,6 +25,7 @@ Keep left action panel state when collapsed and let the search box navigate to e
 - [ ] Typing a non-existent path does not navigate.
 - [ ] Typing a protected path in public mode does not navigate and reports it as not existing.
 - [ ] Normal keyword, tag, and note searches still behave as before.
+- [ ] Dragging a marquee selection to the bottom auto-scrolls only until the real bottom, then stops without expanding the scroll range.
 - [ ] Frontend build succeeds.
 
 ## Notes
