@@ -92,9 +92,9 @@ export function GetThumbnailBudgetLimit():Promise<number>;
 
 export function GetThumbnailCacheSize():Promise<number>;
 
-export function IsPathProtected(arg1:string):Promise<boolean>;
-
 export function InspectPathForNavigation(arg1:string):Promise<models.PathInspection>;
+
+export function IsPathProtected(arg1:string):Promise<boolean>;
 
 export function LockPrivacyMode():Promise<models.PrivacyState>;
 
