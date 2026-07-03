@@ -174,3 +174,40 @@ Fixed startup privacy gate timing, duplicate initial icon/file loading, feature 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: Fix tag search and tag management
+
+**Date**: 2026-07-03
+**Task**: Fix tag search and tag management
+**Branch**: `main`
+
+### Summary
+
+Fixed colon-containing tag search parsing and typed tag matching, deduped directory reloads after clearing search, added advanced tag drag reordering, cleaned unused tags with undo safety, and stabilized tag marker color generation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d46085c` | (see git log) |
+| `aa97925` | (see git log) |
+| `15172b7` | (see git log) |
+| `7783727` | (see git log) |
+| `7a0c100` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
