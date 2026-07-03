@@ -60,8 +60,9 @@ func init() {
 					return err
 				}
 			}
-			return nil
+			return database.DeleteUnusedTags(tagIDs)
 		},
+		database.RestoreTags,
 	)
 }
 
@@ -655,10 +656,12 @@ func (a *App) RemoveTagFromFiles(paths []string, tagIDs []string) error {
 		tagSet[tagID] = struct{}{}
 	}
 	pathTagIDs := make(map[string][]string)
+	removedTagMap := make(map[string]models.Tag)
 	for _, path := range paths {
 		for _, tag := range existingTags[path] {
 			if _, ok := tagSet[tag.ID]; ok {
 				pathTagIDs[path] = append(pathTagIDs[path], tag.ID)
+				removedTagMap[tag.ID] = tag
 			}
 		}
 	}
@@ -668,6 +671,9 @@ func (a *App) RemoveTagFromFiles(paths []string, tagIDs []string) error {
 
 	err = database.RemoveTagFromFiles(paths, tagIDs)
 	if err != nil {
+		return err
+	}
+	if err := database.DeleteUnusedTags(tagIDs); err != nil {
 		return err
 	}
 
@@ -682,6 +688,13 @@ func (a *App) RemoveTagFromFiles(paths []string, tagIDs []string) error {
 		Paths:      append([]string(nil), paths...),
 		TagIDs:     append([]string(nil), tagIDs...),
 		PathTagIDs: pathTagIDs,
+		RemovedTags: func() []models.Tag {
+			removedTags := make([]models.Tag, 0, len(removedTagMap))
+			for _, tag := range removedTagMap {
+				removedTags = append(removedTags, tag)
+			}
+			return removedTags
+		}(),
 	})
 	return nil
 }

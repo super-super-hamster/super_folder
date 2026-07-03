@@ -1,27 +1,43 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { ComboBox, Input, ListBox } from '@heroui/react'
 import { useSelectionStore } from '../../store/selectionStore'
-import { useTagStore, generateColorFromName } from '../../store/tagStore'
-import { GetTagsForFiles, AddTagToFiles, RemoveTagFromFiles } from '../../../wailsjs/go/main/App'
+import { useTagStore } from '../../store/tagStore'
+import { GetTagsForFiles, AddTagToFiles, RemoveTagFromFiles, GetTagUsageCounts } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 
 export default function TagPanel() {
   const { selectedPaths } = useSelectionStore()
-  const { globalTags, fetchGlobalTags, createTag, triggerTagRefresh, tagRefreshKey } = useTagStore()
+  const { globalTags, fetchGlobalTags, createTag, reorderTags, triggerTagRefresh, tagRefreshKey } = useTagStore()
   
   const [fileTags, setFileTags] = useState<models.Tag[]>([])
   const [isAdding, setIsAdding] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({})
 
   const addingTagsRef = useRef(new Set<string>())
+  const fileTagsRef = useRef<models.Tag[]>([])
 
   useEffect(() => {
     fetchGlobalTags()
+    fetchUsageCounts()
   }, [])
 
   useEffect(() => {
+    fileTagsRef.current = fileTags
+  }, [fileTags])
+
+  const fetchUsageCounts = async () => {
+    try {
+      const counts = await GetTagUsageCounts()
+      setUsageCounts(counts as Record<string, number>)
+    } catch (e) { console.error(e) }
+  }
+
+  useEffect(() => {
     const paths = Array.from(selectedPaths)
+    fetchGlobalTags()
+    fetchUsageCounts()
     if (paths.length > 0) {
       GetTagsForFiles(paths).then(tagsMap => {
         if (paths.length === 1) {
@@ -81,6 +97,7 @@ export default function TagPanel() {
       if (!fileTags.find(t => t.id === tag!.id)) {
         await AddTagToFiles(paths, tag!)
         setFileTags(prev => [...prev, tag!])
+        await fetchUsageCounts()
         triggerTagRefresh()
       }
       setIsAdding(false)
@@ -95,38 +112,36 @@ export default function TagPanel() {
     if (paths.length === 0) return
     await RemoveTagFromFiles(paths, [tagId])
     setFileTags(prev => prev.filter(t => t.id !== tagId))
+    await fetchGlobalTags()
+    await fetchUsageCounts()
     triggerTagRefresh()
   }
 
-  const handleRemoveGroup = async (type: string) => {
-    const paths = Array.from(selectedPaths)
-    if (paths.length === 0) return
-    const tagsToRemove = fileTags.filter(t => t.type === type)
-    if (tagsToRemove.length === 0) return
-    const tagIDs = tagsToRemove.map(t => t.id)
-
-    await RemoveTagFromFiles(paths, tagIDs)
-
-    const idsToRemove = new Set(tagIDs)
-    setFileTags(prev => prev.filter(t => !idsToRemove.has(t.id)))
-    triggerTagRefresh()
+  const handleReorderTags = (nextTags: models.Tag[]) => {
+    setFileTags(nextTags)
   }
 
-  // Group tags
-  const typeGroups = fileTags.reduce((acc, tag) => {
-    if (tag.type) {
-      if (!acc[tag.type]) acc[tag.type] = []
-      acc[tag.type].push(tag)
-    }
-    return acc
-  }, {} as Record<string, models.Tag[]>)
+  const handleReorderEnd = () => {
+    const reorderedFileTags = fileTagsRef.current
+    const reorderedFileTagIds = new Set(reorderedFileTags.map(t => t.id))
+    let nextFileTagIndex = 0
+    const orderedIds = globalTags.map(tag => {
+      if (!reorderedFileTagIds.has(tag.id)) {
+        return tag.id
+      }
+      return reorderedFileTags[nextFileTagIndex++]?.id || tag.id
+    })
+    reorderTags(orderedIds).catch(console.error)
+  }
 
-  const flatTags = fileTags.filter(t => !t.type)
+  const visibleGlobalTags = useMemo(() => {
+    return globalTags.filter(tag => (usageCounts[tag.id] || 0) > 0)
+  }, [globalTags, usageCounts])
 
   // Filter and format tags according to display logic
   const displayTags = useMemo(() => {
     // Unique tags from global tags based on type and name
-    const uniqueTags = Array.from(new Map(globalTags.map(item => [`${item.type}:${item.name}`, item])).values())
+    const uniqueTags = Array.from(new Map(visibleGlobalTags.map(item => [`${item.type}:${item.name}`, item])).values())
     
     // If input contains ':', show the actual tags
     if (inputValue.includes(':')) {
@@ -164,7 +179,7 @@ export default function TagPanel() {
     })
     
     return result
-  }, [globalTags, inputValue])
+  }, [visibleGlobalTags, inputValue])
 
   if (selectedPaths.size === 0) {
     return <div className="text-gray-400 text-center mt-8 text-sm">当前未选择文件</div>
@@ -172,35 +187,16 @@ export default function TagPanel() {
 
   return (
     <div className="w-full p-4 flex flex-col gap-3 text-gray-800">
-      <div className="flex flex-col gap-2">
-        {Object.entries(typeGroups).map(([type, tags]) => (
-          <div key={type} className="flex flex-col gap-1">
-            <div className="peer flex items-center justify-between text-sm text-sf-text font-semibold select-none hover:bg-gray-100 rounded py-1.5 px-2 transition-colors cursor-default">
-              <div className="flex items-center gap-2">
-                <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' style={{ color: tags[0]?.colorHex || '#0F2039' }} className='shrink-0'>
-                  <g fill='none'>
-                    <path d='M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z' />
-                    <path fill='currentColor' d='M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v16.028c0 1.22-1.38 1.93-2.372 1.221L12 18.229l-5.628 4.02c-.993.71-2.372 0-2.372-1.22z' />
-                  </g>
-                </svg>
-                {type}
-              </div>
-              <button onClick={() => handleRemoveGroup(type)} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-              </button>
-            </div>
-            <div className="pl-6 flex flex-col gap-1 peer-hover:[&>div]:bg-gray-100">
-              {tags.map(tag => (
-                <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} isNested={true} />
-              ))}
-            </div>
-          </div>
+      <Reorder.Group
+        axis="y"
+        values={fileTags}
+        onReorder={handleReorderTags}
+        className="flex flex-col gap-2"
+      >
+        {fileTags.map(tag => (
+          <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} onDragEnd={handleReorderEnd} />
         ))}
-
-        {flatTags.map(tag => (
-          <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} isNested={false} />
-        ))}
-      </div>
+      </Reorder.Group>
 
       <div className="flex flex-col items-center mt-2 w-full">
         <AnimatePresence>
@@ -225,7 +221,7 @@ export default function TagPanel() {
                       setInputValue(typePrefix)
                       return
                     }
-                    const selectedTag = globalTags.find(t => t.id === key)
+                    const selectedTag = visibleGlobalTags.find(t => t.id === key)
                     if (selectedTag) {
                       handleAddTag(selectedTag.type ? `${selectedTag.type}: ${selectedTag.name}` : selectedTag.name)
                       setInputValue('')
@@ -280,9 +276,13 @@ export default function TagPanel() {
   )
 }
 
-function TagItem({ tag, onRemove, isNested }: { tag: models.Tag, onRemove: () => void, isNested: boolean }) {
+function TagItem({ tag, onRemove, onDragEnd }: { tag: models.Tag, onRemove: () => void, onDragEnd: () => void }) {
   return (
-    <div className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors select-none hover:bg-gray-100 cursor-default">
+    <Reorder.Item
+      value={tag}
+      onDragEnd={onDragEnd}
+      className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors select-none hover:bg-gray-100 cursor-grab active:cursor-grabbing"
+    >
       <div className="flex items-center gap-2">
         <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' style={{ color: tag.colorHex }} className='shrink-0'>
           <g fill='none'>
@@ -290,11 +290,11 @@ function TagItem({ tag, onRemove, isNested }: { tag: models.Tag, onRemove: () =>
             <path fill='currentColor' d='M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v16.028c0 1.22-1.38 1.93-2.372 1.221L12 18.229l-5.628 4.02c-.993.71-2.372 0-2.372-1.22z' />
           </g>
         </svg>
-        <span className="text-[14px] text-gray-800">{tag.name}</span>
+        <span className="text-[14px] text-gray-800">{tag.type ? `${tag.type}: ${tag.name}` : tag.name}</span>
       </div>
       <button onClick={onRemove} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
       </button>
-    </div>
+    </Reorder.Item>
   )
 }

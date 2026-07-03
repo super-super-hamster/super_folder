@@ -7,7 +7,7 @@ import { models } from '../../../wailsjs/go/models'
 import { usePrivacyStore } from '../../store/privacyStore'
 
 const TagSettings = () => {
-  const { globalTags, fetchGlobalTags, createTag } = useTagStore()
+  const { globalTags, fetchGlobalTags, createTag, tagRefreshKey } = useTagStore()
   const { state: privacyState, setTagProtected } = usePrivacyStore()
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({})
   const [editingTagId, setEditingTagId] = useState<string | null>(null)
@@ -28,7 +28,7 @@ const TagSettings = () => {
   useEffect(() => {
     fetchGlobalTags()
     fetchCounts()
-  }, [])
+  }, [tagRefreshKey])
 
   const fetchCounts = async () => {
     try {
@@ -156,6 +156,10 @@ const TagSettings = () => {
     )
   }
 
+  const visibleGlobalTags = useMemo(() => {
+    return globalTags.filter(tag => (usageCounts[tag.id] || 0) > 0)
+  }, [globalTags, usageCounts])
+
   const TypeGroup = ({ type, tags }: { type: string, tags: models.Tag[] }) => {
     const colorHex = tags[0]?.colorHex || '#9ca3af'
     const expanded = expandedTypes.has(type)
@@ -241,7 +245,7 @@ const TagSettings = () => {
   }
 
   const displayTags = useMemo(() => {
-    const uniqueTags = Array.from(new Map(globalTags.map(item => [`${item.type}:${item.name}`, item])).values())
+    const uniqueTags = Array.from(new Map(visibleGlobalTags.map(item => [`${item.type}:${item.name}`, item])).values())
     if (inputValue.includes(':')) {
       return uniqueTags.map(item => ({
         id: item.id,
@@ -270,10 +274,10 @@ const TagSettings = () => {
       }
     })
     return result
-  }, [globalTags, inputValue])
+  }, [visibleGlobalTags, inputValue])
 
   // Group tags by type
-  const groupedTags = globalTags.reduce((acc, tag) => {
+  const groupedTags = visibleGlobalTags.reduce((acc, tag) => {
     const type = tag.type || '未分类'
     if (!acc[type]) acc[type] = []
     acc[type].push(tag)
@@ -291,7 +295,7 @@ const TagSettings = () => {
           {Object.entries(groupedTags).map(([type, tags]) => (
             <TypeGroup key={type} type={type} tags={tags} />
           ))}
-          {globalTags.length === 0 && (
+          {visibleGlobalTags.length === 0 && (
             <div className="text-sm text-gray-400 py-8 text-center bg-sf-panel/80 rounded-lg border border-gray-100 border-dashed">
               暂无标签
             </div>
@@ -323,7 +327,7 @@ const TagSettings = () => {
                             setInputValue(typePrefix)
                             return
                           }
-                          const selectedTag = globalTags.find(t => t.id === key)
+                          const selectedTag = visibleGlobalTags.find(t => t.id === key)
                           if (selectedTag) {
                             handleAddTag(selectedTag.type ? `${selectedTag.type}: ${selectedTag.name}` : selectedTag.name)
                             setInputValue('')

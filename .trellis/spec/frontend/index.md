@@ -20,6 +20,7 @@ This directory contains frontend-specific coding conventions and patterns. These
 | [File List Context Menu](./filelist-contextmenu.md) | Boundary clamping, view-mode-sensitive items, auto-scroll to new items | Filled |
 | [Privacy Mode](./privacy-mode.md) | Privacy state, startup unlock, directory refresh, and lock badge contracts | Filled |
 | [Search Query Parsing](./search-query.md) | Token boundaries, tag/remark prefixes, colon-containing values | Filled |
+| [Tag Management](./tag-management.md) | File tag reordering, usage-based suggestions, global order persistence | Filled |
 
 ---
 

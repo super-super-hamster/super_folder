@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"super_folder/internal/models"
 )
 
 type OpType string
@@ -19,26 +21,29 @@ const (
 )
 
 type Operation struct {
-	Type       OpType              `json:"type"`
-	SrcPaths   []string            `json:"srcPaths"`
-	DestPaths  []string            `json:"destPaths"`
-	Paths      []string            `json:"paths"`
-	TagIDs     []string            `json:"tagIDs"`
-	PathTagIDs map[string][]string `json:"pathTagIDs"`
+	Type        OpType              `json:"type"`
+	SrcPaths    []string            `json:"srcPaths"`
+	DestPaths   []string            `json:"destPaths"`
+	Paths       []string            `json:"paths"`
+	TagIDs      []string            `json:"tagIDs"`
+	PathTagIDs  map[string][]string `json:"pathTagIDs"`
+	RemovedTags []models.Tag        `json:"removedTags"`
 }
 
 var (
-	undoStack        []Operation
-	redoStack        []Operation
-	mutex            sync.Mutex
-	maxStack         = 50
-	addTagHandler    func(paths []string, tagIDs []string) error
-	removeTagHandler func(paths []string, tagIDs []string) error
+	undoStack         []Operation
+	redoStack         []Operation
+	mutex             sync.Mutex
+	maxStack          = 50
+	addTagHandler     func(paths []string, tagIDs []string) error
+	removeTagHandler  func(paths []string, tagIDs []string) error
+	restoreTagHandler func(tags []models.Tag) error
 )
 
-func RegisterTagHandlers(add func(paths []string, tagIDs []string) error, remove func(paths []string, tagIDs []string) error) {
+func RegisterTagHandlers(add func(paths []string, tagIDs []string) error, remove func(paths []string, tagIDs []string) error, restore func(tags []models.Tag) error) {
 	addTagHandler = add
 	removeTagHandler = remove
+	restoreTagHandler = restore
 }
 
 // Push adds a new operation to the undo stack and clears the redo stack.
@@ -144,6 +149,14 @@ func performInverse(op Operation) error {
 	case OpRemoveTag:
 		if addTagHandler == nil {
 			return fmt.Errorf("tag add handler not registered")
+		}
+		if len(op.RemovedTags) > 0 {
+			if restoreTagHandler == nil {
+				return fmt.Errorf("tag restore handler not registered")
+			}
+			if err := restoreTagHandler(op.RemovedTags); err != nil {
+				return err
+			}
 		}
 		return applyTagHandler(op, addTagHandler)
 	}

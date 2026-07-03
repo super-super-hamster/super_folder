@@ -82,14 +82,16 @@ export const useTagStore = create<TagState>((set, get) => ({
   },
 
   reorderTags: async (orderedIds: string[]) => {
-    // Optimistic update
-    const map = new Map(get().globalTags.map(t => [t.id, t]))
-    const newTags = orderedIds.map((id, i) => {
-        const t = map.get(id)!
+    const currentTags = get().globalTags
+    const map = new Map(currentTags.map(t => [t.id, t]))
+    const nextIds = orderedIds.filter(id => map.has(id))
+    const newTags = nextIds.flatMap((id, i) => {
+        const t = map.get(id)
+        if (!t) return []
         return new models.Tag({...t, sortOrder: i})
     })
     set({ globalTags: newTags })
     
-    await UpdateTagsOrder(orderedIds)
+    await UpdateTagsOrder(nextIds)
   }
 }))

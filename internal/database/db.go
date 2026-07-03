@@ -197,6 +197,17 @@ func UpdateTag(tag *models.Tag) error {
 	return DB.Save(tag).Error
 }
 
+func RestoreTags(tags []models.Tag) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		for _, tag := range tags {
+			if err := tx.Where(models.Tag{ID: tag.ID}).FirstOrCreate(&tag).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func DeleteTag(tagID string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("tag_id = ?", tagID).Delete(&models.FileTag{}).Error; err != nil {
@@ -204,6 +215,15 @@ func DeleteTag(tagID string) error {
 		}
 		return tx.Where("id = ?", tagID).Delete(&models.Tag{}).Error
 	})
+}
+
+func DeleteUnusedTags(tagIDs []string) error {
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	return DB.Exec(`DELETE FROM tags WHERE id IN ? AND NOT EXISTS (
+		SELECT 1 FROM file_tags WHERE file_tags.tag_id = tags.id
+	)`, tagIDs).Error
 }
 
 func UpdateTagsOrder(orderedIDs []string) error {
