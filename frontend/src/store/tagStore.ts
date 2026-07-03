@@ -14,18 +14,18 @@ interface TagState {
   reorderTags: (orderedIds: string[]) => Promise<void>
 }
 
-// Generate color hash function limited to nice colors
 export const generateColorFromName = (name: string): string => {
-  let hash = 0
+  let hash = 2166136261
   for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    hash ^= name.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
   }
-  const colors = [
-    '#F87171', '#FB923C', '#FBBF24', '#34D399', '#38BDF8', '#818CF8', '#A78BFA', '#F472B6', '#FB7185',
-    '#2DD4BF', '#4ADE80', '#60A5FA', '#C084FC', '#F43F5E', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'
-  ]
-  const index = Math.abs(hash) % colors.length
-  return colors[index]
+
+  const unsignedHash = hash >>> 0
+  const hue = unsignedHash % 360
+  const saturation = 58 + ((unsignedHash >>> 8) % 17)
+  const lightness = 48 + ((unsignedHash >>> 16) % 15)
+  return `hsl(${hue} ${saturation}% ${lightness}%)`
 }
 
 const generateUUID = () => {
@@ -55,7 +55,7 @@ export const useTagStore = create<TagState>((set, get) => ({
 
   createTag: async (name: string, type: string = '') => {
     const id = generateUUID()
-    const colorHex = generateColorFromName(name)
+    const colorHex = generateColorFromName(type ? `${type}:${name}` : name)
     const sortOrder = get().globalTags.length
     
     const newTag = new models.Tag({

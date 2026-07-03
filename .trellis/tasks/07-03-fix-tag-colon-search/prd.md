@@ -14,6 +14,7 @@ Searching for tag values that contain a colon, such as tag:a:b, currently behave
 - The search panel collapse button must be anchored to the search panel bottom, not the file panel bottom.
 - The advanced operation panel tag list must allow drag reordering, matching the settings general navigation ordering interaction.
 - Tags whose usage count reaches 0 after removal must disappear from Settings > Tags and from the advanced operation panel tag ComboBox results.
+- Tag colors must be generated from stable tag identity rather than a fixed small palette or tag order, while staying within a visually controlled color range.
 
 ## Acceptance Criteria
 
@@ -28,6 +29,8 @@ Searching for tag values that contain a colon, such as tag:a:b, currently behave
 - [ ] Dragging tags in the advanced operation panel updates tag order without dropping unrelated global tags from the persisted order.
 - [ ] Removing the last use of a tag removes it from Settings > Tags and the advanced operation panel ComboBox.
 - [ ] Undoing a tag removal restores any tag row that was deleted because it became unused.
+- [ ] Reordering tags does not change the bottom-right file icon tag marker color for the same set of tags.
+- [ ] New tag colors are deterministic from tag name/type and are not limited to a fixed small color list.
 - [ ] Frontend build succeeds.
 - [ ] Go build succeeds.
 

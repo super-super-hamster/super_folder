@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useDebounce } from 'use-debounce'
 import { useUIStore } from '../store/uiStore'
 import { useSettingsStore } from '../store/settingsStore'
-import { useTagStore } from '../store/tagStore'
+import { useTagStore, generateColorFromName } from '../store/tagStore'
 import { useModalStore } from '../store/modalStore'
 import { usePrivacyStore } from '../store/privacyStore'
 import { useTabsStore } from '../store/tabsStore'
@@ -22,6 +22,20 @@ function mergeFilesByPath(base: models.FileInfo[], next: models.FileInfo[]): mod
     }
   }
   return merged
+}
+
+function getTagColorIdentity(tag: models.Tag): string {
+  return tag.type ? `${tag.type}:${tag.name}` : tag.name
+}
+
+function getStableTagColor(tags: models.Tag[]): string | undefined {
+  if (tags.length === 0) return undefined
+  const stableTag = [...tags].sort((a, b) => {
+    const aIdentity = getTagColorIdentity(a)
+    const bIdentity = getTagColorIdentity(b)
+    return aIdentity.localeCompare(bIdentity, undefined, { sensitivity: 'base' }) || aIdentity.localeCompare(bIdentity)
+  })[0]
+  return stableTag.colorHex || generateColorFromName(getTagColorIdentity(stableTag))
 }
 
 export interface UseDirectoryFilesResult {
@@ -58,7 +72,8 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       const colors: Record<string, string> = {}
       for (const [path, tags] of Object.entries(res)) {
         if (tags && tags.length > 0) {
-          colors[path] = tags[0].colorHex
+          const color = getStableTagColor(tags)
+          if (color) colors[path] = color
         }
       }
       setFileTagColors(colors)

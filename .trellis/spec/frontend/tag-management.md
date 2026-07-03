@@ -72,3 +72,65 @@ const orderedIds = globalTags.map(tag => {
 })
 await UpdateTagsOrder(orderedIds)
 ```
+
+---
+
+## Scenario: Stable Tag Colors
+
+### 1. Scope / Trigger
+
+- Trigger: Creating tags, rendering tag markers, or changing tag order behavior.
+- Components: `frontend/src/store/tagStore.ts`, `frontend/src/hooks/useDirectoryFiles.ts`, tag display components.
+
+### 2. Signatures
+
+```ts
+export const generateColorFromName = (name: string): string
+```
+
+### 3. Contracts
+
+- New tag colors are deterministic from stable tag identity: plain tags use `name`, typed tags use `type:name`.
+- Do not choose colors from a fixed small palette; hash the identity into a controlled CSS color range.
+- Honor existing persisted `tag.colorHex` when present.
+- File icon tag marker color must not depend on `sortOrder` or backend tag array order.
+- If multiple tags exist on a file, choose the displayed marker tag by stable identity ordering before reading/generating its color.
+
+### 4. Validation & Error Matrix
+
+| Condition | Handling |
+|-----------|----------|
+| Existing tag has `colorHex` | Use it directly as CSS color |
+| Existing tag lacks `colorHex` | Generate from `type:name` or `name` |
+| Tags are reordered | Marker color remains the same for the same tag set |
+| Different names hash nearby | Keep saturation/lightness bounded so colors remain usable |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `project:alpha` always generates the same color regardless of tag position.
+- Base: Two files with the same tag set show the same marker color even if the backend returns tags in different order.
+- Bad: Use `tags[0].colorHex` for file markers; dragging tags changes `sortOrder`, which can change the first returned tag and therefore the marker color.
+
+### 6. Tests Required
+
+- Frontend typecheck/build must pass after color generation or marker selection changes.
+- Manual assertion: reorder tags in the advanced panel; files with the same tags keep the same bottom-right marker color.
+- Manual assertion: create several differently named tags; colors differ and remain in a readable visual range.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```ts
+const colors = ['#F87171', '#FB923C', '#FBBF24']
+return colors[Math.abs(hash) % colors.length]
+```
+
+#### Correct
+
+```ts
+const hue = unsignedHash % 360
+const saturation = 58 + ((unsignedHash >>> 8) % 17)
+const lightness = 48 + ((unsignedHash >>> 16) % 15)
+return `hsl(${hue} ${saturation}% ${lightness}%)`
+```
