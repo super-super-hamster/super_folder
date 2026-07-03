@@ -44,8 +44,8 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
   }, [isResizing, setRightSidebarWidth])
 
   return (
-    <div className="relative shrink-0 flex h-full">
-      <motion.div 
+    <div className={`relative shrink-0 flex h-full transition-[margin] duration-200 ease-out ${isOpen ? '' : '-mr-4'}`}>
+      <motion.div
         initial={false}
         animate={{ opacity: isOpen ? 1 : 0, width: isOpen ? rightSidebarWidth : 0, marginLeft: isOpen ? 0 : -12 }}
         transition={{ type: 'tween', duration: isResizing ? 0 : 0.2, ease: 'easeOut' }}
