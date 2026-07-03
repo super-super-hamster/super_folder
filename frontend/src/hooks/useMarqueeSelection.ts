@@ -42,7 +42,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
     edgeTimeoutRef.current = setTimeout(() => {
       setEdgeFeedback(null)
       edgeTimeoutRef.current = null
-    }, 800)
+    }, 250)
   }, [])
 
   const getContainerCoords = useCallback((clientX: number, clientY: number) => {
@@ -139,7 +139,12 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
 
     const handlePointerMove = (e: PointerEvent) => {
       lastMousePosRef.current = { x: e.clientX, y: e.clientY }
-      const coords = getContainerCoords(e.clientX, e.clientY)
+      const rawCoords = getContainerCoords(e.clientX, e.clientY)
+      const maxY = scrollRef.current ? scrollRef.current.scrollHeight : rawCoords.y
+      const coords = {
+        x: rawCoords.x,
+        y: Math.max(0, Math.min(rawCoords.y, maxY))
+      }
       setDragBox(computeDragBox(coords, dragStartPos))
       updateDragSelection(coords, dragStartPos)
     }
@@ -179,6 +184,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       const atTop = scrollTop <= 0
       const atBottom = scrollTop + clientHeight >= scrollHeight - 1
 
+      const maxScrollTop = Math.max(0, scrollHeight - clientHeight)
       let didScroll = false
       if (clientY < rect.top + SCROLL_MARGIN) {
         if (atTop) {
@@ -192,7 +198,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         }
         if (!atTop) {
           const distanceRatio = Math.min(1, Math.max(0, (rect.top + SCROLL_MARGIN - clientY) / SCROLL_MARGIN))
-          scrollRef.current.scrollTop -= MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
+          scrollRef.current.scrollTop = Math.max(0, scrollRef.current.scrollTop - (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
           didScroll = true
         }
       } else if (clientY > rect.bottom - SCROLL_MARGIN) {
@@ -207,7 +213,7 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
         }
         if (!atBottom) {
           const distanceRatio = Math.min(1, Math.max(0, (clientY - (rect.bottom - SCROLL_MARGIN)) / SCROLL_MARGIN))
-          scrollRef.current.scrollTop += MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio
+          scrollRef.current.scrollTop = Math.min(maxScrollTop, scrollRef.current.scrollTop + (MIN_SCROLL_SPEED + (MAX_SCROLL_SPEED - MIN_SCROLL_SPEED) * distanceRatio))
           didScroll = true
         }
       } else {
@@ -215,7 +221,11 @@ export function useMarqueeSelection({ scrollRef, listItems, columns, viewMode }:
       }
 
       if (didScroll) {
-        const coords = getContainerCoords(lastMousePosRef.current.x, lastMousePosRef.current.y)
+        const rawCoords = getContainerCoords(lastMousePosRef.current.x, lastMousePosRef.current.y)
+        const coords = {
+          x: rawCoords.x,
+          y: Math.max(0, Math.min(rawCoords.y, scrollRef.current.scrollHeight))
+        }
         setDragBox(computeDragBox(coords, dragStartPos))
         updateDragSelection(coords, dragStartPos)
       }

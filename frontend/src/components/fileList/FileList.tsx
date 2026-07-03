@@ -415,23 +415,13 @@ export default function FileList() {
         {edgeFeedback && (
           <motion.div
             key={edgeFeedback.key}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            className={`absolute left-0 right-0 h-16 pointer-events-none z-30 ${
-              edgeFeedback.edge === 'top' ? 'top-0 bg-gradient-to-b from-gray-400/10 to-transparent' : 'bottom-0 bg-gradient-to-t from-gray-400/10 to-transparent'
+            initial={{ y: edgeFeedback.edge === 'top' ? -24 - edgeFeedback.intensity * 16 : 24 + edgeFeedback.intensity * 16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+            exit={{ y: edgeFeedback.edge === 'top' ? 40 : -40, opacity: 0, transition: { duration: 0.45, ease: 'easeOut' } }}
+            className={`absolute left-0 right-0 mx-auto w-4/5 h-0.5 rounded-full bg-gray-400/50 pointer-events-none drop-shadow-md z-30 ${
+              edgeFeedback.edge === 'top' ? 'top-3' : 'bottom-3'
             }`}
-          >
-            <motion.div
-              initial={{ y: edgeFeedback.edge === 'top' ? -24 - edgeFeedback.intensity * 16 : 24 + edgeFeedback.intensity * 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
-              exit={{ y: edgeFeedback.edge === 'top' ? 40 : -40, opacity: 0, transition: { duration: 0.5, ease: 'easeOut' } }}
-              className={`absolute left-0 right-0 mx-auto w-4/5 h-0.5 rounded-full bg-gray-400/50 pointer-events-none ${
-                edgeFeedback.edge === 'top' ? 'top-3' : 'bottom-3'
-              }`}
-            />
-          </motion.div>
+          />
         )}
       </AnimatePresence>
       {loading ? (
