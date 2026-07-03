@@ -18,6 +18,7 @@ type PrivacyDialogMode = 'setup' | 'unlock' | 'startupUnlock' | 'reset' | null
 
 interface PrivacyStateStore {
   state: models.PrivacyState | null
+  initialized: boolean
   dialogMode: PrivacyDialogMode
   error: string
   loading: boolean
@@ -47,15 +48,18 @@ const refreshPrivacyViews = () => {
 
 export const usePrivacyStore = create<PrivacyStateStore>((set, get) => ({
   state: null,
+  initialized: false,
   dialogMode: null,
   error: '',
   loading: false,
   load: async () => {
     const state = await GetPrivacyState()
-    set({ state })
-    if (state.shouldPromptRestore) {
-      set({ dialogMode: 'startupUnlock', error: '' })
-    }
+    set({
+      state,
+      initialized: true,
+      dialogMode: state.shouldPromptRestore ? 'startupUnlock' : get().dialogMode,
+      error: state.shouldPromptRestore ? '' : get().error
+    })
   },
   openDialog: (mode) => set({ dialogMode: mode, error: '' }),
   closeDialog: () => set({ dialogMode: null, error: '' }),

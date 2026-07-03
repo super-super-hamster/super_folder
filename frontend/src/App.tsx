@@ -24,6 +24,7 @@ import { usePrivacyStore } from './store/privacyStore'
 function App() {
   const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
   const { tabs, activeTabId } = useTabsStore()
+  const { initialized, dialogMode } = usePrivacyStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
 
   useEffect(() => {
@@ -135,6 +136,17 @@ function App() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
+
+  const showStartupGate = dialogMode === 'startupUnlock'
+
+  if (!initialized || showStartupGate) {
+    return (
+      <>
+        <PrivacyStartupGate />
+        <PrivacyModal />
+      </>
+    )
+  }
 
   return (
     <>
