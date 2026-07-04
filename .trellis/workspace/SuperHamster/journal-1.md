@@ -256,3 +256,37 @@ This session: (1) left-side panel toggling preserves mounted state instead of un
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: Fix terminal mode switch newline leak
+
+**Date**: 2026-07-04
+**Task**: Fix terminal mode switch newline leak
+**Branch**: `main`
+
+### Summary
+
+Fixed multiple newline-related bugs in terminal SF↔CMD mode switching:\n- Sync mechanism now writes full ConPTY buffer preserving \\r\\n and ANSI\n- Reset cmdRawBuffer on SF→CMD switch\n- Added defensive return after @cmd handler\n- Fixed @cmd prompt ANSI orange color stripped by sync
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c4768de` | (see git log) |
+| `4f7d024` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
