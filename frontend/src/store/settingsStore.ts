@@ -330,6 +330,7 @@ export const useSettingsStore = create<SettingsState>()(
         cacheLimitMB: state.cacheLimitMB,
         cacheLimitEnabled: state.cacheLimitEnabled,
         autoCleanPeriod: state.autoCleanPeriod,
+        showParentDirInNav: state.showParentDirInNav,
       }),
     }
   )

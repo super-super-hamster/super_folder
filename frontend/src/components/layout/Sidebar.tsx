@@ -11,7 +11,7 @@ import { getFileIcon } from '../../utils/fileFormatting'
 
 export default function Sidebar() {
   const { isSidebarExpanded, setSidebarExpanded, setSettingsOpen } = useUIStore()
-  const { navigate, activeTabId, tabs } = useTabsStore()
+  const { navigate, goBack, activeTabId, tabs } = useTabsStore()
   const { shortcuts, searchPresets, loadFromBackend, showParentDirInNav } = useSettingsStore()
   const { fetchFavorites } = useFavoriteStore()
   const [drives, setDrives] = useState<string[]>([])
@@ -29,7 +29,7 @@ export default function Sidebar() {
   }, [])
 
   useEffect(() => {
-    if (showParentDirInNav && isBrowsing) {
+    if (showParentDirInNav) {
       setSidebarExpanded(true)
     }
   }, [showParentDirInNav])
@@ -54,7 +54,6 @@ export default function Sidebar() {
 
   const isBrowsing = showParentDirInNav && hasParent(currentPath)
   const parentPath = isBrowsing ? getParentPath(currentPath!) : ''
-  const grandParentPath = isBrowsing ? getParentPath(parentPath) : ''
 
   useEffect(() => {
     if (isBrowsing) {
@@ -68,6 +67,16 @@ export default function Sidebar() {
     if (path) {
       setSettingsOpen(false)
       navigate(path, name)
+    }
+  }
+
+  const handleDotDot = () => {
+    setSettingsOpen(false)
+    const tab = tabs.find(t => t.id === activeTabId)
+    if (tab && tab.historyIndex >= 0 && tab.history[tab.historyIndex]?.path === parentPath) {
+      goBack()
+    } else {
+      navigate(parentPath, getFileName(parentPath))
     }
   }
 
@@ -183,7 +192,7 @@ export default function Sidebar() {
             </div>
 
             <div
-              onClick={() => handleNavigate(grandParentPath, getFileName(grandParentPath))}
+              onClick={handleDotDot}
               className="flex items-center py-2 rounded-lg cursor-pointer transition-colors px-4 mx-2 hover:bg-sf-item text-gray-700"
             >
               <img src="/src/assets/icons/left_line.svg" alt=".." className="w-5 h-5 shrink-0" />
