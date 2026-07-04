@@ -2,9 +2,9 @@ export function installDevMocks() {
   const configStore: Record<string, string> = {
     initialPathLast: '""',
     initialPathMode_public: '"last"',
-    initialPathCustom_public: '""',
+    initialPathCustom_public: '"C:\\\\"',
     initialPathMode_privacy: '"last"',
-    initialPathCustom_privacy: '""',
+    initialPathCustom_privacy: '"C:\\\\"',
   }
 
   if (!(window as any).go) {

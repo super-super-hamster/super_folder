@@ -144,9 +144,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ initialPathModePublic: mode })
         get().saveInitialPathModePublic()
       },
-      initialPathCustomPublic: '',
+      initialPathCustomPublic: 'C:\\',
       setInitialPathCustomPublic: (path) => {
-        set({ initialPathCustomPublic: path })
+        const normalized = path.replace(/\//g, '\\').replace(/^(\w):$/, '$1:\\\\').trim()
+        set({ initialPathCustomPublic: normalized })
         get().saveInitialPathCustomPublic()
       },
       initialPathModePrivacy: 'last',
@@ -154,9 +155,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ initialPathModePrivacy: mode })
         get().saveInitialPathModePrivacy()
       },
-      initialPathCustomPrivacy: '',
+      initialPathCustomPrivacy: 'C:\\',
       setInitialPathCustomPrivacy: (path) => {
-        set({ initialPathCustomPrivacy: path })
+        const normalized = path.replace(/\//g, '\\').replace(/^(\w):$/, '$1:\\\\').trim()
+        set({ initialPathCustomPrivacy: normalized })
         get().saveInitialPathCustomPrivacy()
       },
 

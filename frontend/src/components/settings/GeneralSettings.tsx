@@ -242,7 +242,6 @@ export default function GeneralSettings() {
                   type="text"
                   value={initialPathCustom}
                   onChange={(e) => setInitialPathCustom(e.target.value)}
-                  placeholder="例如 C:\\Users\\Name\\Desktop"
                   className="flex-1"
                 />
                 <Button
