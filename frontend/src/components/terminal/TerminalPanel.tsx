@@ -133,8 +133,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
     let sfBuffer = ""
     let cmdRawBuffer = ""
     let currentSfPath = ""
-    let sfLineCount = 0
-    let syncingConpty = false
+    let syncRemaining = 0
     let syncBuffer = ""
     let sfHistory: string[] = []
     let sfHistoryIndex = 0
@@ -294,18 +293,14 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         if (cmd === '@cmd') {
           sfMode = false
           sfBuffer = ""
-          syncingConpty = true
+          syncRemaining = 1
           syncBuffer = ""
-          term.write('\x1b[0m') // Reset ANSI
-          EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
-          // Sync ConPTY cursor down to match xterm by sending empty enters. Empty enters don't go into history!
-          const newlines = '\r'.repeat(Math.max(1, sfLineCount))
-          EventsEmit('terminal:input', newlines)
-          sfLineCount = 0
+          term.write('\x1b[0m')
+          EventsEmit('terminal:input', '\x1b')
+          EventsEmit('terminal:input', '\r')
         } else if (mainCmd === 'rename' && subCmd === 'add') {
           sfState = 'rename_name'
           sfBuffer = ''
-          sfLineCount++
           term.write('\x1b[36m名称：\x1b[0m ')
           return
         } else if (mainCmd === 'rename' && subCmd === 'show') {
@@ -319,7 +314,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
                 term.write(`  - ${s.name}\r\n`)
               })
             }
-            sfLineCount += Math.max(list.length, 1) + 1
             term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
           }).catch((e: any) => {
             term.write(`\x1b[31m[错误] ${e?.message || String(e)}\x1b[0m\r\n`)
@@ -388,7 +382,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             EventsEmit('terminal:sf:command', cmd)
           }
           sfBuffer = ""
-          sfLineCount++
           term.write(`\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
         }
         } else if (data === '\x1b[A') { // Up arrow
@@ -429,7 +422,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           sfBuffer = ""
           sfCursorOffset = 0
           sfHistoryIndex = sfHistory.length
-          sfLineCount++
           term.write(`^C\r\n\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> `)
         } else if (data === '\t') { // Tab
           const pos = sfBuffer.length - sfCursorOffset
@@ -480,7 +472,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
             sfMode = true
             sfBuffer = ""
             cmdRawBuffer = ""
-            sfLineCount = 1 // Start at 1 for the prompt line
             
             // Extract path from the prompt on screen
             const activeBuffer = term.buffer.active
@@ -536,17 +527,17 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         return // Drop PTY output during sfMode since we do local echo
       }
       
-      if (syncingConpty) {
+      if (syncRemaining > 0) {
         syncBuffer += data
-        // Wait until PowerShell prints the new prompt
-        if (syncBuffer.includes('@cmd') && syncBuffer.includes('>')) {
-          syncingConpty = false
+        const promptCount = (syncBuffer.match(/@cmd/g) || []).length
+        if (promptCount >= syncRemaining) {
+          syncRemaining = 0
           const idx = syncBuffer.lastIndexOf('@cmd')
           const promptText = syncBuffer.substring(idx)
           syncBuffer = ""
           term.write(promptText)
         }
-        return // Drop output to hide the synchronization sequence from xterm
+        return
       }
       term.write(data)
     })
@@ -568,7 +559,6 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         sfBuffer = 'rename add'
         sfState = 'cmd'
         cmdRawBuffer = ''
-        sfLineCount = 1
         term.write('\x1b[0m') // Reset ANSI
         EventsEmit('terminal:input', '\x1b') // Escape to clear any ghost buffer in PS
         term.write(`\r\n\x1b[38;2;255;108;2m@sf\x1b[0m ${currentSfPath}> rename add`)
