@@ -290,3 +290,38 @@ Fixed multiple newline-related bugs in terminal SF↔CMD mode switching:\n- Sync
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Add initial path setting
+
+**Date**: 2026-07-04
+**Task**: Add initial path setting
+**Branch**: `main`
+
+### Summary
+
+Implemented initial path setting in General settings with last/custom modes, privacy-aware config, close-time recording, startup path resolver, and follow-up fixes for Select value, default C: path, and input normalization.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4310cc1` | (see git log) |
+| `2ed7057` | (see git log) |
+| `b2340ca` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

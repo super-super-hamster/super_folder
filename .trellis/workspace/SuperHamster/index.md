@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-07-04
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~292 | Active |
+| `journal-1.md` | ~327 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-07-04 | Add initial path setting | `4310cc1`, `2ed7057`, `b2340ca` | `main` |
 | 8 | 2026-07-04 | Fix terminal mode switch newline leak | `c4768de`, `4f7d024` | `main` |
 | 7 | 2026-07-03 | Preserve panel state, search path nav, public mode protection, marquee edge feedback | `e968541`, `294a054`, `bd0d4e3`, `555768d`, `910a3a9`, `1771d82`, `2e8990c`, `8552ecd`, `0e8a46a`, `cca7929`, `ad75fa9`, `042e8ca`, `bd0c2bd` | `main` |
 | 6 | 2026-07-03 | Fix tag search and tag management | `d46085c`, `aa97925`, `15172b7`, `7783727`, `7a0c100` | `main` |
