@@ -212,11 +212,9 @@ export default function GeneralSettings() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-700">初始路径</span>
               <Select
-                selectedKey={initialPathMode}
-                onSelectionChange={(key) => {
-                  const selected = Array.from(key as any)[0] || key
-                  setInitialPathMode(selected as 'last' | 'custom')
-                }}
+                value={initialPathMode}
+                onChange={(value) => setInitialPathMode(value as 'last' | 'custom')}
+                placeholder="请选择"
                 className="w-64"
               >
                 <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-10 min-h-10 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
