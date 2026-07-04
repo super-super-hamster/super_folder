@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
+- **Total Sessions**: 11
 - **Last Active**: 2026-07-04
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~361 | Active |
+| `journal-1.md` | ~394 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-07-04 | Fix empty folder creation, scroll-to-rename race, and FilterVisibleFiles nil | `cd89640` | `main` |
 | 10 | 2026-07-04 | Add sidebar column browse, search depth filter, terminal newline fix | `110c3ed`, `d288ed0` | `main` |
 | 9 | 2026-07-04 | Add initial path setting | `4310cc1`, `2ed7057`, `b2340ca` | `main` |
 | 8 | 2026-07-04 | Fix terminal mode switch newline leak | `c4768de`, `4f7d024` | `main` |

@@ -359,3 +359,36 @@ Implemented sidebar column browse mode showing parent directory listing with dra
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: Fix empty folder creation, scroll-to-rename race, and FilterVisibleFiles nil
+
+**Date**: 2026-07-04
+**Task**: Fix empty folder creation, scroll-to-rename race, and FilterVisibleFiles nil
+**Branch**: `main`
+
+### Summary
+
+Fixed three issues: FilterVisibleFiles returning nil for empty folders causing ReadDir to return null; scrollToPosition restoration overriding scrollToIndex for new items; added diagnostic modal to handleCreate catch block.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cd89640` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
