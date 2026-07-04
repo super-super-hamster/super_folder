@@ -209,13 +209,14 @@ export default function FileList() {
     if (index >= 0) {
       requestAnimationFrame(() => {
         rowVirtualizer.scrollToIndex(index, { align: 'center' })
+        setScrollToPath(null)
       })
-      setScrollToPath(null)
     }
   }, [scrollToPath, listItems, rowVirtualizer, setScrollToPath])
 
   useEffect(() => {
     if (scrollRef.current && currentPath && !loading) {
+      if (useUIStore.getState().scrollToPath) return
       setTimeout(() => {
         if (scrollRef.current) {
           scrollRef.current.scrollTop = useUIStore.getState().scrollPositions[currentPath] || 0

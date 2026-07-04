@@ -223,7 +223,7 @@ func IsPathHiddenInPublic(path string) (bool, error) {
 
 func FilterVisibleFiles(files []models.FileInfo, includeProtectedState bool) ([]models.FileInfo, error) {
 	if len(files) == 0 {
-		return files, nil
+		return []models.FileInfo{}, nil
 	}
 	paths := make([]string, len(files))
 	for i, file := range files {

@@ -300,7 +300,8 @@ export default function ContextMenu() {
       }, 100)
 
     } catch (e) {
-      console.error(e)
+      console.error('handleCreate 异常', e)
+      useModalStore.getState().openModal('warning', { message: `创建失败: ${e}` })
     }
   }
 
