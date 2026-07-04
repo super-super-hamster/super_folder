@@ -65,6 +65,8 @@ interface SettingsState {
   setInitialPathModePrivacy: (mode: 'last' | 'custom') => void
   initialPathCustomPrivacy: string
   setInitialPathCustomPrivacy: (path: string) => void
+  showParentDirInNav: boolean
+  setShowParentDirInNav: (value: boolean) => void
 
   // Save/Load to backend
   loadFromBackend: () => Promise<void>
@@ -161,6 +163,8 @@ export const useSettingsStore = create<SettingsState>()(
         set({ initialPathCustomPrivacy: normalized })
         get().saveInitialPathCustomPrivacy()
       },
+      showParentDirInNav: false,
+      setShowParentDirInNav: (value) => set({ showParentDirInNav: value }),
 
       loadFromBackend: async () => {
         try {

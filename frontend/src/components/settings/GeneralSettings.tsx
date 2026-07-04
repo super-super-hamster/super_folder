@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Reorder } from 'framer-motion'
-import { Select, Slider, ListBox, Label, Input, Button } from '@heroui/react'
+import { Select, Slider, ListBox, Label, Input, Button, Switch } from '@heroui/react'
 import { useSettingsStore, ShortcutItem } from '../../store/settingsStore'
 import { usePrivacyStore } from '../../store/privacyStore'
 import { GetDefaultPaths, SelectDirectory } from '../../../wailsjs/go/main/App'
@@ -27,6 +27,7 @@ export default function GeneralSettings() {
     initialPathCustomPublic, setInitialPathCustomPublic,
     initialPathModePrivacy, setInitialPathModePrivacy,
     initialPathCustomPrivacy, setInitialPathCustomPrivacy,
+    showParentDirInNav, setShowParentDirInNav,
   } = useSettingsStore()
   const privacyMode = usePrivacyStore((state) => state.state?.mode || 'public')
   const isPrivacy = privacyMode === 'privacy'
@@ -254,6 +255,19 @@ export default function GeneralSettings() {
                 </Button>
               </div>
             )}
+          </div>
+
+          <div className="bg-sf-panel/80 rounded-xl p-5 flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-700">导航栏显示上一级目录</span>
+            <Switch isSelected={showParentDirInNav} onChange={setShowParentDirInNav}>
+              {({ isSelected }) => (
+                <Switch.Content>
+                  <Switch.Control className={isSelected ? 'bg-green-500' : 'bg-gray-300'}>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
+              )}
+            </Switch>
           </div>
         </div>
       </div>
