@@ -325,3 +325,37 @@ Implemented initial path setting in General settings with last/custom modes, pri
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: Add sidebar column browse, search depth filter, terminal newline fix
+
+**Date**: 2026-07-04
+**Task**: Add sidebar column browse, search depth filter, terminal newline fix
+**Branch**: `main`
+
+### Summary
+
+Implemented sidebar column browse mode showing parent directory listing with drag-and-drop support, added search depth filter with input validation, fixed terminal SF→CMD mode switch extra blank line issue.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `110c3ed` | (see git log) |
+| `d288ed0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
