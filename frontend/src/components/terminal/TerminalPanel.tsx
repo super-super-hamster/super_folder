@@ -295,9 +295,11 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           sfBuffer = ""
           syncRemaining = 1
           syncBuffer = ""
+          cmdRawBuffer = ""
           term.write('\x1b[0m')
           EventsEmit('terminal:input', '\x1b')
           EventsEmit('terminal:input', '\r')
+          return
         } else if (mainCmd === 'rename' && subCmd === 'add') {
           sfState = 'rename_name'
           sfBuffer = ''
@@ -532,10 +534,8 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
         const promptCount = (syncBuffer.match(/@cmd/g) || []).length
         if (promptCount >= syncRemaining) {
           syncRemaining = 0
-          const idx = syncBuffer.lastIndexOf('@cmd')
-          const promptText = syncBuffer.substring(idx)
+          term.write(syncBuffer)
           syncBuffer = ""
-          term.write(promptText)
         }
         return
       }
