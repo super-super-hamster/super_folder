@@ -118,6 +118,8 @@ export function ReadDirChunked(arg1:string,arg2:string):Promise<Array<models.Fil
 
 export function ReadFileText(arg1:string):Promise<string>;
 
+export function RecordInitialPath(arg1:string):Promise<void>;
+
 export function RedoOperation():Promise<void>;
 
 export function RemoveTagFromFile(arg1:string,arg2:string):Promise<void>;

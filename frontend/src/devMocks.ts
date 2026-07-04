@@ -1,4 +1,12 @@
 export function installDevMocks() {
+  const configStore: Record<string, string> = {
+    initialPathLast: '""',
+    initialPathMode_public: '"last"',
+    initialPathCustom_public: '""',
+    initialPathMode_privacy: '"last"',
+    initialPathCustom_privacy: '""',
+  }
+
   if (!(window as any).go) {
     (window as any).go = {
       main: {
@@ -41,11 +49,19 @@ export function installDevMocks() {
           SetTagProtected: async () => {},
           IsPathProtected: async () => false,
           CanAccessPath: async () => true,
-          InspectPathForNavigation: async (path: string) => ({ path, exists: false, accessible: false, isDir: false }),
+          InspectPathForNavigation: async (path: string) => {
+            const normalized = path?.replace(/\\+$/, '') || ''
+            const known = new Set(['C:', 'C:\\', 'D:', 'D:\\'])
+            if (known.has(normalized) || normalized.toLowerCase().startsWith('c:\\users\\mock')) {
+              return { path, exists: true, accessible: true, isDir: true }
+            }
+            return { path, exists: false, accessible: false, isDir: false }
+          },
+          RecordInitialPath: async () => {},
           VerifyWindowsIdentityForPrivacyReset: async () => false,
           ResetPrivacyPassword: async () => ({ mode: 'privacy', hasPassword: true, restorePrivacyOnStartup: false, shouldPromptRestore: false, windowsIdentityAvailable: false }),
-          GetConfig: async () => '',
-          SetConfig: async () => {},
+          GetConfig: async (key: string) => configStore[key] || '',
+          SetConfig: async (key: string, value: string) => { configStore[key] = value },
           GetThumbnailBudgetLimit: async () => 512,
           SetThumbnailBudgetLimit: async () => {},
           GetThumbnailCacheSize: async () => 0,

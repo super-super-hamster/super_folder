@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Reorder } from 'framer-motion'
-import { Select, Slider, ListBox, Label } from '@heroui/react'
+import { Select, Slider, ListBox, Label, Input, Button } from '@heroui/react'
 import { useSettingsStore, ShortcutItem } from '../../store/settingsStore'
+import { usePrivacyStore } from '../../store/privacyStore'
 import { GetDefaultPaths, SelectDirectory } from '../../../wailsjs/go/main/App'
 
 const SPECIAL_IDS = new Set(['favorite', 'recent', 'smartfolder'])
@@ -21,8 +22,19 @@ export default function GeneralSettings() {
   const {
     shortcuts, setShortcuts, loadFromBackend,
     doubleClickOpenMode, setDoubleClickOpenMode,
-    thumbnailBudgetMB, setThumbnailBudgetMB
+    thumbnailBudgetMB, setThumbnailBudgetMB,
+    initialPathModePublic, setInitialPathModePublic,
+    initialPathCustomPublic, setInitialPathCustomPublic,
+    initialPathModePrivacy, setInitialPathModePrivacy,
+    initialPathCustomPrivacy, setInitialPathCustomPrivacy,
   } = useSettingsStore()
+  const privacyMode = usePrivacyStore((state) => state.state?.mode || 'public')
+  const isPrivacy = privacyMode === 'privacy'
+  const initialPathMode = isPrivacy ? initialPathModePrivacy : initialPathModePublic
+  const initialPathCustom = isPrivacy ? initialPathCustomPrivacy : initialPathCustomPublic
+  const setInitialPathMode = isPrivacy ? setInitialPathModePrivacy : setInitialPathModePublic
+  const setInitialPathCustom = isPrivacy ? setInitialPathCustomPrivacy : setInitialPathCustomPublic
+
   const [items, setItems] = useState<ShortcutItem[]>([])
   const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
   const [dragId, setDragId] = useState<string | null>(null)
@@ -194,6 +206,57 @@ export default function GeneralSettings() {
                 <Slider.Thumb />
               </Slider.Track>
             </Slider>
+          </div>
+
+          <div className="bg-sf-panel/80 rounded-xl p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">初始路径</span>
+              <Select
+                selectedKey={initialPathMode}
+                onSelectionChange={(key) => {
+                  const selected = Array.from(key as any)[0] || key
+                  setInitialPathMode(selected as 'last' | 'custom')
+                }}
+                className="w-64"
+              >
+                <Select.Trigger className="bg-sf-input hover:bg-sf-input-hover transition-colors rounded-full shadow-none border-none h-10 min-h-10 flex items-center px-4 data-[hover=true]:bg-sf-input-hover">
+                  <Select.Value className="text-sm font-medium text-gray-800 bg-transparent w-full truncate" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-data-[open=true]:rotate-180 transition-transform">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </Select.Trigger>
+                <Select.Popover className="border border-gray-200 shadow-lg rounded-xl w-64 p-1">
+                  <ListBox className="gap-1 p-0">
+                    <ListBox.Item id="last" textValue="上次退出的位置" className="rounded-lg text-sm font-medium text-gray-800 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
+                      上次退出的位置
+                    </ListBox.Item>
+                    <ListBox.Item id="custom" textValue="自定义" className="rounded-lg text-sm font-medium text-gray-800 px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer">
+                      自定义
+                    </ListBox.Item>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            </div>
+
+            {initialPathMode === 'custom' && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  value={initialPathCustom}
+                  onChange={(e) => setInitialPathCustom(e.target.value)}
+                  placeholder="例如 C:\\Users\\Name\\Desktop"
+                  className="flex-1"
+                />
+                <Button
+                  onPress={async () => {
+                    const dir = await SelectDirectory()
+                    if (dir) setInitialPathCustom(dir)
+                  }}
+                >
+                  浏览
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

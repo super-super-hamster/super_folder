@@ -230,6 +230,10 @@ export function ReadFileText(arg1) {
   return window['go']['main']['App']['ReadFileText'](arg1);
 }
 
+export function RecordInitialPath(arg1) {
+  return window['go']['main']['App']['RecordInitialPath'](arg1);
+}
+
 export function RedoOperation() {
   return window['go']['main']['App']['RedoOperation']();
 }

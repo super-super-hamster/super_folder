@@ -57,6 +57,14 @@ interface SettingsState {
   setDoubleClickOpenMode: (mode: 'inApp' | 'defaultProgram') => void
   thumbnailBudgetMB: number
   setThumbnailBudgetMB: (limit: number) => void
+  initialPathModePublic: 'last' | 'custom'
+  setInitialPathModePublic: (mode: 'last' | 'custom') => void
+  initialPathCustomPublic: string
+  setInitialPathCustomPublic: (path: string) => void
+  initialPathModePrivacy: 'last' | 'custom'
+  setInitialPathModePrivacy: (mode: 'last' | 'custom') => void
+  initialPathCustomPrivacy: string
+  setInitialPathCustomPrivacy: (path: string) => void
 
   // Save/Load to backend
   loadFromBackend: () => Promise<void>
@@ -66,6 +74,10 @@ interface SettingsState {
   saveSmartFolders: () => Promise<void>
   saveDoubleClickOpenMode: () => Promise<void>
   saveThumbnailBudgetMB: () => Promise<void>
+  saveInitialPathModePublic: () => Promise<void>
+  saveInitialPathCustomPublic: () => Promise<void>
+  saveInitialPathModePrivacy: () => Promise<void>
+  saveInitialPathCustomPrivacy: () => Promise<void>
 }
 
 const defaultShortcuts: ShortcutItem[] = [
@@ -127,6 +139,27 @@ export const useSettingsStore = create<SettingsState>()(
         get().saveThumbnailBudgetMB()
       },
 
+      initialPathModePublic: 'last',
+      setInitialPathModePublic: (mode) => {
+        set({ initialPathModePublic: mode })
+        get().saveInitialPathModePublic()
+      },
+      initialPathCustomPublic: '',
+      setInitialPathCustomPublic: (path) => {
+        set({ initialPathCustomPublic: path })
+        get().saveInitialPathCustomPublic()
+      },
+      initialPathModePrivacy: 'last',
+      setInitialPathModePrivacy: (mode) => {
+        set({ initialPathModePrivacy: mode })
+        get().saveInitialPathModePrivacy()
+      },
+      initialPathCustomPrivacy: '',
+      setInitialPathCustomPrivacy: (path) => {
+        set({ initialPathCustomPrivacy: path })
+        get().saveInitialPathCustomPrivacy()
+      },
+
       loadFromBackend: async () => {
         try {
           const scJSON = await GetConfig("shortcuts")
@@ -186,6 +219,40 @@ export const useSettingsStore = create<SettingsState>()(
             SetThumbnailBudgetLimit(get().thumbnailBudgetMB).catch(console.error)
           }
         } catch (e) { console.error("Failed to load thumbnailBudgetMB", e) }
+
+        try {
+          const modePublicJSON = await GetConfig("initialPathMode_public")
+          if (modePublicJSON) {
+            const mode = JSON.parse(modePublicJSON)
+            if (mode === 'last' || mode === 'custom') {
+              set({ initialPathModePublic: mode })
+            }
+          }
+        } catch (e) { console.error("Failed to load initialPathMode_public", e) }
+
+        try {
+          const customPublicJSON = await GetConfig("initialPathCustom_public")
+          if (customPublicJSON) {
+            set({ initialPathCustomPublic: JSON.parse(customPublicJSON) })
+          }
+        } catch (e) { console.error("Failed to load initialPathCustom_public", e) }
+
+        try {
+          const modePrivacyJSON = await GetConfig("initialPathMode_privacy")
+          if (modePrivacyJSON) {
+            const mode = JSON.parse(modePrivacyJSON)
+            if (mode === 'last' || mode === 'custom') {
+              set({ initialPathModePrivacy: mode })
+            }
+          }
+        } catch (e) { console.error("Failed to load initialPathMode_privacy", e) }
+
+        try {
+          const customPrivacyJSON = await GetConfig("initialPathCustom_privacy")
+          if (customPrivacyJSON) {
+            set({ initialPathCustomPrivacy: JSON.parse(customPrivacyJSON) })
+          }
+        } catch (e) { console.error("Failed to load initialPathCustom_privacy", e) }
       },
       
       saveShortcuts: async () => {
@@ -225,6 +292,30 @@ export const useSettingsStore = create<SettingsState>()(
           await SetConfig("thumbnailBudgetMB", JSON.stringify(clamped))
           await SetThumbnailBudgetLimit(clamped)
         } catch (e) { console.error("Failed to save thumbnailBudgetMB", e) }
+      },
+
+      saveInitialPathModePublic: async () => {
+        try {
+          await SetConfig("initialPathMode_public", JSON.stringify(get().initialPathModePublic))
+        } catch (e) { console.error("Failed to save initialPathMode_public", e) }
+      },
+
+      saveInitialPathCustomPublic: async () => {
+        try {
+          await SetConfig("initialPathCustom_public", JSON.stringify(get().initialPathCustomPublic))
+        } catch (e) { console.error("Failed to save initialPathCustom_public", e) }
+      },
+
+      saveInitialPathModePrivacy: async () => {
+        try {
+          await SetConfig("initialPathMode_privacy", JSON.stringify(get().initialPathModePrivacy))
+        } catch (e) { console.error("Failed to save initialPathMode_privacy", e) }
+      },
+
+      saveInitialPathCustomPrivacy: async () => {
+        try {
+          await SetConfig("initialPathCustom_privacy", JSON.stringify(get().initialPathCustomPrivacy))
+        } catch (e) { console.error("Failed to save initialPathCustom_privacy", e) }
       }
     }),
     {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import Sidebar from './components/layout/Sidebar'
 import TopNav from './components/layout/TopNav'
@@ -9,6 +9,7 @@ import SearchPanel from './components/layout/SearchPanel'
 import { ModalManager } from './components/common/ModalManager'
 import { useUIStore } from './store/uiStore'
 import { useTabsStore } from './store/tabsStore'
+import { useSettingsStore } from './store/settingsStore'
 import SettingsSidebar from './components/settings/SettingsSidebar'
 import SettingsContent from './components/settings/SettingsContent'
 import { useUndoStore } from './store/undoStore'
@@ -20,6 +21,8 @@ import ContextMenu from './components/fileList/ContextMenu'
 import PrivacyModal from './components/privacy/PrivacyModal'
 import PrivacyStartupGate from './components/privacy/PrivacyStartupGate'
 import { usePrivacyStore } from './store/privacyStore'
+import { RecordInitialPath, InspectPathForNavigation, IsPathProtected, GetConfig } from '../wailsjs/go/main/App'
+import { getLastInitialPath, isFunctionPage } from './utils/pathUtils'
 
 function App() {
   const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen, searchQuery } = useUIStore()
@@ -31,6 +34,71 @@ function App() {
   useEffect(() => {
     usePrivacyStore.getState().load().catch(console.error)
   }, [])
+
+  useEffect(() => {
+    const path = getLastInitialPath(tabs, activeTabId)
+    RecordInitialPath(path).catch(console.error)
+  }, [tabs, activeTabId])
+
+  const resolverRun = useRef(false)
+  useEffect(() => {
+    if (!initialized || dialogMode === 'startupUnlock' || resolverRun.current) return
+    resolverRun.current = true
+
+    const resolveInitialPath = async () => {
+      await useSettingsStore.getState().loadFromBackend()
+      const mode = usePrivacyStore.getState().state?.mode || 'public'
+      const settings = useSettingsStore.getState()
+
+      const useLast = mode === 'privacy'
+        ? settings.initialPathModePrivacy !== 'custom'
+        : settings.initialPathModePublic !== 'custom'
+
+      let target = ''
+      if (useLast) {
+        try {
+          const lastJSON = await GetConfig('initialPathLast')
+          target = lastJSON ? JSON.parse(lastJSON) : ''
+        } catch (e) {
+          console.error('Failed to load initialPathLast', e)
+          target = ''
+        }
+      } else {
+        target = mode === 'privacy'
+          ? settings.initialPathCustomPrivacy
+          : settings.initialPathCustomPublic
+      }
+
+      if (!target || isFunctionPage(target)) {
+        target = 'C:\\'
+      } else {
+        try {
+          const inspection = await InspectPathForNavigation(target)
+          const isValid = inspection.exists && inspection.accessible && inspection.isDir
+          if (!isValid) {
+            if (mode === 'privacy') {
+              const isProtected = await IsPathProtected(target)
+              if (!isProtected) {
+                target = 'C:\\'
+              }
+            } else {
+              target = 'C:\\'
+            }
+          }
+        } catch (e) {
+          console.error('Failed to inspect initial path', e)
+          target = 'C:\\'
+        }
+      }
+
+      const active = useTabsStore.getState().tabs.find((t) => t.id === useTabsStore.getState().activeTabId)
+      if (target !== active?.currentPath) {
+        useTabsStore.getState().navigate(target, undefined, true, true)
+      }
+    }
+
+    resolveInitialPath().catch(console.error)
+  }, [initialized, dialogMode])
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {

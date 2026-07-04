@@ -76,12 +76,13 @@ func syncFileTagsToADS(path string) error {
 
 // App struct
 type App struct {
-	ctx            context.Context
-	localHttpPort  int
-	localAuthToken string
-	termService    *terminal.TerminalService
-	privacyMode    string
-	resetVerified  bool
+	ctx             context.Context
+	localHttpPort   int
+	localAuthToken  string
+	termService     *terminal.TerminalService
+	privacyMode     string
+	resetVerified   bool
+	lastInitialPath string
 }
 
 func generateToken() string {
@@ -202,7 +203,14 @@ func (a *App) beforeClose(ctx context.Context) bool {
 	configBytes, _ := json.Marshal(config)
 	_ = database.SetConfig("window_bounds", string(configBytes))
 
+	lastPathBytes, _ := json.Marshal(a.lastInitialPath)
+	_ = database.SetConfig("initialPathLast", string(lastPathBytes))
+
 	return false
+}
+
+func (a *App) RecordInitialPath(path string) {
+	a.lastInitialPath = path
 }
 
 // Window control bindings
