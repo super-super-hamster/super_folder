@@ -14,7 +14,8 @@ export default function SearchPanel() {
   const [extInput, setExtInput] = useState('')
   const [isAddingExclude, setIsAddingExclude] = useState(false)
   const [excludeInput, setExcludeInput] = useState('')
-
+  const [depthInput, setDepthInput] = useState('0')
+  const [depthError, setDepthError] = useState(false)
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return
@@ -47,6 +48,7 @@ export default function SearchPanel() {
   if (!searchFilter.isSizeFilter) availableFilters.push({ id: 'size', label: '文件大小' })
   if (!searchFilter.isTimeFilter) availableFilters.push({ id: 'time', label: '修改时间' })
   if (!searchFilter.isImageShapeFilter) availableFilters.push({ id: 'image_shape', label: '图片形状' })
+  if (!searchFilter.isDepthFilter) availableFilters.push({ id: 'depth', label: '搜索深度' })
   if (searchFilter.type === 'all') {
     availableFilters.push({ id: 'file', label: '仅文件' })
     availableFilters.push({ id: 'folder', label: '仅文件夹' })
@@ -61,6 +63,7 @@ export default function SearchPanel() {
     if (id === 'size') setSearchFilter({ isSizeFilter: true, minSize: null, maxSize: null })
     if (id === 'time') setSearchFilter({ isTimeFilter: true, minTime: null, maxTime: null })
     if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: true, imageShape: 'square' })
+    if (id === 'depth') setSearchFilter({ isDepthFilter: true, maxDepth: 0 })
   }
 
   const handleRemoveFilter = (id: string) => {
@@ -71,6 +74,7 @@ export default function SearchPanel() {
     if (id === 'size') setSearchFilter({ isSizeFilter: false, minSize: null, maxSize: null })
     if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null })
     if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: false, imageShape: 'square' })
+    if (id === 'depth') setSearchFilter({ isDepthFilter: false, maxDepth: null })
   }
 
   const submitExt = () => {
@@ -433,6 +437,55 @@ export default function SearchPanel() {
                     </ListBox>
                   </Select.Popover>
                 </Select>
+              </motion.div>
+            )}
+
+            {searchFilter.isDepthFilter && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-800 font-medium">搜索深度</span>
+                  <button onClick={() => { setDepthInput('0'); setDepthError(false); handleRemoveFilter('depth') }} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                    <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="w-full h-px bg-gray-200 my-2"></div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={depthInput}
+                    onChange={(e: any) => {
+                      const raw = e.target.value
+                      setDepthInput(raw)
+                      if (raw === '' || !/^\d+$/.test(raw)) {
+                        setDepthError(true)
+                        setSearchFilter({ maxDepth: null })
+                      } else {
+                        const n = parseInt(raw, 10)
+                        setDepthError(false)
+                        setSearchFilter({ maxDepth: n })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (depthError && depthInput !== '') {
+                        setDepthInput('')
+                        setDepthError(true)
+                        setSearchFilter({ maxDepth: null })
+                      }
+                    }}
+                    placeholder="输入层数"
+                    className={`w-16 h-7 text-xs bg-white border px-2 rounded-md [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                      depthError ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                  />
+                  <span className="text-xs text-gray-500">层</span>
+                  <span className="text-xs text-gray-400 ml-auto">0=当前目录 1=含一层子目录</span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -225,7 +225,10 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         tags: tags,
         tagLogic: tagLogic,
         remarks: remarks,
-        maxDepth: 0,
+        maxDepth:
+          searchFilter?.isDepthFilter && searchFilter?.maxDepth != null
+            ? searchFilter.maxDepth + 1
+            : 0,
         rootPath: currentPath,
         limit: 2000,
         minSize: toBytes(searchFilter?.minSize ?? null),

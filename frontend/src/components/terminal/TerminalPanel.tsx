@@ -261,9 +261,22 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
 
         // Simple line editor for SF Mode
         if (data === '\r') { // Enter
-          term.write('\r\n')
           const cmd = sfBuffer.trim()
-          
+
+          if (cmd === '@cmd') {
+            sfMode = false
+            sfBuffer = ""
+            syncRemaining = 1
+            syncBuffer = ""
+            cmdRawBuffer = ""
+            term.write('\x1b[0m')
+            EventsEmit('terminal:input', '\x1b')
+            EventsEmit('terminal:input', '\r')
+            return
+          }
+
+          term.write('\r\n')
+
           if (sfState === 'cmd' && cmd !== '') {
             if (sfHistory.length === 0 || sfHistory[sfHistory.length - 1] !== cmd) {
               sfHistory.push(cmd)
@@ -290,17 +303,7 @@ export default function TerminalPanel({ onClose }: TerminalPanelProps) {
           return
         }
 
-        if (cmd === '@cmd') {
-          sfMode = false
-          sfBuffer = ""
-          syncRemaining = 1
-          syncBuffer = ""
-          cmdRawBuffer = ""
-          term.write('\x1b[0m')
-          EventsEmit('terminal:input', '\x1b')
-          EventsEmit('terminal:input', '\r')
-          return
-        } else if (mainCmd === 'rename' && subCmd === 'add') {
+        if (mainCmd === 'rename' && subCmd === 'add') {
           sfState = 'rename_name'
           sfBuffer = ''
           term.write('\x1b[36m名称：\x1b[0m ')

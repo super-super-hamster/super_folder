@@ -19,6 +19,8 @@ export interface SearchFilter {
   maxTime: number | null
   isImageShapeFilter: boolean
   imageShape: 'square' | 'landscape' | 'portrait'
+  isDepthFilter: boolean
+  maxDepth: number | null
 }
 
 export interface AutocompleteSuggestion {
@@ -108,7 +110,9 @@ export const useUIStore = create<UIState>()(
       minTime: null,
       maxTime: null,
       isImageShapeFilter: false,
-      imageShape: 'square'
+      imageShape: 'square',
+      isDepthFilter: false,
+      maxDepth: null
     },
       setSearchFilter: (filter) => set((state) => ({ searchFilter: { ...state.searchFilter, ...filter } })),
       isSidebarExpanded: false,
