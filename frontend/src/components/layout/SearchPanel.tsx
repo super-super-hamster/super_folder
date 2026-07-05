@@ -16,6 +16,8 @@ export default function SearchPanel() {
   const [excludeInput, setExcludeInput] = useState('')
   const [depthInput, setDepthInput] = useState('0')
   const [depthError, setDepthError] = useState(false)
+  const [isAddingInclude, setIsAddingInclude] = useState(false)
+  const [includeInput, setIncludeInput] = useState('')
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return
@@ -49,6 +51,7 @@ export default function SearchPanel() {
   if (!searchFilter.isTimeFilter) availableFilters.push({ id: 'time', label: '修改时间' })
   if (!searchFilter.isImageShapeFilter) availableFilters.push({ id: 'image_shape', label: '图片形状' })
   if (!searchFilter.isDepthFilter) availableFilters.push({ id: 'depth', label: '搜索深度' })
+  if (!searchFilter.isIncludeFilter) availableFilters.push({ id: 'include', label: '包含' })
   if (searchFilter.type === 'all') {
     availableFilters.push({ id: 'file', label: '仅文件' })
     availableFilters.push({ id: 'folder', label: '仅文件夹' })
@@ -64,6 +67,7 @@ export default function SearchPanel() {
     if (id === 'time') setSearchFilter({ isTimeFilter: true, minTime: null, maxTime: null })
     if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: true, imageShape: 'square' })
     if (id === 'depth') setSearchFilter({ isDepthFilter: true, maxDepth: 0 })
+    if (id === 'include') setSearchFilter({ isIncludeFilter: true, includeStrings: [] })
   }
 
   const handleRemoveFilter = (id: string) => {
@@ -75,6 +79,7 @@ export default function SearchPanel() {
     if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null })
     if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: false, imageShape: 'square' })
     if (id === 'depth') setSearchFilter({ isDepthFilter: false, maxDepth: null })
+    if (id === 'include') setSearchFilter({ isIncludeFilter: false, includeStrings: [] })
   }
 
   const submitExt = () => {
@@ -110,6 +115,20 @@ export default function SearchPanel() {
     setSearchFilter({ excludedFolders: searchFilter.excludedFolders.filter(f => f !== folderToRemove) })
   }
 
+  const submitInclude = () => {
+    if (includeInput.trim()) {
+      const newItem = includeInput.trim()
+      const uniqueItems = Array.from(new Set([...(searchFilter.includeStrings || []), newItem]))
+      setSearchFilter({ includeStrings: uniqueItems })
+      setIncludeInput('')
+    }
+    setIsAddingInclude(false)
+  }
+
+  const handleRemoveInclude = (itemToRemove: string) => {
+    setSearchFilter({ includeStrings: searchFilter.includeStrings.filter(s => s !== itemToRemove) })
+  }
+
   return (
     <motion.div 
       id="search-panel"
@@ -130,7 +149,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-800 font-medium">仅文件</span>
@@ -138,9 +157,9 @@ export default function SearchPanel() {
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
                 </div>
-                
+
                 <div className="w-full h-px bg-gray-200 my-2"></div>
-                
+
                 {searchFilter.extensions.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 w-full">
                     {searchFilter.extensions.map(ext => (
@@ -166,8 +185,9 @@ export default function SearchPanel() {
                       className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
-                    <button onClick={() => setIsAddingExt(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
-                      +
+                    <button onClick={() => setIsAddingExt(true)} className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1">
+                      <span className="text-lg leading-none">+</span>
+                      <span>添加</span>
                     </button>
                   )}
                 </div>
@@ -193,7 +213,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-800 font-medium">排除文件夹</span>
@@ -201,9 +221,9 @@ export default function SearchPanel() {
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
                 </div>
-                
+
                 <div className="w-full h-px bg-gray-200 my-2"></div>
-                
+
                 {searchFilter.excludedFolders && searchFilter.excludedFolders.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 w-full">
                     {searchFilter.excludedFolders.map(folder => (
@@ -229,8 +249,9 @@ export default function SearchPanel() {
                       className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
-                    <button onClick={() => setIsAddingExclude(true)} className="opacity-70 hover:opacity-100 text-sf-text-secondary text-lg leading-none transition-colors">
-                      +
+                    <button onClick={() => setIsAddingExclude(true)} className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1">
+                      <span className="text-lg leading-none">+</span>
+                      <span>添加</span>
                     </button>
                   )}
                 </div>
@@ -478,13 +499,59 @@ export default function SearchPanel() {
                         setSearchFilter({ maxDepth: null })
                       }
                     }}
-                    placeholder="输入层数"
                     className={`w-16 h-7 text-xs bg-white border px-2 rounded-md [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                       depthError ? 'border-red-500' : 'border-gray-200'
                     }`}
                   />
                   <span className="text-xs text-gray-500">层</span>
                   <span className="text-xs text-gray-400 ml-auto">0=当前目录 1=含一层子目录</span>
+                </div>
+              </motion.div>
+            )}
+
+            {searchFilter.isIncludeFilter && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-800 font-medium">包含</span>
+                  <button onClick={() => { setIsAddingInclude(false); setIncludeInput(''); handleRemoveFilter('include') }} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                    <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="w-full h-px bg-gray-200 my-2"></div>
+                {searchFilter.includeStrings && searchFilter.includeStrings.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 w-full">
+                    {searchFilter.includeStrings.map(s => (
+                      <span key={s} className="inline-flex items-center bg-white rounded-md px-1.5 py-0.5 text-[10px] text-gray-600 border border-gray-200">
+                        {s}
+                        <button onClick={() => handleRemoveInclude(s)} className="ml-1 hover:text-red-500 transition-colors">
+                          <img src="/src/assets/icons/close_line.svg" className="w-2.5 h-2.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-2 flex items-center justify-start">
+                  {isAddingInclude ? (
+                    <Input
+                      autoFocus
+                      value={includeInput}
+                      onChange={(e: any) => setIncludeInput(e.target.value)}
+                      onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); submitInclude() } }}
+                      onBlur={submitInclude}
+                      placeholder="输入关键词"
+                      className="w-full h-7 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                    />
+                  ) : (
+                    <button onClick={() => setIsAddingInclude(true)} className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1">
+                      <span className="text-lg leading-none">+</span>
+                      <span>添加</span>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
