@@ -392,3 +392,37 @@ Fixed three issues: FilterVisibleFiles returning nil for empty folders causing R
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: Add search include filter with OR substring matching, fix depth filter placeholder
+
+**Date**: 2026-07-05
+**Task**: Add search include filter with OR substring matching, fix depth filter placeholder
+**Branch**: `main`
+
+### Summary
+
+Added search include filter: frontend store, tag-style input UI (single item at a time), backend OR substring matching in both tag and USN paths. Removed depth filter placeholder text. Changed include input to single-item mode (no comma split).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d33d049` | (see git log) |
+| `d164d91` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
