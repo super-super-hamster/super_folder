@@ -104,7 +104,7 @@ export default function RenamePopover() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70]" onClick={endRename} onContextMenu={(e) => e.preventDefault()}>
+      <div className="fixed inset-0 z-[70]" onClick={handleRename} onContextMenu={(e) => e.preventDefault()}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: showAbove ? 10 : -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

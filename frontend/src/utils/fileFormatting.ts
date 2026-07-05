@@ -30,6 +30,7 @@ export function getFileIcon(file: models.FileInfo) {
       return 'book_2_line.svg'
     case '.txt':
     case '.md':
+    case '.markdown':
       return 'document_line.svg'
     case '.zip':
     case '.rar':
