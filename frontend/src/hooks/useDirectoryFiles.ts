@@ -229,6 +229,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
           searchFilter?.isDepthFilter && searchFilter?.maxDepth != null
             ? searchFilter.maxDepth + 1
             : 0,
+        includeStrings: searchFilter?.includeStrings || [],
         rootPath: currentPath,
         limit: 2000,
         minSize: toBytes(searchFilter?.minSize ?? null),

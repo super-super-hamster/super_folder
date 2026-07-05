@@ -131,6 +131,7 @@ type SearchRequest struct {
 	MaxTime         *int64   `json:"maxTime"`
 	ImageShape      string   `json:"imageShape"`
 	PrivacyMode     string   `json:"privacyMode"`
+	IncludeStrings  []string `json:"includeStrings"`
 }
 
 type SearchResponse struct {
@@ -417,6 +418,27 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
+			if len(req.IncludeStrings) > 0 {
+				includeMatched := false
+				checkName := name
+				if !req.CaseSensitive {
+					checkName = strings.ToLower(checkName)
+				}
+				for _, s := range req.IncludeStrings {
+					matchStr := s
+					if !req.CaseSensitive {
+						matchStr = strings.ToLower(matchStr)
+					}
+					if strings.Contains(checkName, matchStr) {
+						includeMatched = true
+						break
+					}
+				}
+				if !includeMatched {
+					continue
+				}
+			}
+
 			if len(req.ExcludedFolders) > 0 {
 				dir := filepath.Dir(fullPath)
 				parts := strings.Split(dir, `\`)
@@ -532,6 +554,27 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 
 			if !matched {
 				continue
+			}
+
+			if len(req.IncludeStrings) > 0 {
+				includeMatched := false
+				checkName := node.Name
+				if !req.CaseSensitive {
+					checkName = strings.ToLower(checkName)
+				}
+				for _, s := range req.IncludeStrings {
+					matchStr := s
+					if !req.CaseSensitive {
+						matchStr = strings.ToLower(matchStr)
+					}
+					if strings.Contains(checkName, matchStr) {
+						includeMatched = true
+						break
+					}
+				}
+				if !includeMatched {
+					continue
+				}
 			}
 
 			if len(req.Extensions) > 0 && !node.IsFolder {
