@@ -258,6 +258,7 @@ export default function TopNav() {
 
   const [isMaximized, setIsMaximized] = useState(false)
   const tabsContainerRef = useRef<HTMLDivElement>(null)
+  const hasScrolledOnMount = useRef(false)
 
   useEffect(() => {
     if (!(window as any).runtime) return;
@@ -288,6 +289,32 @@ export default function TopNav() {
 
   const activeTab = tabs.find((t) => t.id === activeTabId)
   const isSearchActive = isSearchFocused || isSearchPanelOpen || searchQuery !== ''
+
+  useEffect(() => {
+    if (isSearchActive) return
+    if (!hasScrolledOnMount.current) {
+      hasScrolledOnMount.current = true
+      return
+    }
+    const container = tabsContainerRef.current
+    if (!container) return
+    const activeTabEl = container.querySelector(`[data-tab-id="${activeTabId}"]`) as HTMLElement | null
+    if (!activeTabEl) return
+
+    const scrollToActiveTab = () => {
+      const containerRect = container.getBoundingClientRect()
+      const tabRect = activeTabEl.getBoundingClientRect()
+      const rightPadding = 4
+      const desiredContainerRight = containerRect.right - rightPadding
+      const delta = tabRect.right - desiredContainerRight
+      const maxScrollLeft = container.scrollWidth - container.clientWidth
+      const targetScrollLeft = Math.max(0, Math.min(maxScrollLeft, container.scrollLeft + delta))
+      container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' })
+    }
+
+    const raf = requestAnimationFrame(() => requestAnimationFrame(scrollToActiveTab))
+    return () => cancelAnimationFrame(raf)
+  }, [activeTabId, activeTab?.currentPath, isSearchActive])
 
   return (
     <div className="flex items-center h-14 bg-white rounded-2xl shadow-panel border border-gray-100 wails-draggable px-4 shrink-0">
@@ -340,6 +367,7 @@ export default function TopNav() {
               return (
                 <motion.div
                   key={tab.id}
+                  data-tab-id={tab.id}
                   layout
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 'auto' }}
