@@ -492,3 +492,36 @@ Added auto-scroll behavior to the top tab bar so that when the current tab's pat
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: Fix TopNav tab auto-scroll jitter
+
+**Date**: 2026-07-06
+**Task**: Fix TopNav tab auto-scroll jitter
+**Branch**: `main`
+
+### Summary
+
+Replaced the one-shot requestAnimationFrame scroll logic with a ResizeObserver-based debounce on the active tab element. Scroll now uses scrollIntoView({inline: 'end'}) and only triggers when the tab overflows the right edge, eliminating jitter and incorrect positioning caused by concurrent framer-motion layout animations.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5764c1d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

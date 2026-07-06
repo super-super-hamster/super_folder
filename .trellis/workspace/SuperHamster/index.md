@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 14
+- **Total Sessions**: 15
 - **Last Active**: 2026-07-06
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~494 | Active |
+| `journal-1.md` | ~527 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 15 | 2026-07-06 | Fix TopNav tab auto-scroll jitter | `5764c1d` | `main` |
 | 14 | 2026-07-06 | Auto-scroll active tab in TopNav | `a8e2c05` | `main` |
 | 13 | 2026-07-06 | Custom overlay scrollbar | `e95eca3` | `main` |
 | 12 | 2026-07-05 | Add search include filter with OR substring matching, fix depth filter placeholder | `d33d049`, `d164d91` | `main` |
