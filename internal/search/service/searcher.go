@@ -312,6 +312,47 @@ func matchesImageShape(path, shape string) bool {
 	return true
 }
 
+// convertGlobToRegex converts a glob pattern with ? * [...] to a regex.
+// Case-insensitive prefix is added when ci is true.
+func convertGlobToRegex(pattern string, ci bool) *regexp.Regexp {
+	var buf strings.Builder
+	if ci {
+		buf.WriteString("(?i)")
+	}
+	buf.WriteByte('^')
+	inBracket := false
+	for _, c := range pattern {
+		if inBracket {
+			if c == ']' {
+				inBracket = false
+			} else if c == '!' {
+				buf.WriteByte('^')
+				continue
+			}
+			buf.WriteRune(c)
+			continue
+		}
+		switch c {
+		case '[':
+			inBracket = true
+			buf.WriteRune(c)
+		case ']':
+			buf.WriteRune(c)
+		case '?':
+			buf.WriteByte('.')
+		case '*':
+			buf.WriteString(".*")
+		case '.', '+', '(', ')', '{', '}', '^', '$', '|', '\\':
+			buf.WriteByte('\\')
+			buf.WriteRune(c)
+		default:
+			buf.WriteRune(c)
+		}
+	}
+	buf.WriteByte('$')
+	return regexp.MustCompile(buf.String())
+}
+
 func (s *Searcher) executeSearch(req *SearchRequest) []string {
 	includeProtected := req.PrivacyMode == privacy.ModePrivacy
 	var regex *regexp.Regexp
@@ -418,6 +459,9 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				matched = true
 			} else if req.IsRegex && regex != nil {
 				matched = regex.MatchString(name)
+			} else if strings.ContainsAny(keyword, "?*[") {
+				globRe := convertGlobToRegex(keyword, !req.CaseSensitive)
+				matched = globRe.MatchString(name)
 			} else {
 				checkName := name
 				if !req.CaseSensitive {
@@ -546,6 +590,9 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				matched = true
 			} else if req.IsRegex && regex != nil {
 				matched = regex.MatchString(node.Name)
+			} else if strings.ContainsAny(keyword, "?*[") {
+				globRe := convertGlobToRegex(keyword, !req.CaseSensitive)
+				matched = globRe.MatchString(node.Name)
 			} else {
 				name := node.Name
 				if !req.CaseSensitive {
