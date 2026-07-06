@@ -426,3 +426,36 @@ Added search include filter: frontend store, tag-style input UI (single item at 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: Custom overlay scrollbar
+
+**Date**: 2026-07-06
+**Task**: Custom overlay scrollbar
+**Branch**: `main`
+
+### Summary
+
+Added a reusable ScrollArea component with a custom overlay scrollbar (no arrows, 50% opacity thumb, hover-to-show) and applied it to visible scrollable panels including Settings, SearchPanel, RightSidebarAdvanced, BatchRename, previews, SimilarImages, and ModalManager.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e95eca3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

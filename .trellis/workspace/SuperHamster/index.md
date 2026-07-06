@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
-- **Last Active**: 2026-07-05
+- **Total Sessions**: 13
+- **Last Active**: 2026-07-06
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~428 | Active |
+| `journal-1.md` | ~461 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 13 | 2026-07-06 | Custom overlay scrollbar | `e95eca3` | `main` |
 | 12 | 2026-07-05 | Add search include filter with OR substring matching, fix depth filter placeholder | `d33d049`, `d164d91` | `main` |
 | 11 | 2026-07-04 | Fix empty folder creation, scroll-to-rename race, and FilterVisibleFiles nil | `cd89640` | `main` |
 | 10 | 2026-07-04 | Add sidebar column browse, search depth filter, terminal newline fix | `110c3ed`, `d288ed0` | `main` |
