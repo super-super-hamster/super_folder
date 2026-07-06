@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
+import ScrollArea from '../common/ScrollArea'
 
 const SETTINGS_TABS = [
   { id: 'general', name: '通用', icon: 'settings_6_line.svg' },
@@ -22,7 +23,7 @@ export default function SettingsSidebar() {
       onMouseEnter={() => setSidebarExpanded(true)}
       onMouseLeave={() => setSidebarExpanded(false)}
     >
-      <div className="flex-1 overflow-y-auto space-y-1 wails-no-drag">
+      <ScrollArea className="flex-1 wails-no-drag" innerClassName="space-y-1">
         {SETTINGS_TABS.map((tab) => (
           <div
             key={tab.id}
@@ -47,7 +48,7 @@ export default function SettingsSidebar() {
             </motion.span>
           </div>
         ))}
-      </div>
+      </ScrollArea>
       
       <div className="mt-auto wails-no-drag">
         <div 

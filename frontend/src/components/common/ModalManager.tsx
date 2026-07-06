@@ -5,6 +5,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useTaskStore } from '../../store/taskStore'
 import { CancelPaste, ResolvePasteConflict, RenameFile, PermanentDelete } from '../../../wailsjs/go/main/App'
 import { Modal, Button, ProgressBar } from '@heroui/react'
+import ScrollArea from './ScrollArea'
 
 const ProgressModalContent = () => {
   const { taskData, operation, progress } = useTaskStore()
@@ -223,11 +224,11 @@ const WarningModalContent = () => {
         </div>
 
         {showDetails && (
-          <div className="w-full bg-gray-50 rounded p-3 max-h-32 overflow-y-auto border border-gray-200">
+          <ScrollArea className="w-full bg-gray-50 rounded border border-gray-200 max-h-32" innerClassName="p-3">
             <p className="text-gray-600 text-xs font-mono break-all text-left">
               {modalData?.message || '未知错误'}
             </p>
-          </div>
+          </ScrollArea>
         )}
       </Modal.Body>
       <Modal.Footer className="w-full">

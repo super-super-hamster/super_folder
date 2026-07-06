@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ScrollArea from '../common/ScrollArea'
 
 interface TextPreviewProps {
   path: string
@@ -32,10 +33,10 @@ export default function TextPreview({ path }: TextPreviewProps) {
   if (error) return <div className="p-4 text-sm text-red-500 flex items-center justify-center h-full">{error}</div>
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50 p-4">
+    <ScrollArea className="w-full h-full bg-gray-50" innerClassName="p-4">
       <pre className="text-gray-800 font-sans text-[13px] whitespace-pre-wrap break-words m-0">
         {text || ''}
       </pre>
-    </div>
+    </ScrollArea>
   )
 }

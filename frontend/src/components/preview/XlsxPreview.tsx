@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as XLSX from 'xlsx'
+import ScrollArea from '../common/ScrollArea'
 
 interface XlsxPreviewProps {
   path: string
@@ -35,7 +36,7 @@ export default function XlsxPreview({ path }: XlsxPreviewProps) {
   if (error) return <div className="p-4 text-sm text-red-500 flex items-center justify-center h-full">{error}</div>
 
   return (
-    <div className="h-full w-full overflow-auto bg-white p-4">
+    <ScrollArea className="h-full w-full bg-white" innerClassName="p-4">
       <style>{`
         .xlsx-preview table { border-collapse: collapse; width: 100%; font-size: 13px; }
         .xlsx-preview td, .xlsx-preview th { border: 1px solid #ddd; padding: 4px 8px; }
@@ -44,6 +45,6 @@ export default function XlsxPreview({ path }: XlsxPreviewProps) {
         className="xlsx-preview max-w-none"
         dangerouslySetInnerHTML={{ __html: html || '' }} 
       />
-    </div>
+    </ScrollArea>
   )
 }

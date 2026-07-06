@@ -7,6 +7,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useModalStore } from '../../store/modalStore'
 import { useTabsStore } from '../../store/tabsStore'
 import { EventsOn } from '../../../wailsjs/runtime/runtime'
+import ScrollArea from '../common/ScrollArea'
 
 export default function BatchRenameView() {
   const { files, setFiles } = useBatchRenameStore()
@@ -243,7 +244,7 @@ export default function BatchRenameView() {
   return (
     <div className="flex w-full h-full bg-white relative items-center justify-center p-8 gap-8">
       {/* Left Container */}
-      <div className="w-[400px] h-[600px] bg-sf-panel rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
+      <ScrollArea className="w-[400px] h-[600px] bg-sf-panel rounded-3xl" innerClassName="p-6 flex flex-col gap-3">
         {files.map(f => (
           <div key={f.path} className="bg-sf-item px-4 py-2 rounded-full flex items-center justify-between text-sm text-gray-800 transition-all hover:bg-sf-item-hover">
             <span className="truncate flex-1 font-medium">{f.name}</span>
@@ -258,7 +259,7 @@ export default function BatchRenameView() {
         {files.length === 0 && (
           <div className="text-gray-400 text-center mt-10">空</div>
         )}
-      </div>
+      </ScrollArea>
 
       {/* Middle Arrow & Scheme */}
       <div className="flex flex-col items-center justify-center gap-6">
@@ -306,7 +307,7 @@ export default function BatchRenameView() {
       </div>
 
       {/* Right Container */}
-      <div className="w-[400px] h-[600px] bg-sf-panel rounded-3xl p-6 overflow-y-auto flex flex-col gap-3 relative">
+      <ScrollArea className="w-[400px] h-[600px] bg-sf-panel rounded-3xl" innerClassName="p-6 flex flex-col gap-3">
         {preview.map((p, idx) => (
           <div 
             key={idx} 
@@ -324,7 +325,7 @@ export default function BatchRenameView() {
         {preview.length === 0 && (
           <div className="text-gray-400 text-center mt-10">空</div>
         )}
-      </div>
+      </ScrollArea>
     </div>
   )
 }

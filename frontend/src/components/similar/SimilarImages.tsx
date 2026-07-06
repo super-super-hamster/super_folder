@@ -6,6 +6,7 @@ import { useSelectionStore } from '../../store/selectionStore'
 import { useContextMenuStore } from '../../store/contextMenuStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { EventsOn } from '../../../wailsjs/runtime/runtime'
+import ScrollArea from '../common/ScrollArea'
 import FileListItem from '../fileList/FileListItem'
 import {
   FindSimilarImageGroups,
@@ -296,7 +297,7 @@ export default function SimilarImages() {
         <div className="text-sm font-medium text-gray-700">{title}</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6" onClick={clearSelection}>
+      <ScrollArea className="flex-1" innerClassName="p-5 space-y-6" onClick={clearSelection}>
         {visibleGroups.map(({ group, idx, signature, isPendingHidden }) => (
           <div key={signature} className={`rounded-xl p-4 ${isPendingHidden ? 'bg-gray-100' : 'bg-sf-panel/50'}`}>
             {!queryImagePath && renderGroupHeader(idx, group.length, signature, isPendingHidden)}
@@ -338,7 +339,7 @@ export default function SimilarImages() {
             )}
           </>
         )}
-      </div>
+      </ScrollArea>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Input, Dropdown, Label, Header, Separator, Select, ListBox } from '@heroui/react'
 import SimpleDatePicker from '../common/SimpleDatePicker'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
+import ScrollArea from '../common/ScrollArea'
 
 export default function SearchPanel() {
   const { searchFilter, setSearchFilter, isSearchPanelOpen, setSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
@@ -141,7 +142,7 @@ export default function SearchPanel() {
       <div className="bg-white rounded-2xl shadow-panel overflow-hidden border border-gray-100 w-full h-full flex flex-col relative">
         <div className="p-6 h-full flex transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
         {/* Left Filter Panel */}
-        <div className="w-[200px] border-r border-gray-300 pr-6 flex flex-col gap-3 overflow-y-auto">
+        <ScrollArea className="w-[200px] border-r border-gray-300 pr-6" innerClassName="flex flex-col gap-3">
           
           <AnimatePresence>
             {searchFilter.type === 'file' && (
@@ -599,7 +600,7 @@ export default function SearchPanel() {
               </Dropdown.Popover>
             </Dropdown>
           )}
-        </div>
+        </ScrollArea>
 
         {/* Right Info Area (History / Autocomplete) */}
         <div className="flex-1 pl-6 flex flex-col gap-1.5 pt-1">

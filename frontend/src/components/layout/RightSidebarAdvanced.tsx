@@ -6,6 +6,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useSelectionStore } from '../../store/selectionStore'
 import { GetSimilarImageThresholds } from '../../../wailsjs/go/main/App'
 import { buildSimilarPath } from '../similar/SimilarImages'
+import ScrollArea from '../common/ScrollArea'
 
 const scopeOptions = [
   { id: 'current', name: '当前文件夹' },
@@ -138,9 +139,9 @@ export default function RightSidebarAdvanced() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <ScrollArea className="flex-1 min-h-0">
         <TagPanel />
-      </div>
+      </ScrollArea>
     </div>
   )
 }
