@@ -8,8 +8,6 @@ export interface SearchFilter {
   isRegex: boolean
   type: 'all' | 'file' | 'folder'
   extensions: string[]
-  isExcludeFolder: boolean
-  excludedFolders: string[]
   isSizeFilter: boolean
   minSize: number | null
   maxSize: number | null
@@ -23,6 +21,13 @@ export interface SearchFilter {
   maxDepth: number | null
   isIncludeFilter: boolean
   includeStrings: string[]
+  isTypeNegated: boolean
+  isIncludeNegated: boolean
+  isSizeNegated: boolean
+  isTimeNegated: boolean
+  isImageShapeNegated: boolean
+  isFolderPathsFilter: boolean
+  folderPaths: string[]
 }
 
 export interface AutocompleteSuggestion {
@@ -102,8 +107,6 @@ export const useUIStore = create<UIState>()(
       isRegex: false,
       type: 'all',
       extensions: [],
-      isExcludeFolder: false,
-      excludedFolders: [],
       isSizeFilter: false,
       minSize: null,
       maxSize: null,
@@ -116,7 +119,14 @@ export const useUIStore = create<UIState>()(
       isDepthFilter: false,
       maxDepth: null,
       isIncludeFilter: false,
-      includeStrings: []
+      includeStrings: [],
+      isTypeNegated: false,
+      isIncludeNegated: false,
+      isSizeNegated: false,
+      isTimeNegated: false,
+      isImageShapeNegated: false,
+      isFolderPathsFilter: false,
+      folderPaths: []
     },
       setSearchFilter: (filter) => set((state) => ({ searchFilter: { ...state.searchFilter, ...filter } })),
       isSidebarExpanded: false,

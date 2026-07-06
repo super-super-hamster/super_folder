@@ -19,6 +19,8 @@ export default function SearchPanel() {
   const [depthError, setDepthError] = useState(false)
   const [isAddingInclude, setIsAddingInclude] = useState(false)
   const [includeInput, setIncludeInput] = useState('')
+  const [isAddingFolderPath, setIsAddingFolderPath] = useState(false)
+  const [folderPathInput, setFolderPathInput] = useState('')
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return
@@ -47,7 +49,6 @@ export default function SearchPanel() {
   const availableFilters = []
   if (!searchFilter.isCaseSensitive) availableFilters.push({ id: 'case', label: '区分大小写' })
   if (!searchFilter.isRegex) availableFilters.push({ id: 'regex', label: '正则表达式' })
-  if (!searchFilter.isExcludeFolder) availableFilters.push({ id: 'exclude_folder', label: '排除文件夹' })
   if (!searchFilter.isSizeFilter) availableFilters.push({ id: 'size', label: '文件大小' })
   if (!searchFilter.isTimeFilter) availableFilters.push({ id: 'time', label: '修改时间' })
   if (!searchFilter.isImageShapeFilter) availableFilters.push({ id: 'image_shape', label: '图片形状' })
@@ -63,7 +64,6 @@ export default function SearchPanel() {
     if (id === 'regex') setSearchFilter({ isRegex: true })
     if (id === 'file') setSearchFilter({ type: 'file' })
     if (id === 'folder') setSearchFilter({ type: 'folder' })
-    if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: true })
     if (id === 'size') setSearchFilter({ isSizeFilter: true, minSize: null, maxSize: null })
     if (id === 'time') setSearchFilter({ isTimeFilter: true, minTime: null, maxTime: null })
     if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: true, imageShape: 'square' })
@@ -74,13 +74,17 @@ export default function SearchPanel() {
   const handleRemoveFilter = (id: string) => {
     if (id === 'case') setSearchFilter({ isCaseSensitive: false })
     if (id === 'regex') setSearchFilter({ isRegex: false })
-    if (id === 'file' || id === 'folder') setSearchFilter({ type: 'all', extensions: [] })
-    if (id === 'exclude_folder') setSearchFilter({ isExcludeFolder: false, excludedFolders: [] })
-    if (id === 'size') setSearchFilter({ isSizeFilter: false, minSize: null, maxSize: null })
-    if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null })
-    if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: false, imageShape: 'square' })
+    if (id === 'file' || id === 'folder') setSearchFilter({ type: 'all', extensions: [], isTypeNegated: false })
+    if (id === 'size') setSearchFilter({ isSizeFilter: false, minSize: null, maxSize: null, isSizeNegated: false })
+    if (id === 'time') setSearchFilter({ isTimeFilter: false, minTime: null, maxTime: null, isTimeNegated: false })
+    if (id === 'image_shape') setSearchFilter({ isImageShapeFilter: false, imageShape: 'square', isImageShapeNegated: false })
     if (id === 'depth') setSearchFilter({ isDepthFilter: false, maxDepth: null })
-    if (id === 'include') setSearchFilter({ isIncludeFilter: false, includeStrings: [] })
+    if (id === 'include') setSearchFilter({ isIncludeFilter: false, includeStrings: [], isIncludeNegated: false })
+  }
+
+  const toggleNegate = (field: string) => {
+    const key = `is${field.charAt(0).toUpperCase() + field.slice(1)}Negated` as any
+    setSearchFilter({ [key]: !(searchFilter as any)[key] })
   }
 
   const submitExt = () => {
@@ -98,22 +102,8 @@ export default function SearchPanel() {
     setIsAddingExt(false)
   }
 
-  const submitExclude = () => {
-    if (excludeInput.trim()) {
-      const newExclude = excludeInput.trim()
-      const uniqueExcludes = Array.from(new Set([...(searchFilter.excludedFolders || []), newExclude]))
-      setSearchFilter({ excludedFolders: uniqueExcludes })
-      setExcludeInput('')
-    }
-    setIsAddingExclude(false)
-  }
-
   const handleRemoveExtension = (extToRemove: string) => {
     setSearchFilter({ extensions: searchFilter.extensions.filter(e => e !== extToRemove) })
-  }
-
-  const handleRemoveExclude = (folderToRemove: string) => {
-    setSearchFilter({ excludedFolders: searchFilter.excludedFolders.filter(f => f !== folderToRemove) })
   }
 
   const submitInclude = () => {
@@ -129,6 +119,31 @@ export default function SearchPanel() {
   const handleRemoveInclude = (itemToRemove: string) => {
     setSearchFilter({ includeStrings: searchFilter.includeStrings.filter(s => s !== itemToRemove) })
   }
+
+  const submitFolderPath = () => {
+    if (folderPathInput.trim()) {
+      const newItem = folderPathInput.trim()
+      const uniqueItems = Array.from(new Set([...(searchFilter.folderPaths || []), newItem]))
+      setSearchFilter({ folderPaths: uniqueItems, isFolderPathsFilter: true })
+      setFolderPathInput('')
+    }
+    setIsAddingFolderPath(false)
+  }
+
+  const handleRemoveFolderPath = (itemToRemove: string) => {
+    const remaining = searchFilter.folderPaths.filter(p => p !== itemToRemove)
+    setSearchFilter({ folderPaths: remaining, isFolderPathsFilter: remaining.length > 0 })
+  }
+
+  const NegateIcon = ({ negated, onToggle }: { negated: boolean; onToggle: () => void }) => (
+    <img
+      src="/src/assets/icons/exclamation-mark.svg"
+      onClick={onToggle}
+      className={`w-4 h-4 cursor-pointer transition-opacity shrink-0 ${negated ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
+    />
+  )
+
+  const negatedBg = (negated: boolean) => negated ? 'bg-yellow-50' : 'bg-gray-100'
 
   return (
     <motion.div 
@@ -150,10 +165,13 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">仅文件</span>
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isTypeNegated} onToggle={() => toggleNegate('type')} />
+                    <span className="text-sm text-gray-800 font-medium">{searchFilter.isTypeNegated ? '排除文件' : '仅文件'}</span>
+                  </div>
                   <button onClick={() => handleRemoveFilter('file')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
@@ -200,59 +218,47 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
-              >
-                <span className="text-sm text-gray-800">仅文件夹</span>
-                <button onClick={() => handleRemoveFilter('folder')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
-                  <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
-                </button>
-              </motion.div>
-            )}
-
-            {searchFilter.isExcludeFolder && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">排除文件夹</span>
-                  <button onClick={() => handleRemoveFilter('exclude_folder')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isTypeNegated} onToggle={() => toggleNegate('type')} />
+                    <span className="text-sm text-gray-800 font-medium">{searchFilter.isTypeNegated ? '排除文件夹' : '仅文件夹'}</span>
+                  </div>
+                  <button onClick={() => handleRemoveFilter('folder')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
                 </div>
 
                 <div className="w-full h-px bg-gray-200 my-2"></div>
 
-                {searchFilter.excludedFolders && searchFilter.excludedFolders.length > 0 && (
+                {searchFilter.folderPaths && searchFilter.folderPaths.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 w-full">
-                    {searchFilter.excludedFolders.map(folder => (
-                      <span key={folder} className="inline-flex items-center bg-white rounded-md px-1.5 py-0.5 text-[10px] text-gray-600 border border-gray-200">
-                        {folder}
-                        <button onClick={() => handleRemoveExclude(folder)} className="ml-1 opacity-50 hover:opacity-100">
+                    {searchFilter.folderPaths.map(p => (
+                      <span key={p} className="inline-flex items-center bg-white rounded-md px-1.5 py-0.5 text-[10px] text-gray-600 border border-gray-200">
+                        {p}
+                        <button onClick={() => handleRemoveFolderPath(p)} className="ml-1 opacity-50 hover:opacity-100">
                           <img src="/src/assets/icons/close_line.svg" className="w-2 h-2" />
                         </button>
                       </span>
                     ))}
                   </div>
                 )}
-
                 <div className="mt-2 flex items-center justify-start">
-                  {isAddingExclude ? (
-                    <Input 
+                  {isAddingFolderPath ? (
+                    <Input
                       autoFocus
-                      value={excludeInput} 
-                      onChange={(e: any) => setExcludeInput(e.target.value)} 
-                      onKeyDown={(e: any) => { if (e.key === 'Enter') submitExclude() }}
-                      onBlur={submitExclude}
-                      placeholder="文件夹名"
-                      className="w-24 h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
+                      value={folderPathInput}
+                      onChange={(e: any) => setFolderPathInput(e.target.value)}
+                      onKeyDown={(e: any) => { if (e.key === 'Enter') submitFolderPath() }}
+                      onBlur={submitFolderPath}
+                      placeholder="路径"
+                      className="w-full h-6 text-xs bg-white border border-gray-200 px-2 rounded-md"
                     />
                   ) : (
-                    <button onClick={() => setIsAddingExclude(true)} className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1">
+                    <button onClick={() => setIsAddingFolderPath(true)} className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1">
                       <span className="text-lg leading-none">+</span>
-                      <span>添加</span>
+                      <span>路径</span>
                     </button>
                   )}
                 </div>
@@ -292,10 +298,13 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isSizeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">文件大小</span>
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isSizeNegated} onToggle={() => toggleNegate('size')} />
+                    <span className="text-sm text-gray-800 font-medium">文件大小</span>
+                  </div>
                   <button onClick={() => handleRemoveFilter('size')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
@@ -366,10 +375,13 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isTimeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">修改时间</span>
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isTimeNegated} onToggle={() => toggleNegate('time')} />
+                    <span className="text-sm text-gray-800 font-medium">修改时间</span>
+                  </div>
                   <button onClick={() => handleRemoveFilter('time')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
@@ -408,10 +420,13 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isImageShapeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">图片形状</span>
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isImageShapeNegated} onToggle={() => toggleNegate('image_shape')} />
+                    <span className="text-sm text-gray-800 font-medium">图片形状</span>
+                  </div>
                   <button onClick={() => handleRemoveFilter('image_shape')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>
@@ -515,10 +530,13 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className={`${negatedBg(searchFilter.isIncludeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-800 font-medium">包含</span>
+                  <div className="flex items-center gap-2">
+                    <NegateIcon negated={searchFilter.isIncludeNegated} onToggle={() => toggleNegate('include')} />
+                    <span className="text-sm text-gray-800 font-medium">{searchFilter.isIncludeNegated ? '不包含' : '包含'}</span>
+                  </div>
                   <button onClick={() => { setIsAddingInclude(false); setIncludeInput(''); handleRemoveFilter('include') }} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
                     <img src="/src/assets/icons/close_line.svg" className="w-3 h-3" />
                   </button>

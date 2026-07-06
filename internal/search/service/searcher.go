@@ -111,27 +111,32 @@ func (s *Searcher) serveHTTP() {
 }
 
 type SearchRequest struct {
-	Keyword         string   `json:"keyword"`
-	IsRegex         bool     `json:"isRegex"`
-	CaseSensitive   bool     `json:"caseSensitive"`
-	OnlyFiles       bool     `json:"onlyFiles"`
-	OnlyFolders     bool     `json:"onlyFolders"`
-	ExcludedFolders []string `json:"excludedFolders"`
-	Extensions      []string `json:"extensions"`
-	Tags            []string `json:"tags"`
-	TagLogic        string   `json:"tagLogic"`
-	Remarks         []string `json:"remarks"`
-	MaxDepth        int      `json:"maxDepth"`
-	RootPath        string   `json:"rootPath"`
-	RootPaths       []string `json:"rootPaths"`
-	Limit           int      `json:"limit"`
-	MinSize         *int64   `json:"minSize"`
-	MaxSize         *int64   `json:"maxSize"`
-	MinTime         *int64   `json:"minTime"`
-	MaxTime         *int64   `json:"maxTime"`
-	ImageShape      string   `json:"imageShape"`
-	PrivacyMode     string   `json:"privacyMode"`
-	IncludeStrings  []string `json:"includeStrings"`
+	Keyword           string   `json:"keyword"`
+	IsRegex           bool     `json:"isRegex"`
+	CaseSensitive     bool     `json:"caseSensitive"`
+	OnlyFiles         bool     `json:"onlyFiles"`
+	OnlyFolders       bool     `json:"onlyFolders"`
+	TypeNegated       bool     `json:"typeNegated"`
+	IncludeNegated    bool     `json:"includeNegated"`
+	SizeNegated       bool     `json:"sizeNegated"`
+	TimeNegated       bool     `json:"timeNegated"`
+	ImageShapeNegated bool     `json:"imageShapeNegated"`
+	Extensions        []string `json:"extensions"`
+	Tags              []string `json:"tags"`
+	TagLogic          string   `json:"tagLogic"`
+	Remarks           []string `json:"remarks"`
+	MaxDepth          int      `json:"maxDepth"`
+	RootPath          string   `json:"rootPath"`
+	RootPaths         []string `json:"rootPaths"`
+	Limit             int      `json:"limit"`
+	MinSize           *int64   `json:"minSize"`
+	MaxSize           *int64   `json:"maxSize"`
+	MinTime           *int64   `json:"minTime"`
+	MaxTime           *int64   `json:"maxTime"`
+	ImageShape        string   `json:"imageShape"`
+	PrivacyMode       string   `json:"privacyMode"`
+	IncludeStrings    []string `json:"includeStrings"`
+	FolderPaths       []string `json:"folderPaths"`
 }
 
 type SearchResponse struct {
@@ -395,11 +400,17 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				// Fallback to name-based logic since full resolve is slow
 			}
 
-			if req.OnlyFiles && isFolder {
-				continue
+			if req.OnlyFiles {
+				wantFolder := req.TypeNegated
+				if isFolder != wantFolder {
+					continue
+				}
 			}
-			if req.OnlyFolders && !isFolder {
-				continue
+			if req.OnlyFolders {
+				wantFolder := !req.TypeNegated
+				if isFolder != wantFolder {
+					continue
+				}
 			}
 
 			matched := false
@@ -434,42 +445,27 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 						break
 					}
 				}
-				if !includeMatched {
-					continue
+				if req.IncludeNegated {
+					if includeMatched {
+						continue
+					}
+				} else {
+					if !includeMatched {
+						continue
+					}
 				}
 			}
 
-			if len(req.ExcludedFolders) > 0 {
-				dir := filepath.Dir(fullPath)
-				parts := strings.Split(dir, `\`)
-				parentMatched := false
-				for _, part := range parts {
-					if part == "" || strings.HasSuffix(part, ":") {
-						continue
-					}
-
-					pMatch := false
-					for _, ef := range req.ExcludedFolders {
-						if strings.EqualFold(part, ef) {
-							pMatch = true
-							break
-						}
-					}
-					if pMatch {
-						parentMatched = true
+			if len(req.FolderPaths) > 0 {
+				fpMatched := false
+				fullPathLower := strings.ToLower(fullPath)
+				for _, fp := range req.FolderPaths {
+					if strings.HasPrefix(fullPathLower, strings.ToLower(fp)) {
+						fpMatched = true
 						break
 					}
 				}
-				// Also check if the node itself is an excluded folder
-				if !parentMatched && isFolder {
-					for _, ef := range req.ExcludedFolders {
-						if strings.EqualFold(name, ef) {
-							parentMatched = true
-							break
-						}
-					}
-				}
-				if parentMatched {
+				if !fpMatched {
 					continue
 				}
 			}
@@ -488,7 +484,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				}
 			}
 
-			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) {
+			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
 				continue
 			}
 
@@ -496,7 +492,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
-			if !matchesImageShape(fullPath, req.ImageShape) {
+			if !matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
 				continue
 			}
 
@@ -532,11 +528,17 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				break
 			}
 
-			if req.OnlyFiles && node.IsFolder {
-				continue
+			if req.OnlyFiles {
+				wantFolder := req.TypeNegated
+				if node.IsFolder != wantFolder {
+					continue
+				}
 			}
-			if req.OnlyFolders && !node.IsFolder {
-				continue
+			if req.OnlyFolders {
+				wantFolder := !req.TypeNegated
+				if node.IsFolder != wantFolder {
+					continue
+				}
 			}
 
 			matched := false
@@ -572,8 +574,14 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 						break
 					}
 				}
-				if !includeMatched {
-					continue
+				if req.IncludeNegated {
+					if includeMatched {
+						continue
+					}
+				} else {
+					if !includeMatched {
+						continue
+					}
 				}
 			}
 
@@ -593,37 +601,16 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 
 			fullPath := engine.GetFullPathLocked(frn)
 
-			if len(req.ExcludedFolders) > 0 {
-				dir := filepath.Dir(fullPath)
-				parts := strings.Split(dir, `\`)
-				parentMatched := false
-				for _, part := range parts {
-					if part == "" || strings.HasSuffix(part, ":") {
-						continue
-					}
-
-					pMatch := false
-					for _, ef := range req.ExcludedFolders {
-						if strings.EqualFold(part, ef) {
-							pMatch = true
-							break
-						}
-					}
-					if pMatch {
-						parentMatched = true
+			if len(req.FolderPaths) > 0 {
+				fpMatched := false
+				fullPathLower := strings.ToLower(fullPath)
+				for _, fp := range req.FolderPaths {
+					if strings.HasPrefix(fullPathLower, strings.ToLower(fp)) {
+						fpMatched = true
 						break
 					}
 				}
-				// Also check if the node itself is an excluded folder
-				if !parentMatched && node.IsFolder {
-					for _, ef := range req.ExcludedFolders {
-						if strings.EqualFold(node.Name, ef) {
-							parentMatched = true
-							break
-						}
-					}
-				}
-				if parentMatched {
+				if !fpMatched {
 					continue
 				}
 			}
@@ -653,7 +640,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				}
 			}
 
-			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) {
+			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
 				continue
 			}
 
@@ -661,7 +648,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				continue
 			}
 
-			if !matchesImageShape(fullPath, req.ImageShape) {
+			if !matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
 				continue
 			}
 
