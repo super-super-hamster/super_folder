@@ -459,3 +459,36 @@ Added a reusable ScrollArea component with a custom overlay scrollbar (no arrows
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Auto-scroll active tab in TopNav
+
+**Date**: 2026-07-06
+**Task**: Auto-scroll active tab in TopNav
+**Branch**: `main`
+
+### Summary
+
+Added auto-scroll behavior to the top tab bar so that when the current tab's path changes, the tab bar scrolls horizontally to keep the active tab's right edge aligned with the container's right edge (clamped to scroll bounds).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a8e2c05` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
