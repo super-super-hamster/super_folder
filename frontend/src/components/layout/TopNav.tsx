@@ -301,19 +301,35 @@ export default function TopNav() {
     const activeTabEl = container.querySelector(`[data-tab-id="${activeTabId}"]`) as HTMLElement | null
     if (!activeTabEl) return
 
-    const scrollToActiveTab = () => {
+    let rafId: number | null = null
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+    const scrollIfOverflow = () => {
+      if (!container || !activeTabEl) return
       const containerRect = container.getBoundingClientRect()
       const tabRect = activeTabEl.getBoundingClientRect()
-      const rightPadding = 4
-      const desiredContainerRight = containerRect.right - rightPadding
-      const delta = tabRect.right - desiredContainerRight
-      const maxScrollLeft = container.scrollWidth - container.clientWidth
-      const targetScrollLeft = Math.max(0, Math.min(maxScrollLeft, container.scrollLeft + delta))
-      container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' })
+      if (tabRect.right - containerRect.right > 1) {
+        activeTabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' })
+      }
     }
 
-    const raf = requestAnimationFrame(() => requestAnimationFrame(scrollToActiveTab))
-    return () => cancelAnimationFrame(raf)
+    const scheduleScroll = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      if (timeoutId !== null) clearTimeout(timeoutId)
+      rafId = requestAnimationFrame(() => {
+        timeoutId = setTimeout(scrollIfOverflow, 80)
+      })
+    }
+
+    const ro = new ResizeObserver(scheduleScroll)
+    ro.observe(activeTabEl)
+    scheduleScroll()
+
+    return () => {
+      ro.disconnect()
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      if (timeoutId !== null) clearTimeout(timeoutId)
+    }
   }, [activeTabId, activeTab?.currentPath, isSearchActive])
 
   return (
