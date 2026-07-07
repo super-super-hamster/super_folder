@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 21
+- **Total Sessions**: 22
 - **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~726 | Active |
+| `journal-1.md` | ~761 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 22 | 2026-07-07 | Fix HeroUI Switch/Checkbox scroll shift bug, add file info panel, glob wildcards | `da65655`, `9701ffb`, `22acf77` | `main` |
 | 21 | 2026-07-07 | Fix settings content pushed above visible area | `0411850` | `main` |
 | 20 | 2026-07-07 | Fix settings scroll area height and bottom anchoring | `9da2f42` | `main` |
 | 19 | 2026-07-07 | Fix settings panel bottom gap after toggle | `5958a99` | `main` |

@@ -724,3 +724,38 @@ Real root cause: GeneralSettings h-full forced its height to the scroll viewport
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: Fix HeroUI Switch/Checkbox scroll shift bug, add file info panel, glob wildcards
+
+**Date**: 2026-07-07
+**Task**: Fix HeroUI Switch/Checkbox scroll shift bug, add file info panel, glob wildcards
+**Branch**: `main`
+
+### Summary
+
+Fixed HeroUI Switch/Checkbox scroll shift root cause (sr-only input focus in flex-col). Added file info panel with metadata. Added glob wildcard support (? * [...]) in search. Added tag validation. Added sidebar column browse. Added include filter with OR logic. Added NOT toggle for filter conditions. Fixed empty folder creation bug. Added .markdown support.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `da65655` | (see git log) |
+| `9701ffb` | (see git log) |
+| `22acf77` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
