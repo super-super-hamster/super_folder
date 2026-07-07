@@ -658,3 +658,36 @@ Follow-up fix: the previous min-h-full on GeneralSettings left a fixed-height bo
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: Fix settings scroll area height and bottom anchoring
+
+**Date**: 2026-07-07
+**Task**: Fix settings scroll area height and bottom anchoring
+**Branch**: `main`
+
+### Summary
+
+Added min-h-0 to SettingsContent ScrollArea so the scroll region fills the panel height instead of collapsing to content height after re-renders. Changed GeneralSettings from space-y-6 to gap-6 so the mt-auto on ChineseConvSettings is not overridden by the space-y > * + * margin, allowing the section to anchor to the panel bottom.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9da2f42` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
