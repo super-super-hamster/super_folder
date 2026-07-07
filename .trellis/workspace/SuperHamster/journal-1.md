@@ -691,3 +691,36 @@ Added min-h-0 to SettingsContent ScrollArea so the scroll region fills the panel
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: Fix settings content pushed above visible area
+
+**Date**: 2026-07-07
+**Task**: Fix settings content pushed above visible area
+**Branch**: `main`
+
+### Summary
+
+Real root cause: GeneralSettings h-full forced its height to the scroll viewport, but its real content was much taller. mt-auto on ChineseConvSettings then pushed the section down within that 577px flex container, making the 1236px content bottom extend far beyond the viewport, so the visible top got cut off and the bottom looked empty. Removed h-full from GeneralSettings and mt-auto from ChineseConvSettings so content flows naturally inside the ScrollArea without being pushed up.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0411850` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
