@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition, useDeferredValue } from 'react'
 import { motion } from 'framer-motion'
+import { Skeleton } from '@heroui/react'
 import FilePreview from '../preview/FilePreview'
 import FileInfoPanel from '../preview/FileInfoPanel'
 import RemarkPanel from '../preview/RemarkPanel'
@@ -12,10 +13,17 @@ interface RightSidebarProps {
 
 export default function RightSidebar({ isOpen }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState('预览')
+  const [isTabPending, startTabTransition] = useTransition()
+  const deferredActiveTab = useDeferredValue(activeTab)
   const { rightSidebarWidth, setRightSidebarWidth } = useUIStore()
   const [isResizing, setIsResizing] = useState(false)
 
   const tabs = ['预览', '信息', '高级']
+
+  const handleTabClick = (tab: string) => {
+    if (tab === activeTab) return
+    startTabTransition(() => setActiveTab(tab))
+  }
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -59,7 +67,7 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
           {tabs.map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabClick(tab)}
               className={`relative flex-1 py-1.5 text-xs rounded-full transition-colors z-base ${
                 activeTab === tab ? 'font-medium text-primary' : 'text-gray-600 hover:text-gray-800'
               }`}
@@ -78,19 +86,30 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full no-scrollbar">
-        {activeTab === '预览' && (
-          <div className="w-full flex flex-col relative px-4 max-h-full min-h-0">
-            <FilePreview />
-            <RemarkPanel />
+        {isTabPending ? (
+          <div className="w-full p-4 space-y-4">
+            <Skeleton className="h-8 rounded-lg" />
+            <Skeleton className="h-24 rounded-lg" />
+            <Skeleton className="h-4 w-4/5 rounded-lg" />
+            <Skeleton className="h-4 w-3/5 rounded-lg" />
           </div>
-        )}
-        {activeTab === '信息' && (
-          <div className="w-full h-full overflow-y-auto">
-            <FileInfoPanel />
-          </div>
-        )}
-        {activeTab === '高级' && (
-          <RightSidebarAdvanced />
+        ) : (
+          <>
+            {deferredActiveTab === '预览' && (
+              <div className="w-full flex flex-col relative px-4 max-h-full min-h-0">
+                <FilePreview />
+                <RemarkPanel />
+              </div>
+            )}
+            {deferredActiveTab === '信息' && (
+              <div className="w-full h-full overflow-y-auto">
+                <FileInfoPanel />
+              </div>
+            )}
+            {deferredActiveTab === '高级' && (
+              <RightSidebarAdvanced />
+            )}
+          </>
         )}
       </div>
     </motion.div>
