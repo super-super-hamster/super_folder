@@ -80,7 +80,7 @@ export default function GeneralSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col h-full gap-6">
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-1">导航栏顺序</h2>
       </div>
@@ -258,8 +258,10 @@ export default function GeneralSettings() {
           </div>
 
           <div className="bg-sf-panel/80 rounded-xl p-5 flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-700">导航栏显示上一级目录</span>
-            <Switch isSelected={showParentDirInNav} onChange={setShowParentDirInNav}>
+            <div>
+              <div className="text-sm font-semibold text-gray-800">导航栏显示上一级目录</div>
+            </div>
+            <Switch isSelected={showParentDirInNav} onChange={setShowParentDirInNav} className="relative">
               {({ isSelected }) => (
                 <Switch.Content>
                   <Switch.Control className={isSelected ? 'bg-green-500' : 'bg-gray-300'}>

@@ -6,6 +6,7 @@ interface ScrollAreaProps {
   innerClassName?: string
   orientation?: 'vertical' | 'horizontal' | 'both'
   onClick?: React.MouseEventHandler<HTMLDivElement>
+  disableObservers?: boolean
 }
 
 export default function ScrollArea({
@@ -14,6 +15,7 @@ export default function ScrollArea({
   innerClassName = '',
   orientation = 'vertical',
   onClick,
+  disableObservers = false,
 }: ScrollAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
@@ -49,7 +51,7 @@ export default function ScrollArea({
 
   useEffect(() => {
     const el = scrollRef.current
-    if (!el) return
+    if (!el || disableObservers) return
     updateMetrics()
     el.addEventListener('scroll', updateMetrics, { passive: true })
     const ro = new ResizeObserver(updateMetrics)
@@ -61,7 +63,7 @@ export default function ScrollArea({
       ro.disconnect()
       mo.disconnect()
     }
-  }, [updateMetrics])
+  }, [updateMetrics, disableObservers])
 
   const startDrag = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {

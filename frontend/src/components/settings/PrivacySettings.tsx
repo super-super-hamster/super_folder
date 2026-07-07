@@ -40,7 +40,7 @@ export default function PrivacySettings() {
             <div className="text-sm font-semibold text-gray-800">启动时恢复上次隐私模式</div>
             <div className="text-xs text-gray-500">开启后，下次启动需要先解锁才会恢复隐私模式。</div>
           </div>
-          <Switch isSelected={!!state?.restorePrivacyOnStartup} onChange={setRestoreOnStartup}>
+          <Switch isSelected={!!state?.restorePrivacyOnStartup} onChange={setRestoreOnStartup} className="relative">
             {({ isSelected }) => (
               <Switch.Content>
                 <Switch.Control className={isSelected ? 'bg-green-500' : 'bg-gray-300'}>
