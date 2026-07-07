@@ -559,3 +559,36 @@ Added file info panel with GetFileDetail backend (stat, image dimensions, code l
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: Fix RightSidebar advanced tab stutter
+
+**Date**: 2026-07-07
+**Task**: Fix RightSidebar advanced tab stutter
+**Branch**: `main`
+
+### Summary
+
+Root-caused stutter of the active tab indicator when switching to the 高级 tab to synchronous mounting of RightSidebarAdvanced/TagPanel. Fixed by wrapping tab switches in useTransition, rendering content via useDeferredValue, and showing a HeroUI Skeleton placeholder during the deferred transition so the framer-motion layoutId indicator can animate immediately.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c4a84bd` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
