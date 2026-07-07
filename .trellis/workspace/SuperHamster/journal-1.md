@@ -592,3 +592,36 @@ Root-caused stutter of the active tab indicator when switching to the 高级 tab
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: Fix General settings height collapse on toggle
+
+**Date**: 2026-07-07
+**Task**: Fix General settings height collapse on toggle
+**Branch**: `main`
+
+### Summary
+
+Fixed the settings General page height collapse when toggling the '导航栏显示上一级目录' switch. Root cause was nested h-full inside a ScrollArea: GeneralSettings and ChineseConvSettings both had h-full, causing the scrollable content height to collapse on re-render. Changed GeneralSettings root to min-h-full and ChineseConvSettings root to mt-auto so the section anchors to the bottom without nested full-height conflicts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bf4e7ea` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
