@@ -52,7 +52,7 @@ export default function ChineseConvSettings() {
   }
 
   return (
-    <div className="flex flex-col mt-auto space-y-6">
+    <div className="flex flex-col space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-1">自定义简繁转换方案</h2>
       </div>

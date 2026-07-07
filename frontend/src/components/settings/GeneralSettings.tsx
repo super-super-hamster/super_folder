@@ -80,7 +80,7 @@ export default function GeneralSettings() {
   }
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-1">导航栏顺序</h2>
       </div>
