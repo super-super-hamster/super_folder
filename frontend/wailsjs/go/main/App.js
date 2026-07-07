@@ -118,6 +118,10 @@ export function GetFavorites() {
   return window['go']['main']['App']['GetFavorites']();
 }
 
+export function GetFileDetail(arg1) {
+  return window['go']['main']['App']['GetFileDetail'](arg1);
+}
+
 export function GetFileRemark(arg1) {
   return window['go']['main']['App']['GetFileRemark'](arg1);
 }

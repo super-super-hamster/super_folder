@@ -14,6 +14,12 @@ export default function TagPanel() {
   const [isAdding, setIsAdding] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({})
+  const [tagError, setTagError] = useState('')
+
+  const validateTagName = (name: string) => {
+    if (name.includes(' ') || name.includes('*')) return '标签名称不能带有空格和*'
+    return ''
+  }
 
   const addingTagsRef = useRef(new Set<string>())
   const fileTagsRef = useRef<models.Tag[]>([])
@@ -70,6 +76,7 @@ export default function TagPanel() {
   }, [selectedPaths, tagRefreshKey])
 
   const handleAddTag = async (tagName: string) => {
+    if (validateTagName(tagName)) return
     const paths = Array.from(selectedPaths)
     if (!tagName.trim() || paths.length === 0) return
     
@@ -229,19 +236,25 @@ export default function TagPanel() {
                   }
                 }}
               >
-                <ComboBox.InputGroup className="bg-sf-input hover:bg-sf-input-hover rounded-full overflow-hidden outline-none transition-colors">
+                <ComboBox.InputGroup className={`bg-sf-input hover:bg-sf-input-hover rounded-full overflow-hidden outline-none transition-colors ${tagError ? 'border border-red-500' : ''}`}>
                   <Input 
                     className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-2 h-full"
                     placeholder="" 
                     autoFocus 
                     onKeyDown={(e: any) => {
                       if (e.key === 'Enter' && inputValue) {
+                        const err = validateTagName(inputValue)
+                        if (err) { setTagError(err); return }
+                        setTagError('')
                         handleAddTag(inputValue)
                       }
                     }} 
                   />
                   <ComboBox.Trigger className="text-gray-500 bg-transparent" />
                 </ComboBox.InputGroup>
+                {tagError && (
+                  <span className="text-xs text-red-500 mt-1">{tagError}</span>
+                )}
                 <ComboBox.Popover className="border border-gray-200 shadow-lg rounded-xl">
                   <ListBox className="text-gray-800">
                     {displayTags.map(item => (

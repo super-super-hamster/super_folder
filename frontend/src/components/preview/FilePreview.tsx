@@ -29,10 +29,24 @@ export default function FilePreview() {
   const [dirInfo, setDirInfo] = useState<{files: number, folders: number} | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Load directory info for current path (used as fallback preview)
+  useEffect(() => {
+    if (!currentPath) {
+      setDirInfo(null)
+      return
+    }
+    ReadDir(currentPath).then((items) => {
+      const files = items.filter(i => !i.isDir).length
+      const folders = items.filter(i => i.isDir).length
+      setDirInfo({ files, folders })
+    }).catch(() => {
+      setDirInfo(null)
+    })
+  }, [currentPath])
+
   useEffect(() => {
     if (selectedPaths.size !== 1 || !currentPath) {
       setSelectedFile(null)
-      setDirInfo(null)
       return
     }
 
@@ -64,18 +78,43 @@ export default function FilePreview() {
         size: 0,
         modTime: ''
       } as models.FileInfo)
-      setDirInfo(null)
       setIsLoading(false)
     })
 
   }, [selectedPaths, currentPath])
 
+  const renderDirPreview = () => {
+    if (!currentPath || !dirInfo) return null
+    const dirName = currentPath.split('\\').pop() || currentPath
+    return (
+      <Wrapper>
+        <div className="flex flex-col items-center justify-center h-full text-gray-600 gap-4 p-6">
+          <img src="/src/assets/icons/folder_line.svg" className="w-24 h-24 opacity-80 filter brightness-0 invert-0" />
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-gray-900 mb-2 truncate max-w-full px-4">{dirName}</h3>
+            <p className="text-sm text-gray-500 mb-1">包含：</p>
+            <div className="flex items-center justify-center gap-6 mt-2">
+              <div className="flex flex-col items-center bg-gray-50 px-4 py-2 rounded-lg min-w-[80px]">
+                <span className="text-2xl font-semibold text-blue-600">{dirInfo.folders}</span>
+                <span className="text-xs text-gray-400 mt-1">文件夹</span>
+              </div>
+              <div className="flex flex-col items-center bg-gray-50 px-4 py-2 rounded-lg min-w-[80px]">
+                <span className="text-2xl font-semibold text-emerald-600">{dirInfo.files}</span>
+                <span className="text-xs text-gray-400 mt-1">文件</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Wrapper>
+    )
+  }
+
   if (selectedPaths.size === 0) {
-    return <div className="flex items-center justify-center h-full text-gray-400 text-sm">未选择任何文件</div>
+    return renderDirPreview() || <div className="flex items-center justify-center h-full text-gray-400 text-sm">未选择任何文件</div>
   }
 
   if (selectedPaths.size > 1) {
-    return <div className="flex items-center justify-center h-full text-gray-400 text-sm">已选择 {selectedPaths.size} 个项目</div>
+    return renderDirPreview() || <div className="flex items-center justify-center h-full text-gray-400 text-sm">已选择 {selectedPaths.size} 个项目</div>
   }
 
   if (isLoading || !selectedFile) {
@@ -157,7 +196,7 @@ export default function FilePreview() {
     return <Wrapper><EpubPreview path={selectedFile.path} /></Wrapper>
   }
 
-  return (
+  return renderDirPreview() || (
     <Wrapper>
       <div className="flex items-center justify-center h-full text-gray-400 text-sm flex-col gap-2">
         <img src="/src/assets/icons/document_line.svg" className="w-12 h-12 opacity-50" />

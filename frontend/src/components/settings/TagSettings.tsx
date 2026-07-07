@@ -1,19 +1,16 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ComboBox, Input, ListBox } from '@heroui/react'
 import { useTagStore } from '../../store/tagStore'
 import { GetTagUsageCounts, UpdateTag, DeleteTag } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { usePrivacyStore } from '../../store/privacyStore'
 
 const TagSettings = () => {
-  const { globalTags, fetchGlobalTags, createTag, tagRefreshKey } = useTagStore()
+  const { globalTags, fetchGlobalTags, tagRefreshKey } = useTagStore()
   const { state: privacyState, setTagProtected } = usePrivacyStore()
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({})
   const [editingTagId, setEditingTagId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-  const [inputValue, setInputValue] = useState('')
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const inputRef = useRef<HTMLInputElement>(null)
   
@@ -219,63 +216,6 @@ const TagSettings = () => {
     )
   }
 
-  const handleAddTag = async (tagName: string) => {
-    if (!tagName.trim()) return
-    try {
-      let type = ''
-      let name = tagName.trim()
-      if (name.includes(':') || name.includes('：')) {
-          const parts = name.split(/[:：]/)
-          type = parts[0].trim()
-          name = parts[1].trim()
-      }
-      if (!name) return
-
-      let tag = globalTags.find(t => t.name.toLowerCase() === name.toLowerCase() && 
-                                     (t.type || "").toLowerCase() === type.toLowerCase())
-      if (!tag) {
-        await createTag(name, type)
-        await fetchGlobalTags()
-      }
-      setIsAdding(false)
-      setInputValue('')
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const displayTags = useMemo(() => {
-    const uniqueTags = Array.from(new Map(visibleGlobalTags.map(item => [`${item.type}:${item.name}`, item])).values())
-    if (inputValue.includes(':')) {
-      return uniqueTags.map(item => ({
-        id: item.id,
-        textValue: item.type ? `${item.type}: ${item.name}` : item.name,
-        display: item.type ? `${item.type}: ${item.name}` : item.name
-      }))
-    }
-    const result: any[] = []
-    const seenTypes = new Set<string>()
-    uniqueTags.forEach(item => {
-      if (item.type) {
-        if (!seenTypes.has(item.type)) {
-          seenTypes.add(item.type)
-          result.push({
-            id: `type-${item.type}`,
-            textValue: `${item.type}:`,
-            display: `${item.type}:`
-          })
-        }
-      } else {
-        result.push({
-          id: item.id,
-          textValue: item.name,
-          display: item.name
-        })
-      }
-    })
-    return result
-  }, [visibleGlobalTags, inputValue])
-
   // Group tags by type
   const groupedTags = visibleGlobalTags.reduce((acc, tag) => {
     const type = tag.type || '未分类'
@@ -300,106 +240,6 @@ const TagSettings = () => {
               暂无标签
             </div>
           )}
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <AnimatePresence>
-            {isAdding ? (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: 'auto' }} 
-                exit={{ opacity: 0, height: 0 }}
-                className="w-full overflow-hidden mt-2"
-              >
-                <div className="bg-sf-panel/80 rounded-xl p-5 flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700">添加新标签</span>
-                    <ComboBox 
-                      allowsCustomValue 
-                      className="w-full" 
-                      inputValue={inputValue} 
-                      onInputChange={setInputValue}
-                      onSelectionChange={(key) => {
-                        if (key) {
-                          const keyStr = key.toString()
-                          if (keyStr.startsWith('type-')) {
-                            const typePrefix = keyStr.substring(5) + ':'
-                            setInputValue(typePrefix)
-                            return
-                          }
-                          const selectedTag = visibleGlobalTags.find(t => t.id === key)
-                          if (selectedTag) {
-                            handleAddTag(selectedTag.type ? `${selectedTag.type}: ${selectedTag.name}` : selectedTag.name)
-                            setInputValue('')
-                          }
-                        }
-                      }}
-                    >
-                      <ComboBox.InputGroup className="bg-sf-input hover:bg-sf-input-hover rounded-full overflow-hidden outline-none h-10 transition-all focus-within:!ring-0">
-                        <Input 
-                          className="w-full text-gray-800 bg-transparent outline-none ring-0 border-none px-3 h-full"
-                          placeholder="" 
-                          autoFocus 
-                          onKeyDown={(e: any) => {
-                            if (e.key === 'Enter' && inputValue) {
-                              handleAddTag(inputValue)
-                            }
-                          }} 
-                        />
-                        <ComboBox.Trigger className="text-gray-500 bg-transparent" />
-                      </ComboBox.InputGroup>
-                      <ComboBox.Popover className="border border-gray-200 shadow-lg rounded-xl">
-                        <ListBox className="text-gray-800">
-                          {displayTags.map(item => (
-                            <ListBox.Item 
-                              key={item.id} 
-                              id={item.id} 
-                              textValue={item.textValue} 
-                              className="text-gray-800 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium transition-colors cursor-pointer"
-                            >
-                              {item.display}
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </ComboBox.Popover>
-                    </ComboBox>
-                  </div>
-                  <div className="flex justify-end pt-2 gap-2 mt-1">
-                    <button 
-                      onClick={() => setIsAdding(false)} 
-                      className="px-5 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-xl transition-colors hover:bg-gray-300"
-                    >
-                      取消
-                    </button>
-                    <button 
-                      onClick={() => handleAddTag(inputValue)} 
-                      disabled={!inputValue.trim()}
-                      className="px-5 py-2 bg-green-500 text-white text-sm font-medium rounded-xl transition-colors hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      保存标签
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mt-2"
-              >
-                <button 
-                  onClick={() => setIsAdding(true)}
-                  className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-sf-text-secondary hover:bg-sf-item/80 rounded-xl transition-colors border border-dashed border-gray-300 hover:border-sf-text-secondary/50"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 

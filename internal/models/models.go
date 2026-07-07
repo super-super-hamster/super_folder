@@ -115,3 +115,24 @@ type Favorite struct {
 	Path  string `json:"path" gorm:"primaryKey"`
 	IsDir bool   `json:"isDir"`
 }
+
+// FileDetail holds detailed file information for the info panel
+type FileDetail struct {
+	Name            string `json:"name"`
+	Path            string `json:"path"`
+	Size            int64  `json:"size"`
+	ModTime         string `json:"modTime"`
+	CreateTime      string `json:"createTime"`
+	IsDir           bool   `json:"isDir"`
+	Ext             string `json:"ext"`
+	IsHidden        bool   `json:"isHidden"`
+	IsProtected     bool   `json:"isProtected"`
+	FileCount       int    `json:"fileCount,omitempty"`
+	FolderCount     int    `json:"folderCount,omitempty"`
+	ImageWidth      int    `json:"imageWidth,omitempty"`
+	ImageHeight     int    `json:"imageHeight,omitempty"`
+	MediaDurationMs int64  `json:"mediaDurationMs,omitempty"`
+	VideoWidth      int    `json:"videoWidth,omitempty"`
+	VideoHeight     int    `json:"videoHeight,omitempty"`
+	LineCount       int    `json:"lineCount,omitempty"`
+}

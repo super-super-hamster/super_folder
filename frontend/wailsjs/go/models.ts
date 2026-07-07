@@ -19,6 +19,50 @@ export namespace chineseconv {
 
 export namespace models {
 	
+	export class FileDetail {
+	    name: string;
+	    path: string;
+	    size: number;
+	    modTime: string;
+	    createTime: string;
+	    isDir: boolean;
+	    ext: string;
+	    isHidden: boolean;
+	    isProtected: boolean;
+	    fileCount?: number;
+	    folderCount?: number;
+	    imageWidth?: number;
+	    imageHeight?: number;
+	    mediaDurationMs?: number;
+	    videoWidth?: number;
+	    videoHeight?: number;
+	    lineCount?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.path = source["path"];
+	        this.size = source["size"];
+	        this.modTime = source["modTime"];
+	        this.createTime = source["createTime"];
+	        this.isDir = source["isDir"];
+	        this.ext = source["ext"];
+	        this.isHidden = source["isHidden"];
+	        this.isProtected = source["isProtected"];
+	        this.fileCount = source["fileCount"];
+	        this.folderCount = source["folderCount"];
+	        this.imageWidth = source["imageWidth"];
+	        this.imageHeight = source["imageHeight"];
+	        this.mediaDurationMs = source["mediaDurationMs"];
+	        this.videoWidth = source["videoWidth"];
+	        this.videoHeight = source["videoHeight"];
+	        this.lineCount = source["lineCount"];
+	    }
+	}
 	export class FileInfo {
 	    name: string;
 	    path: string;

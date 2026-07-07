@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import FilePreview from '../preview/FilePreview'
+import FileInfoPanel from '../preview/FileInfoPanel'
 import RemarkPanel from '../preview/RemarkPanel'
 import { useUIStore } from '../../store/uiStore'
 import RightSidebarAdvanced from './RightSidebarAdvanced'
@@ -84,8 +85,8 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
           </div>
         )}
         {activeTab === '信息' && (
-          <div className="w-full flex flex-col p-4 text-gray-400">
-            信息内容区
+          <div className="w-full h-full overflow-y-auto">
+            <FileInfoPanel />
           </div>
         )}
         {activeTab === '高级' && (

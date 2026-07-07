@@ -62,6 +62,8 @@ export function GetFavoritePaths():Promise<Array<string>>;
 
 export function GetFavorites():Promise<Array<models.FileInfo>>;
 
+export function GetFileDetail(arg1:string):Promise<models.FileDetail>;
+
 export function GetFileRemark(arg1:string):Promise<string>;
 
 export function GetFileTags(arg1:string):Promise<Array<models.Tag>>;

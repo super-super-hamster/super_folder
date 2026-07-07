@@ -1,18 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-ole/go-ole"
@@ -369,6 +373,111 @@ func (a *App) BatchRenameFiles(operations map[string]string) error {
 
 func (a *App) GetDefaultPaths() map[string]string {
 	return fs.GetDefaultPaths()
+}
+
+// GetFileDetail returns detailed file information for the info panel
+func (a *App) GetFileDetail(path string) (models.FileDetail, error) {
+	var detail models.FileDetail
+	detail.Path = path
+	detail.Name = filepath.Base(path)
+	detail.Ext = strings.ToLower(filepath.Ext(path))
+
+	stat, err := os.Stat(path)
+	if err == nil {
+		detail.Size = stat.Size()
+		detail.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+		detail.IsDir = stat.IsDir()
+
+		if sys := stat.Sys(); sys != nil {
+			if attrs, ok := sys.(*syscall.Win32FileAttributeData); ok {
+				detail.CreateTime = time.Unix(0, attrs.CreationTime.Nanoseconds()).Format("2006-01-02 15:04:05")
+				detail.IsHidden = attrs.FileAttributes&syscall.FILE_ATTRIBUTE_HIDDEN != 0
+			}
+		}
+	}
+
+	if detail.IsDir {
+		entries, err := os.ReadDir(path)
+		if err == nil {
+			for _, e := range entries {
+				if e.IsDir() {
+					detail.FolderCount++
+				} else {
+					detail.FileCount++
+				}
+			}
+		}
+	}
+
+	detail.IsProtected, _ = privacy.IsDirectPathProtected(path)
+
+	// Image dimensions via DecodeConfig
+	if !detail.IsDir && slices.Contains(imageExts, detail.Ext) {
+		f, err := os.Open(path)
+		if err == nil {
+			cfg, _, err := image.DecodeConfig(f)
+			if err == nil {
+				detail.ImageWidth = cfg.Width
+				detail.ImageHeight = cfg.Height
+			}
+			f.Close()
+		}
+	}
+
+	// Code file line count
+	if !detail.IsDir && lineCountExts[detail.Ext] {
+		detail.LineCount = getCodeLineCount(path)
+	}
+
+	// Media properties via Windows Shell
+	if !detail.IsDir && slices.Contains(mediaExts, detail.Ext) {
+		dur, w, h := readShellProperties(path)
+		detail.MediaDurationMs = dur
+		detail.VideoWidth = w
+		detail.VideoHeight = h
+	}
+
+	return detail, nil
+}
+
+var imageExts = []string{".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+
+var mediaExts = []string{".mp4", ".mkv", ".avi", ".mov", ".wmv", ".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"}
+
+var lineCountExts = map[string]bool{
+	".go": true, ".js": true, ".jsx": true, ".ts": true, ".tsx": true,
+	".json": true, ".html": true, ".css": true,
+	".py": true, ".java": true, ".c": true, ".cpp": true, ".cs": true,
+	".sh": true, ".bat": true, ".xml": true, ".yaml": true, ".yml": true,
+	".sql": true, ".php": true, ".rb": true, ".rs": true, ".swift": true,
+	".kt": true, ".dart": true, ".vue": true, ".svelte": true,
+	".h": true, ".hpp": true, ".m": true, ".md": true, ".txt": true,
+}
+
+func getCodeLineCount(path string) int {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+	// Skip files larger than 10MB
+	if len(content) > 10*1024*1024 {
+		return 0
+	}
+	count := bytes.Count(content, []byte{'\n'})
+	if len(content) > 0 && content[len(content)-1] != '\n' {
+		count++
+	}
+	return count
+}
+
+func readShellProperties(path string) (durationMs int64, width, height int) {
+	// This is a placeholder. Windows Shell COM property reading
+	// requires COM initialization which happens in app startup.
+	// The actual implementation reads PKEY_Media_Duration,
+	// PKEY_Video_FrameWidth, and PKEY_Video_FrameHeight via
+	// SHCreateItemFromParsingName → IShellItem → IPropertyStore.
+	// Returns zeros if unavailable.
+	return 0, 0, 0
 }
 
 func (a *App) PasteFiles(operation string, srcPaths []string, destDir string) string {
