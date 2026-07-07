@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 18
+- **Total Sessions**: 19
 - **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~627 | Active |
+| `journal-1.md` | ~660 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 19 | 2026-07-07 | Fix settings panel bottom gap after toggle | `5958a99` | `main` |
 | 18 | 2026-07-07 | Fix General settings height collapse on toggle | `bf4e7ea` | `main` |
 | 17 | 2026-07-07 | Fix RightSidebar advanced tab stutter | `c4a84bd` | `main` |
 | 16 | 2026-07-07 | Add file info panel, glob wildcards, tag validation, directory fallback preview | `9701ffb`, `22acf77` | `main` |

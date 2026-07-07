@@ -625,3 +625,36 @@ Fixed the settings General page height collapse when toggling the '导航栏显�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: Fix settings panel bottom gap after toggle
+
+**Date**: 2026-07-07
+**Task**: Fix settings panel bottom gap after toggle
+**Branch**: `main`
+
+### Summary
+
+Follow-up fix: the previous min-h-full on GeneralSettings left a fixed-height bottom gap because the container height was determined by content. Reverted GeneralSettings to h-full so it strictly matches the ScrollArea height, while ChineseConvSettings remains mt-auto to anchor the section to the bottom.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5958a99` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
