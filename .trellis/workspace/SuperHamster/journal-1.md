@@ -525,3 +525,37 @@ Replaced the one-shot requestAnimationFrame scroll logic with a ResizeObserver-b
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: Add file info panel, glob wildcards, tag validation, directory fallback preview
+
+**Date**: 2026-07-07
+**Task**: Add file info panel, glob wildcards, tag validation, directory fallback preview
+**Branch**: `main`
+
+### Summary
+
+Added file info panel with GetFileDetail backend (stat, image dimensions, code line count, media metadata). Added glob wildcard search (? * [...]) with regex conversion. Added tag name validation (spaces and * blocked). Removed tag add from settings. Changed preview fallback to show current directory when no/multi/unsupported selection.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9701ffb` | (see git log) |
+| `22acf77` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

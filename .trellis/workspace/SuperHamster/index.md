@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 15
-- **Last Active**: 2026-07-06
+- **Total Sessions**: 16
+- **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~527 | Active |
+| `journal-1.md` | ~561 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 16 | 2026-07-07 | Add file info panel, glob wildcards, tag validation, directory fallback preview | `9701ffb`, `22acf77` | `main` |
 | 15 | 2026-07-06 | Fix TopNav tab auto-scroll jitter | `5764c1d` | `main` |
 | 14 | 2026-07-06 | Auto-scroll active tab in TopNav | `a8e2c05` | `main` |
 | 13 | 2026-07-06 | Custom overlay scrollbar | `e95eca3` | `main` |
