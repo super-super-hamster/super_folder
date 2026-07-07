@@ -12,7 +12,7 @@ export default function SettingsContent() {
 
   return (
     <div className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 flex flex-col overflow-hidden relative">
-      <ScrollArea className="flex-1 wails-no-drag" innerClassName="p-8">
+      <ScrollArea className="flex-1 min-h-0 wails-no-drag" innerClassName="p-8">
         {activeSettingsTab === 'general' && <GeneralSettings />}
         {activeSettingsTab === 'privacy' && <PrivacySettings />}
         {activeSettingsTab === 'cache' && <CacheSettings />}
