@@ -1,7 +1,7 @@
 import { useState, useRef, ReactNode } from 'react'
 import { Tooltip } from '@heroui/react'
 
-export function TooltipItem({ children, content, placement = 'top', delay = 200 }: { children: ReactNode, content: string, placement?: string, delay?: number }) {
+export function TooltipItem({ children, content, placement = 'top', delay = 500 }: { children: ReactNode, content: string, placement?: string, delay?: number }) {
   const [isOpen, setIsOpen] = useState(false)
   const triggerRef = useRef<HTMLElement>(null)
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -13,7 +13,8 @@ export function TooltipItem({ children, content, placement = 'top', delay = 200 
         style={{ display: 'inline-block' }}
         onPointerOver={() => {
           clearTimeout(hideTimer.current)
-          setIsOpen(true)
+          if (delay > 0) hideTimer.current = setTimeout(() => setIsOpen(true), delay)
+          else setIsOpen(true)
         }}
         onPointerOut={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node)) {
