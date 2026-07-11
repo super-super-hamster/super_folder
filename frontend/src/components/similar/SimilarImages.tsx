@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { ProgressBar } from '@heroui/react'
+import { ProgressBar, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import { useTabsStore } from '../../store/tabsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useSelectionStore } from '../../store/selectionStore'
@@ -87,6 +88,7 @@ function saveHiddenSignatures(key: string, signatures: Set<string>) {
 }
 
 export default function SimilarImages() {
+  const siTp = useTooltipState(200)
   const { tabs, activeTabId, navigate } = useTabsStore()
   const { refreshKey } = useUIStore()
   const { selectedPaths, setSelection, toggleSelect, selectOnly, clearSelection } = useSelectionStore()
@@ -244,17 +246,21 @@ export default function SimilarImages() {
       <div className="text-xs font-medium text-gray-500">
         {isPendingHidden ? `第 ${idx + 1} 组 · ${length} 张 · 已隐藏` : `第 ${idx + 1} 组 · ${length} 张`}
       </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); toggleHidden(signature) }}
-        className="p-1 rounded-md hover:bg-gray-200 transition-colors focus:outline-none"
-        title={isPendingHidden ? '取消隐藏' : '隐藏该组'}
-      >
-        <img
-          src={isPendingHidden ? eyeCloseLine : eyeLine}
-          className="w-4 h-4 opacity-70"
-          alt={isPendingHidden ? '已隐藏' : '隐藏'}
-        />
-      </button>
+      <Tooltip delay={200} isOpen={siTp.isOpen}>
+        <button
+          ref={siTp.triggerRef as React.Ref<HTMLButtonElement>}
+          onClick={(e) => { e.stopPropagation(); toggleHidden(signature) }}
+          className="p-1 rounded-md hover:bg-gray-200 transition-colors focus:outline-none"
+          {...siTp.triggerProps}
+        >
+          <img
+            src={isPendingHidden ? eyeCloseLine : eyeLine}
+            className="w-4 h-4 opacity-70"
+            alt={isPendingHidden ? '已隐藏' : '隐藏'}
+          />
+        </button>
+        <Tooltip.Content placement="top" triggerRef={siTp.triggerRef}>{isPendingHidden ? '取消隐藏' : '隐藏该组'}</Tooltip.Content>
+      </Tooltip>
     </div>
   )
 

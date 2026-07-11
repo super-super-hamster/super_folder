@@ -5,7 +5,8 @@ import { useTagStore, generateColorFromName } from '../../store/tagStore'
 import { Minimize, Maximize as AppMaximize, Close, GetGlobalTags, InspectPathForNavigation } from '../../../wailsjs/go/main/App'
 import { WindowToggleMaximise, WindowIsMaximised } from '../../../wailsjs/runtime/runtime'
 import { useRef, useState, useEffect } from 'react'
-import { Checkbox, Dropdown, Separator, Spinner } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
+import { Checkbox, Dropdown, Separator, Spinner, Tooltip } from '@heroui/react'
 import DynamicBreadcrumb from './DynamicBreadcrumb'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 import { models } from '../../../wailsjs/go/models'
@@ -69,6 +70,8 @@ const getParentPath = (path: string) => {
 }
 
 export default function TopNav() {
+  const viewTp = useTooltipState(200)
+  const minTp = useTooltipState(200)
   const { globalTags: allGlobalTags } = useTagStore()
   const { 
     isSearchFocused, setSearchFocused, 
@@ -520,12 +523,16 @@ export default function TopNav() {
       <div className="flex items-center gap-3 wails-no-drag shrink-0">
         <Dropdown>
           <Dropdown.Trigger>
-            <button
-              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
-              title="视图选项"
-            >
-              <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
-            </button>
+            <Tooltip delay={200} isOpen={viewTp.isOpen}>
+              <button
+                ref={viewTp.triggerRef as React.Ref<HTMLButtonElement>}
+                className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                {...viewTp.triggerProps}
+              >
+                <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
+              </button>
+              <Tooltip.Content placement="bottom" triggerRef={viewTp.triggerRef}>视图选项</Tooltip.Content>
+            </Tooltip>
           </Dropdown.Trigger>
           <Dropdown.Popover className="w-24 p-1 rounded-xl border border-gray-200 shadow-lg" placement="bottom end">
             <Dropdown.Menu
@@ -635,9 +642,12 @@ export default function TopNav() {
         <div className="w-[1px] h-4 bg-gray-300 mx-1 shrink-0"></div>
 
         <div className="flex items-center gap-1 text-gray-600 shrink-0">
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" onClick={() => Minimize()}>
-            <img src="/src/assets/icons/minimize_line.svg" className="w-4 h-4" />
-          </button>
+          <Tooltip delay={200} isOpen={minTp.isOpen}>
+            <button ref={minTp.triggerRef as unknown as React.Ref<HTMLButtonElement>} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none relative" onClick={() => Minimize()} {...minTp.triggerProps}>
+              <img src="/src/assets/icons/minimize_line.svg" className="w-4 h-4" />
+            </button>
+            <Tooltip.Content placement="bottom" triggerRef={minTp.triggerRef}>最小化</Tooltip.Content>
+          </Tooltip>
           <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" onClick={handleMaximize}>
             <img src={isMaximized ? "/src/assets/icons/fullscreen_exit_line.svg" : "/src/assets/icons/fullscreen_line.svg"} className="w-4 h-4" />
           </button>

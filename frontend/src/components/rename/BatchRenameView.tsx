@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Select, ListBox, Input } from '@heroui/react'
+import { Select, ListBox, Input, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import { useBatchRenameStore } from '../../store/batchRenameStore'
 import { GetRenameSchemes, BatchRenameFiles, CheckBatchRenameConflicts } from '../../../wailsjs/go/main/App'
 import { rename } from '../../../wailsjs/go/models'
@@ -10,6 +11,8 @@ import { EventsOn } from '../../../wailsjs/runtime/runtime'
 import ScrollArea from '../common/ScrollArea'
 
 export default function BatchRenameView() {
+  const applyTp = useTooltipState(200)
+  const [previewHoverIdx, setPreviewHoverIdx] = useState(-1)
   const { files, setFiles } = useBatchRenameStore()
   const { setTerminalOpen } = useUIStore()
   const { goBack } = useTabsStore()
@@ -263,14 +266,18 @@ export default function BatchRenameView() {
 
       {/* Middle Arrow & Scheme */}
       <div className="flex flex-col items-center justify-center gap-6">
-        <button 
-          onClick={handleApply}
-          disabled={hasErrors || files.length === 0 || isProcessing}
-          className="hover:opacity-80 transition-opacity disabled:opacity-30 cursor-pointer"
-          title="点击执行重命名"
-        >
-          <img src="/src/assets/icons/large_arrow_right_fill.svg" className="w-16 h-16" alt="Apply" />
-        </button>
+        <Tooltip delay={200} isOpen={applyTp.isOpen}>
+          <button 
+            ref={applyTp.triggerRef as React.Ref<HTMLButtonElement>}
+            onClick={handleApply}
+            disabled={hasErrors || files.length === 0 || isProcessing}
+            className="hover:opacity-80 transition-opacity disabled:opacity-30 cursor-pointer"
+            {...applyTp.triggerProps}
+          >
+            <img src="/src/assets/icons/large_arrow_right_fill.svg" className="w-16 h-16" alt="Apply" />
+          </button>
+          <Tooltip.Content placement="top" triggerRef={applyTp.triggerRef}>点击执行重命名</Tooltip.Content>
+        </Tooltip>
 
         <div className="relative w-[180px] rounded-full ring-0">
           <Select 
@@ -309,18 +316,23 @@ export default function BatchRenameView() {
       {/* Right Container */}
       <ScrollArea className="w-[400px] h-[600px] bg-sf-panel rounded-3xl" innerClassName="p-6 flex flex-col gap-3">
         {preview.map((p, idx) => (
-          <div 
-            key={idx} 
-            className={`px-4 py-2 rounded-full text-sm truncate flex items-center justify-between font-medium ${
-              p.error ? 'bg-red-200 text-red-800' : 'bg-sf-item text-gray-800'
-            }`}
-            title={p.error || p.newName}
-          >
-            <span className="truncate">{p.newName || p.error || '(空)'}</span>
+          <Tooltip delay={200} key={idx} isOpen={previewHoverIdx === idx}>
+            <div 
+              className={`px-4 py-2 rounded-full text-sm truncate flex items-center justify-between font-medium ${
+                p.error ? 'bg-red-200 text-red-800' : 'bg-sf-item text-gray-800'
+              }`}
+              onPointerEnter={() => setPreviewHoverIdx(idx)}
+              onPointerLeave={() => setPreviewHoverIdx(-1)}
+              onFocus={() => setPreviewHoverIdx(idx)}
+              onBlur={() => setPreviewHoverIdx(-1)}
+            >
+              <span className="truncate">{p.newName || p.error || '(空)'}</span>
             {p.error && (
               <span className="text-red-600 text-xs shrink-0 ml-2 font-bold">!</span>
             )}
-          </div>
+            </div>
+            <Tooltip.Content placement="top">{p.error || p.newName}</Tooltip.Content>
+          </Tooltip>
         ))}
         {preview.length === 0 && (
           <div className="text-gray-400 text-center mt-10">空</div>

@@ -2,12 +2,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useState, useEffect } from 'react'
-import { Input, Dropdown, Label, Header, Separator, Select, ListBox } from '@heroui/react'
+import { Input, Dropdown, Label, Header, Separator, Select, ListBox, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import SimpleDatePicker from '../common/SimpleDatePicker'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 import ScrollArea from '../common/ScrollArea'
 
 export default function SearchPanel() {
+  const spTp = useTooltipState(200)
   const { searchFilter, setSearchFilter, isSearchPanelOpen, setSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
   const { searchPresets } = useSettingsStore()
   const [isResizing, setIsResizing] = useState(false)
@@ -668,13 +670,17 @@ export default function SearchPanel() {
           })}
         </div>
         </div>
-        <button
-          className="absolute left-1/2 bottom-0 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-t-md transition-colors focus:outline-none wails-no-drag"
-          onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
-          title={isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}
-        >
-          <img src={`/src/assets/icons/${isSearchPanelOpen ? 'up_line.svg' : 'down_line.svg'}`} className="w-4 h-4 opacity-70" alt="切换搜索面板" />
-        </button>
+        <Tooltip delay={200} isOpen={spTp.isOpen}>
+          <button
+            ref={spTp.triggerRef as React.Ref<HTMLButtonElement>}
+            className="absolute left-1/2 bottom-0 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-t-md transition-colors focus:outline-none wails-no-drag"
+            onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
+            {...spTp.triggerProps}
+          >
+            <img src={`/src/assets/icons/${isSearchPanelOpen ? 'up_line.svg' : 'down_line.svg'}`} className="w-4 h-4 opacity-70" alt="切换搜索面板" />
+          </button>
+          <Tooltip.Content placement="top" triggerRef={spTp.triggerRef}>{isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}</Tooltip.Content>
+        </Tooltip>
       </div>
       {/* Resizer Handle */}
       {isSearchPanelOpen && <div 

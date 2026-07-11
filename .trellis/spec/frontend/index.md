@@ -21,6 +21,8 @@ This directory contains frontend-specific coding conventions and patterns. These
 | [Privacy Mode](./privacy-mode.md) | Privacy state, startup unlock, directory refresh, and lock badge contracts | Filled |
 | [Search Query Parsing](./search-query.md) | Token boundaries, tag/remark prefixes, colon-containing values | Filled |
 | [Tag Management](./tag-management.md) | File tag reordering, usage-based suggestions, global order persistence | Filled |
+| [HeroUI Bug Fixes](./heroui-switch-scroll-bug.md) | HeroUI/RAC component bug patterns, root causes, and fixes | Filled |
+| [Tooltip Guide](./heroui-tooltip-guide.md) | Tooltip usage pattern, placement priority, and implementation | Filled |
 
 ---
 

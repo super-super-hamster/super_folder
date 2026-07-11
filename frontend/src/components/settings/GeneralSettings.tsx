@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Reorder } from 'framer-motion'
-import { Select, Slider, ListBox, Label, Input, Button, Switch } from '@heroui/react'
+import { Select, Slider, ListBox, Label, Input, Button, Switch, Tooltip } from '@heroui/react'
+import { TooltipItem } from '../../utils/TooltipItem'
 import { useSettingsStore, ShortcutItem } from '../../store/settingsStore'
 import { usePrivacyStore } from '../../store/privacyStore'
 import { GetDefaultPaths, SelectDirectory } from '../../../wailsjs/go/main/App'
@@ -117,28 +118,30 @@ export default function GeneralSettings() {
                   {item.name}
                 </span>
                 {!isSpecial && (
-                  <button
-                    onClick={() => handlePathClick(item.id)}
-                    className={`text-sm truncate max-w-full text-left ${item.visible ? 'text-gray-500 hover:text-blue-600' : 'text-gray-400'} pointer-events-auto`}
-                    title={path}
-                  >
-                    {path}
-                  </button>
+                  <TooltipItem content={path} placement="top">
+                    <button
+                      onClick={() => handlePathClick(item.id)}
+                      className={`text-sm truncate max-w-full text-left ${item.visible ? 'text-gray-500 hover:text-blue-600' : 'text-gray-400'} pointer-events-auto`}
+                    >
+                      {path}
+                    </button>
+                  </TooltipItem>
                 )}
               </div>
 
               <div className="flex items-center ml-4 relative z-10">
-                <button
-                  onClick={() => toggleVisibility(item.id)}
-                  className="p-1.5 hover:bg-gray-200 rounded-md transition-colors flex items-center justify-center pointer-events-auto"
-                  title={item.visible ? '隐藏' : '显示'}
-                >
-                  <img
-                    src={`/src/assets/icons/${item.visible ? 'eye_line.svg' : 'eye_close_line.svg'}`}
-                    className={`w-5 h-5 ${item.visible ? 'opacity-70' : 'opacity-40'}`}
-                    alt={item.visible ? 'Visible' : 'Hidden'}
-                  />
-                </button>
+                <TooltipItem content={item.visible ? '隐藏' : '显示'} placement="top">
+                  <button
+                    onClick={() => toggleVisibility(item.id)}
+                    className="p-1.5 hover:bg-gray-200 rounded-md transition-colors flex items-center justify-center pointer-events-auto"
+                  >
+                    <img
+                      src={`/src/assets/icons/${item.visible ? 'eye_line.svg' : 'eye_close_line.svg'}`}
+                      className={`w-5 h-5 ${item.visible ? 'opacity-70' : 'opacity-40'}`}
+                      alt={item.visible ? 'Visible' : 'Hidden'}
+                    />
+                  </button>
+                </TooltipItem>
               </div>
             </Reorder.Item>
           )

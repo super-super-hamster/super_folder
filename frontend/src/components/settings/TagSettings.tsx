@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTagStore } from '../../store/tagStore'
 import { GetTagUsageCounts, UpdateTag, DeleteTag } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
+import { TooltipItem } from '../../utils/TooltipItem'
 import { usePrivacyStore } from '../../store/privacyStore'
 
 const TagSettings = () => {
@@ -130,24 +131,26 @@ const TagSettings = () => {
         </div>
         <div className="flex items-center gap-2">
           {isPrivacyMode && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setTagProtected(tag.id, !tag.isProtected).catch(console.error)
-              }}
-              className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
-              title={tag.isProtected ? '解除保护' : '保护标签'}
-            >
-              <img src={`/src/assets/icons/${tag.isProtected ? 'lock_line.svg' : 'unlock_line.svg'}`} className="w-4 h-4" alt={tag.isProtected ? 'protected' : 'unprotected'} />
-            </button>
+            <TooltipItem content={tag.isProtected ? '解除保护' : '保护标签'} placement="top">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setTagProtected(tag.id, !tag.isProtected).catch(console.error)
+                }}
+                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <img src={`/src/assets/icons/${tag.isProtected ? 'lock_line.svg' : 'unlock_line.svg'}`} className="w-4 h-4" alt={tag.isProtected ? 'protected' : 'unprotected'} />
+              </button>
+            </TooltipItem>
           )}
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleDelete(tag.id) }}
-            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
-            title="删除标签"
-          >
-            <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
-          </button>
+          <TooltipItem content="删除标签" placement="left">
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleDelete(tag.id) }}
+              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
+            >
+              <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
+            </button>
+          </TooltipItem>
         </div>
       </div>
     )
@@ -187,13 +190,14 @@ const TagSettings = () => {
             <span className="text-sm text-gray-500">{tags.length} 个子标签</span>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={(e) => { e.stopPropagation(); handleDeleteType(type, tags) }}
-              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
-              title="删除类型及子标签"
-            >
-              <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
-            </button>
+            <TooltipItem content="删除类型及子标签" placement="left">
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleDeleteType(type, tags) }}
+                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-red-500 transition-all"
+              >
+                <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
+              </button>
+            </TooltipItem>
             <motion.svg animate={{ rotate: expanded ? 90 : 0 }} className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </motion.svg>

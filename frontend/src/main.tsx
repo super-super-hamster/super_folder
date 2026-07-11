@@ -2,7 +2,6 @@ import React from 'react'
 import {createRoot} from 'react-dom/client'
 import './style.css'
 import App from './App'
-import { HeroUIProvider } from '@heroui/system'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { installDevMocks } from './devMocks'
 import { useUIStore } from './store/uiStore'
@@ -81,10 +80,8 @@ const root = createRoot(container!)
 
 root.render(
     <React.StrictMode>
-        <HeroUIProvider>
-            <ErrorBoundary>
-                <App/>
-            </ErrorBoundary>
-        </HeroUIProvider>
+        <ErrorBoundary>
+            <App/>
+        </ErrorBoundary>
     </React.StrictMode>
 )

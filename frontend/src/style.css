@@ -22,6 +22,12 @@ input, textarea, button, select {
   --wails-draggable: no-drag;
 }
 
+/* HeroUI Tooltip 的trigger wrapper div位于 wails-draggable 容器内，
+   需要显式设置 no-drag 以避免 Wails 拦截 pointer 事件 */
+[data-slot="tooltip-trigger"] {
+  --wails-draggable: no-drag;
+}
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('./assets/fonts/JetBrainsMono.ttf') format('truetype');

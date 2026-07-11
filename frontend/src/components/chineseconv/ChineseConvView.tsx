@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Select, ListBox } from '@heroui/react'
+import { Select, ListBox, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import { useChineseConvStore } from '../../store/chineseConvStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useTabsStore } from '../../store/tabsStore'
@@ -17,6 +18,8 @@ const schemeOptions = [
 ]
 
 export default function ChineseConvView() {
+  const importFileTp = useTooltipState(200)
+  const importFolderTp = useTooltipState(200)
   const {
     files,
     baseScheme,
@@ -195,22 +198,30 @@ export default function ChineseConvView() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleImportFiles}
-              disabled={isProcessing}
-              className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
-              title="从文件导入"
-            >
-              <img src="/src/assets/icons/file_new_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件" />
-            </button>
-            <button
-              onClick={handleImportFolder}
-              disabled={isProcessing}
-              className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
-              title="从文件夹导入"
-            >
-              <img src="/src/assets/icons/new_folder_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件夹" />
-            </button>
+            <Tooltip delay={200} isOpen={importFileTp.isOpen}>
+              <button
+                ref={importFileTp.triggerRef as React.Ref<HTMLButtonElement>}
+                onClick={handleImportFiles}
+                disabled={isProcessing}
+                className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
+                {...importFileTp.triggerProps}
+              >
+                <img src="/src/assets/icons/file_new_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件" />
+              </button>
+              <Tooltip.Content placement="top" triggerRef={importFileTp.triggerRef}>从文件导入</Tooltip.Content>
+            </Tooltip>
+            <Tooltip delay={200} isOpen={importFolderTp.isOpen}>
+              <button
+                ref={importFolderTp.triggerRef as React.Ref<HTMLButtonElement>}
+                onClick={handleImportFolder}
+                disabled={isProcessing}
+                className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors disabled:opacity-50"
+                {...importFolderTp.triggerProps}
+              >
+                <img src="/src/assets/icons/new_folder_line.svg" className="w-5 h-5 brightness-0 invert" alt="文件夹" />
+              </button>
+              <Tooltip.Content placement="top" triggerRef={importFolderTp.triggerRef}>从文件夹导入</Tooltip.Content>
+            </Tooltip>
           </div>
         </div>
 

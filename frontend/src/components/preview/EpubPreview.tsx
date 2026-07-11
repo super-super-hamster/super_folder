@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Dropdown, Label } from '@heroui/react'
+import { Dropdown, Label, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import ePub from 'epubjs'
 import LottieLib, { LottieRefCurrentProps } from 'lottie-react'
 import leftAnim from '../../assets/anim/left.json'
@@ -60,6 +61,9 @@ interface EpubPreviewProps {
 }
 
 export default function EpubPreview({ path }: EpubPreviewProps) {
+  const prevTp = useTooltipState(200)
+  const nextTp = useTooltipState(200)
+  const tocTp = useTooltipState(200)
   const viewerRef = useRef<HTMLDivElement>(null)
   const bookRef = useRef<any>(null)
   const renditionRef = useRef<any>(null)
@@ -285,15 +289,19 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         }
       `}</style>
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
-        <button
-          onClick={goPrev}
-          onMouseDown={(e) => e.preventDefault()}
-          disabled={!canGoPrev}
-          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
-          title="上一章"
-        >
-          <Lottie lottieRef={leftRef} animationData={leftAnim} autoplay={false} loop={false} className="w-5 h-5" />
-        </button>
+        <Tooltip delay={200} isOpen={prevTp.isOpen}>
+          <button
+            ref={prevTp.triggerRef as React.Ref<HTMLButtonElement>}
+            onClick={goPrev}
+            onMouseDown={(e) => e.preventDefault()}
+            disabled={!canGoPrev}
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
+            {...prevTp.triggerProps}
+          >
+            <Lottie lottieRef={leftRef} animationData={leftAnim} autoplay={false} loop={false} className="w-5 h-5" />
+          </button>
+          <Tooltip.Content placement="bottom" triggerRef={prevTp.triggerRef}>上一章</Tooltip.Content>
+        </Tooltip>
 
         <div className="flex-1 flex items-center justify-center px-4 min-w-0">
           <span className="text-sm font-medium text-gray-800 text-center max-w-[50%] leading-tight line-clamp-2">
@@ -302,25 +310,33 @@ export default function EpubPreview({ path }: EpubPreviewProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={goNext}
-            onMouseDown={(e) => e.preventDefault()}
-            disabled={!canGoNext}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
-            title="下一章"
-          >
-            <Lottie lottieRef={rightRef} animationData={rightAnim} autoplay={false} loop={false} className="w-5 h-5" />
-          </button>
+          <Tooltip delay={200} isOpen={nextTp.isOpen}>
+            <button
+              ref={nextTp.triggerRef as React.Ref<HTMLButtonElement>}
+              onClick={goNext}
+              onMouseDown={(e) => e.preventDefault()}
+              disabled={!canGoNext}
+              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none"
+              {...nextTp.triggerProps}
+            >
+              <Lottie lottieRef={rightRef} animationData={rightAnim} autoplay={false} loop={false} className="w-5 h-5" />
+            </button>
+            <Tooltip.Content placement="bottom" triggerRef={nextTp.triggerRef}>下一章</Tooltip.Content>
+          </Tooltip>
 
           <Dropdown>
             <Dropdown.Trigger>
-              <button
-                onMouseDown={(e) => e.preventDefault()}
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
-                title="目录"
-              >
-                <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" alt="目录" />
-              </button>
+              <Tooltip delay={200} isOpen={tocTp.isOpen}>
+                <button
+                  ref={tocTp.triggerRef as React.Ref<HTMLButtonElement>}
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+                  {...tocTp.triggerProps}
+                >
+                  <img src="/src/assets/icons/menu_line.svg" className="w-5 h-5 opacity-70" alt="目录" />
+                </button>
+                <Tooltip.Content placement="bottom" triggerRef={tocTp.triggerRef}>目录</Tooltip.Content>
+              </Tooltip>
             </Dropdown.Trigger>
             <Dropdown.Popover placement="bottom end" className="max-h-[70vh] overflow-y-auto min-w-[200px] p-1 rounded-xl border border-gray-200 shadow-lg">
               <Dropdown.Menu onAction={(key) => handleTocAction(String(key))}>

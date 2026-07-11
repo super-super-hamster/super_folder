@@ -4,7 +4,8 @@ import { useModalStore } from '../../store/modalStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTaskStore } from '../../store/taskStore'
 import { CancelPaste, ResolvePasteConflict, RenameFile, PermanentDelete } from '../../../wailsjs/go/main/App'
-import { Modal, Button, ProgressBar } from '@heroui/react'
+import { Modal, Button, ProgressBar, Tooltip } from '@heroui/react'
+import { useTooltipState } from '../../utils/useTooltipState'
 import ScrollArea from './ScrollArea'
 
 const ProgressModalContent = () => {
@@ -181,6 +182,7 @@ const PermanentDeleteConfirmModalContent = () => {
 }
 
 const WarningModalContent = () => {
+  const detailTp = useTooltipState(200)
   const { modalData, closeModal } = useModalStore()
   const [showDetails, setShowDetails] = useState(false)
   
@@ -214,13 +216,17 @@ const WarningModalContent = () => {
         </p>
 
         <div className="w-full flex justify-end mb-2">
-          <button 
-            onClick={() => setShowDetails(!showDetails)}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
-            title={showDetails ? '隐藏详情' : '查看详情'}
-          >
-            <img src="/src/assets/icons/information_line.svg" className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity" alt="Details" />
-          </button>
+          <Tooltip delay={200} isOpen={detailTp.isOpen}>
+            <button 
+              ref={detailTp.triggerRef as React.Ref<HTMLButtonElement>}
+              onClick={() => setShowDetails(!showDetails)}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+              {...detailTp.triggerProps}
+            >
+              <img src="/src/assets/icons/information_line.svg" className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity" alt="Details" />
+            </button>
+            <Tooltip.Content placement="left" triggerRef={detailTp.triggerRef}>{showDetails ? '隐藏详情' : '查看详情'}</Tooltip.Content>
+          </Tooltip>
         </div>
 
         {showDetails && (

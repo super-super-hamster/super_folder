@@ -1,4 +1,5 @@
 import { Checkbox } from '@heroui/react'
+import { TooltipItem } from '../../utils/TooltipItem'
 import { models } from '../../../wailsjs/go/models'
 import AnimatedFolderIcon from '../common/AnimatedFolderIcon'
 import AnimatedDocumentIcon from '../common/AnimatedDocumentIcon'
@@ -97,9 +98,11 @@ export default function FileListItem({
               <img src="/src/assets/icons/lock_line.svg" className="absolute -bottom-1 -left-1 w-3.5 h-3.5 bg-white/90 rounded-full" alt="protected" />
             )}
           </div>
-          <div className="text-sm font-medium text-gray-700 truncate text-left" title={file.name}>
-            {file.name}
-          </div>
+          <TooltipItem content={file.name} placement="top">
+            <div className="text-sm font-medium text-gray-700 truncate text-left">
+              {file.name}
+            </div>
+          </TooltipItem>
           <div className="text-xs text-gray-400 text-right">
             {file.isDir ? '--' : formatSize(file.size)}
           </div>
@@ -138,9 +141,11 @@ export default function FileListItem({
           </div>
           {!(viewMode === 'album' && !file.isDir) && (
             <div className="h-10 w-full flex flex-col items-center justify-start overflow-hidden relative">
-              <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all" title={file.name}>
-                {file.name}
-              </span>
+              <TooltipItem content={file.name} placement="top">
+                <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 w-full px-1 break-all">
+                  {file.name}
+                </span>
+              </TooltipItem>
             </div>
           )}
 

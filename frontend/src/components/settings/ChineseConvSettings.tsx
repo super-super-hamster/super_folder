@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Select, ListBox, Input, Button } from '@heroui/react'
+import { Select, ListBox, Input, Button, Tooltip } from '@heroui/react'
+import { TooltipItem } from '../../utils/TooltipItem'
 import { useSettingsStore, ChineseConvScheme } from '../../store/settingsStore'
 
 const baseSchemeOptions = [
@@ -73,13 +74,14 @@ export default function ChineseConvSettings() {
                 {scheme.pairs.length > 0 && ` · ${scheme.pairs.length} 条替换`}
               </span>
             </div>
-            <button
-              onClick={() => handleDelete(scheme.id)}
-              className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all text-gray-400 hover:text-red-500"
-              title="删除方案"
-            >
-              <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
-            </button>
+            <TooltipItem content="删除方案" placement="left">
+              <button
+                onClick={() => handleDelete(scheme.id)}
+                className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all text-gray-400 hover:text-red-500"
+              >
+                <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
+              </button>
+            </TooltipItem>
           </div>
         ))}
 

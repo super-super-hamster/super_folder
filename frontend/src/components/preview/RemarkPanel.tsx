@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { Tooltip } from '@heroui/react';
+import { useTooltipState } from '../../utils/useTooltipState';
 import { GetFileRemark, SetFileRemark, DeleteFileRemark } from '../../../wailsjs/go/main/App';
 import { useSelectionStore } from '../../store/selectionStore';
 
 export default function RemarkPanel() {
+  const deleteTp = useTooltipState(200)
   const { selectedPaths } = useSelectionStore();
   const [remark, setRemark] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -84,13 +87,17 @@ export default function RemarkPanel() {
             >
               {remark}
             </div>
-            <button
-              onClick={handleDelete}
-              className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all text-sf-text hover:bg-gray-200 shrink-0 ml-2"
-              title="删除"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-            </button>
+            <Tooltip delay={200} isOpen={deleteTp.isOpen}>
+              <button
+                ref={deleteTp.triggerRef as React.Ref<HTMLButtonElement>}
+                onClick={handleDelete}
+                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all text-sf-text hover:bg-gray-200 shrink-0 ml-2"
+                {...deleteTp.triggerProps}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+              <Tooltip.Content placement="left" triggerRef={deleteTp.triggerRef}>删除</Tooltip.Content>
+            </Tooltip>
           </div>
         )}
 

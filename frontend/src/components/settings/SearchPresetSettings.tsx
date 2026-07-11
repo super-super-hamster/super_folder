@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore, SearchPreset } from '../../store/settingsStore'
-import { Button, Input } from '@heroui/react'
+import { Button, Input, Tooltip } from '@heroui/react'
+import { TooltipItem } from '../../utils/TooltipItem'
 
 const SearchPresetSettings = () => {
   const { searchPresets, setSearchPresets } = useSettingsStore()
@@ -142,13 +143,14 @@ const SearchPresetSettings = () => {
         {searchPresets.map(preset => (
           <div key={preset.id} className="flex items-center justify-between px-4 py-3 bg-sf-panel/80 rounded-xl group">
             <span className="text-sm font-medium text-gray-800">{preset.name}</span>
-            <button 
-              onClick={() => handleRemovePreset(preset.id)}
-              className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all text-gray-400 hover:text-red-500"
-              title="删除预设"
-            >
-              <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
-            </button>
+            <TooltipItem content="删除预设" placement="left">
+              <button 
+                onClick={() => handleRemovePreset(preset.id)}
+                className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all text-gray-400 hover:text-red-500"
+              >
+                <img src="/src/assets/icons/close_line.svg" className="w-4 h-4 opacity-50" alt="删除" />
+              </button>
+            </TooltipItem>
           </div>
         ))}
 
