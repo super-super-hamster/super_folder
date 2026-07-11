@@ -759,3 +759,37 @@ Fixed HeroUI Switch/Checkbox scroll shift root cause (sr-only input focus in fle
 ### Next Steps
 
 - None - task complete
+
+
+## Session 23: Replace title attributes with HeroUI Tooltip
+
+**Date**: 2026-07-11
+**Task**: Replace title attributes with HeroUI Tooltip
+**Branch**: `main`
+
+### Summary
+
+Replaced 21 native HTML title attributes with HeroUI v3 Tooltip. Fixed RAC FocusableContext context split bug via useTooltipState hook + controlled isOpen. Removed v2 HeroUIProvider. Added no-drag rule for tooltip trigger. Created TooltipItem wrapper for map-loop usage. Documented in spec. Delay 500ms.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bd568e3` | (see git log) |
+| `5caea28` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
