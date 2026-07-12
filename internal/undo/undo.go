@@ -13,11 +13,12 @@ import (
 type OpType string
 
 const (
-	OpRename    OpType = "rename"
-	OpMove      OpType = "move"
-	OpCopy      OpType = "copy"
-	OpAddTag    OpType = "add_tag"
-	OpRemoveTag OpType = "remove_tag"
+	OpRename      OpType = "rename"
+	OpMove        OpType = "move"
+	OpCopy        OpType = "copy"
+	OpAddTag      OpType = "add_tag"
+	OpRemoveTag   OpType = "remove_tag"
+	OpCreateFolder OpType = "create_folder"
 )
 
 type Operation struct {
@@ -141,6 +142,15 @@ func performInverse(op Operation) error {
 				return err
 			}
 		}
+	case OpCreateFolder:
+		for _, dest := range op.DestPaths {
+			if _, err := os.Stat(dest); os.IsNotExist(err) {
+				return fmt.Errorf("路径 %s 不存在", dest)
+			}
+			if err := os.Remove(dest); err != nil {
+				return err
+			}
+		}
 	case OpAddTag:
 		if removeTagHandler == nil {
 			return fmt.Errorf("tag remove handler not registered")
@@ -182,6 +192,12 @@ func performForward(op Operation) error {
 				return fmt.Errorf("路径 %s 不存在", src)
 			}
 			if err := copyRecursive(src, dest); err != nil {
+				return err
+			}
+		}
+	case OpCreateFolder:
+		for _, dest := range op.DestPaths {
+			if err := os.MkdirAll(dest, 0755); err != nil {
 				return err
 			}
 		}

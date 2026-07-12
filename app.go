@@ -526,7 +526,11 @@ func (a *App) PermanentDelete(paths []string) string {
 }
 
 func (a *App) CreateFolder(path string) error {
-	return os.MkdirAll(path, 0755)
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return err
+	}
+	undo.Push(undo.Operation{Type: undo.OpCreateFolder, DestPaths: []string{path}})
+	return nil
 }
 
 func (a *App) CreateFile(path string) error {
