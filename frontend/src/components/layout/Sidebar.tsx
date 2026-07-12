@@ -73,7 +73,7 @@ export default function Sidebar() {
   const handleDotDot = () => {
     setSettingsOpen(false)
     const tab = tabs.find(t => t.id === activeTabId)
-    if (tab && tab.historyIndex >= 0 && tab.history[tab.historyIndex]?.path === parentPath) {
+    if (tab && tab.historyIndex > 0 && tab.history[tab.historyIndex - 1]?.path === parentPath) {
       goBack()
     } else {
       navigate(parentPath, getFileName(parentPath))
