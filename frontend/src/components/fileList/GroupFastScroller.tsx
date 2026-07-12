@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VirtualListItem } from '../../utils/fileSorting'
 
@@ -19,9 +19,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
   const [isHoveringScroller, setIsHoveringScroller] = useState(false)
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
-  const [highlightWidth, setHighlightWidth] = useState(0)
   const scrollerZoneRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
   const targetGroupRef = useRef<number>(0)
   const lastWheelTime = useRef<number>(0)
   const rafPendingRef = useRef(false)
@@ -123,31 +121,6 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
     return () => el.removeEventListener('wheel', handleWheel)
   }, [isGrouped, groups.length, headerIndices, rowVirtualizer, computeCurrentGroup])
 
-  useLayoutEffect(() => {
-    const el = contentRef.current
-    if (!el) return
-    const update = () => {
-      const rect = el.getBoundingClientRect()
-      setHighlightWidth(rect.width)
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [isHoveringScroller])
-
-  const visibleGroups: ({ title: string, offset: number, index: number } | null)[] = []
-  if (isHoveringScroller && isGrouped) {
-    for (let i = -2; i <= 2; i++) {
-      const idx = currentGroupIndex + i
-      if (idx >= 0 && idx < groups.length) {
-        visibleGroups.push({ title: groups[idx], offset: i, index: idx })
-      } else {
-        visibleGroups.push(null)
-      }
-    }
-  }
-
   const getItemClasses = (offset: number) => {
     const abs = Math.abs(offset)
     if (abs === 0) return 'h-9 px-3 font-bold text-gray-900 text-xl'
@@ -156,6 +129,13 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   }
 
   if (!isGrouped || groups.length === 0) return null
+
+  const itemHeight = 36
+  const gap = 8
+  const step = itemHeight + gap
+  const visibleCount = 5
+  const containerHeight = visibleCount * itemHeight + (visibleCount - 1) * gap
+  const translateY = -(currentGroupIndex * step + itemHeight / 2)
 
   return (
     <div
@@ -167,48 +147,42 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
       <AnimatePresence>
         {isHoveringScroller && (
           <motion.div
-            ref={contentRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none"
+            className="absolute right-8 top-1/2 -translate-y-1/2 w-max overflow-hidden pointer-events-none flex flex-col items-center"
+            style={{ height: containerHeight }}
           >
-            {highlightWidth > 0 && (
-              <motion.div
-                initial={false}
-                animate={{ width: highlightWidth }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 bg-sf-selected rounded-lg pointer-events-none z-0"
-              />
-            )}
-            {visibleGroups.map((g, i) => {
-              const offset = g ? g.offset : i - 2
-              if (!g) {
+            <motion.div
+              layout
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              className="relative z-10 flex items-center justify-center whitespace-nowrap px-3 h-9 bg-sf-selected rounded-lg font-bold text-gray-900 text-xl"
+            >
+              {groups[currentGroupIndex]}
+            </motion.div>
+
+            <motion.div
+              animate={{ y: translateY }}
+              transition={{ type: 'spring', stiffness: 600, damping: 45 }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-0"
+            >
+              {groups.map((title, idx) => {
+                const offset = idx - currentGroupIndex
+                const abs = Math.abs(offset)
+                const isCenter = offset === 0
+                const opacity = abs <= 2 ? (isCenter ? 0 : (abs === 1 ? 0.6 : 0.3)) : 0
+
                 return (
                   <div
-                    key={`placeholder-${offset}`}
-                    className={`flex items-center justify-center whitespace-nowrap rounded-lg invisible ${getItemClasses(offset)}`}
-                    aria-hidden
+                    key={idx}
+                    className={`flex items-center justify-center whitespace-nowrap rounded-lg ${getItemClasses(offset)}`}
+                    style={{ opacity }}
                   >
-                    &nbsp;
+                    {isCenter ? '\u00A0' : title.charAt(0)}
                   </div>
                 )
-              }
-              const isCenter = g.offset === 0
-              const opacity = isCenter ? 1 : (Math.abs(g.offset) === 1 ? 0.6 : 0.3)
-
-              return (
-                <motion.div
-                  key={g.index}
-                  layout
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className={`relative z-10 flex items-center justify-center whitespace-nowrap rounded-lg ${getItemClasses(g.offset)}`}
-                  style={{ opacity }}
-                >
-                  {isCenter ? g.title : g.title.charAt(0)}
-                </motion.div>
-              )
-            })}
+              })}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
