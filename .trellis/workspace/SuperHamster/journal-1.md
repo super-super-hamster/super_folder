@@ -958,3 +958,36 @@ Added a new General setting '导航栏自动折叠' (autoCollapseSidebar), defau
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: Make CreateFolder undoable
+
+**Date**: 2026-07-12
+**Task**: Make CreateFolder undoable
+**Branch**: `main`
+
+### Summary
+
+Registered the CreateFolder operation in the undo stack so users can undo/redo newly created folders. Added OpCreateFolder to internal/undo with inverse (os.Remove empty folder) and forward (os.MkdirAll) handlers; backend CreateFolder now pushes the operation after successful creation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2ef35ed` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
