@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
+- **Total Sessions**: 34
 - **Last Active**: 2026-07-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1125 | Active |
+| `journal-1.md` | ~1158 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 34 | 2026-07-12 | Fixed group scroller layout with fixed slots | `c15f7d7` | `main` |
 | 33 | 2026-07-12 | Center group scroller highlight vertically | `d84665b` | `main` |
 | 32 | 2026-07-12 | Fix group scroller fast-scroll stacking | `31a7989` | `main` |
 | 31 | 2026-07-12 | Fix group scroller highlight disappearing after scroll | `12141a2` | `main` |

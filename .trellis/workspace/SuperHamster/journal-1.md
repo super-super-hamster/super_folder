@@ -1123,3 +1123,36 @@ Fixed the group scroller highlight appearing at the top of the viewport instead 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: Fixed group scroller layout with fixed slots
+
+**Date**: 2026-07-12
+**Task**: Fixed group scroller layout with fixed slots
+**Branch**: `main`
+
+### Summary
+
+Replaced the translating list approach with 5 fixed slots in GroupFastScroller. The center slot always contains the active group and its highlight, while adjacent slots show first characters. Missing slots at boundaries are filled with invisible placeholders to keep the active group centered. Content animates in/out based on scroll direction, avoiding fast-scroll stacking.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c15f7d7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
