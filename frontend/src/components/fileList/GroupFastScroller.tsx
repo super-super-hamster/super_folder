@@ -125,15 +125,14 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
             {visibleGroups.map((g) => {
               const isCenter = g.offset === 0
               const opacity = isCenter ? 1 : (g.offset === 1 || g.offset === -1 ? 0.6 : 0.3)
-              const scale = isCenter ? 1.2 : 0.9
 
               return (
                 <div
                   key={g.index}
-                  className={`flex items-center justify-center transition-all duration-200 ${isCenter ? 'w-10 h-10 bg-sf-selected rounded-full font-bold text-gray-900 text-xl' : 'w-10 h-8 font-medium text-gray-700 text-lg'}`}
-                  style={{ opacity, transform: `scale(${scale})` }}
+                  className={`flex items-center justify-center transition-all duration-200 ${isCenter ? 'h-9 px-3 bg-sf-selected rounded-lg font-bold text-gray-900 text-lg' : 'h-7 px-2 rounded-md font-medium text-gray-500 text-sm'}`}
+                  style={{ opacity }}
                 >
-                  {g.title.length > 2 ? g.title.substring(0, 2) : g.title}
+                  {isCenter ? g.title : g.title.charAt(0)}
                 </div>
               )
             })}

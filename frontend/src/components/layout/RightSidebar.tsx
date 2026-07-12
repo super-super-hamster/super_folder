@@ -58,7 +58,7 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
         initial={false}
         animate={{ opacity: isOpen ? 1 : 0, width: isOpen ? rightSidebarWidth : 0, marginLeft: isOpen ? 0 : -12 }}
         transition={{ type: 'tween', duration: isResizing ? 0 : 0.2, ease: 'easeOut' }}
-        className={`h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-text ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-none ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!isOpen}
       >
       <div className="p-4">
