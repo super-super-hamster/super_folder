@@ -28,8 +28,24 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
     if (!isGrouped || groups.length === 0) return 0
     const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
     const scrollTop = scrollElement?.scrollTop ?? rowVirtualizer.scrollOffset ?? 0
-    const virtualItems = rowVirtualizer.getVirtualItems()
+    const clientHeight = scrollElement?.clientHeight ?? 0
+    const virtualItems = rowVirtualizer.getVirtualItems() as { index: number; start: number; size: number }[]
     if (virtualItems.length === 0) return 0
+
+    const virtualMap = new Map(virtualItems.map(item => [item.index, item]))
+    const threshold = 22
+
+    for (let i = 0; i < headerIndices.length; i++) {
+      const headerIndex = headerIndices[i]
+      const item = virtualMap.get(headerIndex)
+      if (!item) continue
+      const visibleTop = Math.max(item.start, scrollTop)
+      const visibleBottom = Math.min(item.start + item.size, scrollTop + clientHeight)
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+      if (visibleHeight >= threshold) {
+        return i
+      }
+    }
 
     let topIndex = virtualItems[0].index
     for (const item of virtualItems) {
@@ -79,24 +95,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
       e.stopPropagation()
       if (!isGrouped || groups.length === 0) return
 
-      const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
-      const scrollTop = scrollElement?.scrollTop ?? rowVirtualizer.scrollOffset ?? 0
-      const virtualItems = rowVirtualizer.getVirtualItems()
-      if (virtualItems.length === 0) return
-
-      let topIndex = virtualItems[0].index
-      for (const item of virtualItems) {
-        if (item.start + item.size > scrollTop) {
-          topIndex = item.index
-          break
-        }
-      }
-
-      let currIdx = 0
-      for (let i = 0; i < headerIndices.length; i++) {
-        if (headerIndices[i] <= topIndex) currIdx = i
-        else break
-      }
+      const currIdx = computeCurrentGroup()
 
       const now = Date.now()
       let nextIdx = targetGroupRef.current
@@ -120,7 +119,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
     }
     el.addEventListener('wheel', handleWheel, { passive: false })
     return () => el.removeEventListener('wheel', handleWheel)
-  }, [isGrouped, groups.length, headerIndices, rowVirtualizer])
+  }, [isGrouped, groups.length, headerIndices, rowVirtualizer, computeCurrentGroup])
 
   const visibleGroups: { title: string, offset: number, index: number }[] = []
   if (isHoveringScroller && isGrouped) {
