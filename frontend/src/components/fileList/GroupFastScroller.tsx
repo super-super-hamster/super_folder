@@ -19,9 +19,9 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
   const [isHoveringScroller, setIsHoveringScroller] = useState(false)
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
-  const [activeSize, setActiveSize] = useState({ width: 0, height: 0 })
+  const [highlightWidth, setHighlightWidth] = useState(0)
   const scrollerZoneRef = useRef<HTMLDivElement>(null)
-  const activeItemRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const targetGroupRef = useRef<number>(0)
   const lastWheelTime = useRef<number>(0)
   const rafPendingRef = useRef(false)
@@ -124,24 +124,26 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   }, [isGrouped, groups.length, headerIndices, rowVirtualizer, computeCurrentGroup])
 
   useLayoutEffect(() => {
-    const el = activeItemRef.current
+    const el = contentRef.current
     if (!el) return
     const update = () => {
       const rect = el.getBoundingClientRect()
-      setActiveSize({ width: rect.width, height: rect.height })
+      setHighlightWidth(rect.width)
     }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [currentGroupIndex, isHoveringScroller])
+  }, [isHoveringScroller])
 
-  const visibleGroups: { title: string, offset: number, index: number }[] = []
+  const visibleGroups: ({ title: string, offset: number, index: number } | null)[] = []
   if (isHoveringScroller && isGrouped) {
     for (let i = -2; i <= 2; i++) {
       const idx = currentGroupIndex + i
       if (idx >= 0 && idx < groups.length) {
         visibleGroups.push({ title: groups[idx], offset: i, index: idx })
+      } else {
+        visibleGroups.push(null)
       }
     }
   }
@@ -165,27 +167,39 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
       <AnimatePresence>
         {isHoveringScroller && (
           <motion.div
+            ref={contentRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none"
           >
-            {activeSize.width > 0 && (
+            {highlightWidth > 0 && (
               <motion.div
                 initial={false}
-                animate={{ width: activeSize.width, height: activeSize.height }}
+                animate={{ width: highlightWidth }}
                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sf-selected rounded-lg pointer-events-none z-0"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 bg-sf-selected rounded-lg pointer-events-none z-0"
               />
             )}
-            {visibleGroups.map((g) => {
+            {visibleGroups.map((g, i) => {
+              const offset = g ? g.offset : i - 2
+              if (!g) {
+                return (
+                  <div
+                    key={`placeholder-${offset}`}
+                    className={`flex items-center justify-center whitespace-nowrap rounded-lg invisible ${getItemClasses(offset)}`}
+                    aria-hidden
+                  >
+                    &nbsp;
+                  </div>
+                )
+              }
               const isCenter = g.offset === 0
               const opacity = isCenter ? 1 : (Math.abs(g.offset) === 1 ? 0.6 : 0.3)
 
               return (
                 <motion.div
                   key={g.index}
-                  ref={isCenter ? activeItemRef : undefined}
                   layout
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   className={`relative z-10 flex items-center justify-center whitespace-nowrap rounded-lg ${getItemClasses(g.offset)}`}
