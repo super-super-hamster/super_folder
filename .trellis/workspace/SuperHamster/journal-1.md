@@ -991,3 +991,36 @@ Registered the CreateFolder operation in the undo stack so users can undo/redo n
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: Group scroller fixed highlight with animated text
+
+**Date**: 2026-07-12
+**Task**: Group scroller fixed highlight with animated text
+**Branch**: `main`
+
+### Summary
+
+Refactored GroupFastScroller so the active group highlight box stays vertically fixed while the group text scrolls past it. Added ResizeObserver to keep the highlight width/height synchronized with the active text item, used Framer Motion layout animations for fast spring scrolling, and made font sizes taper from the center outward.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ced26c8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
