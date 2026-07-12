@@ -1024,3 +1024,36 @@ Refactored GroupFastScroller so the active group highlight box stays vertically 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 31: Fix group scroller highlight disappearing after scroll
+
+**Date**: 2026-07-12
+**Task**: Fix group scroller highlight disappearing after scroll
+**Branch**: `main`
+
+### Summary
+
+Fixed the group fast scroller highlight box disappearing after scrolling. Root cause: the highlight was centered on the floating container, but at list boundaries the active group was not at the container center; also measuring the active item via a ref could transiently fail after layout animations. Fix: always render 5 symmetric slots with invisible placeholders so the active group stays at the visual center; measure the container width via ResizeObserver for the highlight width instead of relying on a per-item ref.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `12141a2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
