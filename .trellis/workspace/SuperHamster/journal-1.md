@@ -793,3 +793,36 @@ Replaced 21 native HTML title attributes with HeroUI v3 Tooltip. Fixed RAC Focus
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: Fix grouped file list scroller flicker
+
+**Date**: 2026-07-12
+**Task**: Fix grouped file list scroller flicker
+**Branch**: `main`
+
+### Summary
+
+Fixed the group fast scroller briefly showing the wrong group when scrolling from the top of a grouped file list. Added rowVirtualizer.measure() when listItems change so the virtualizer does not use stale positions after toggling grouping. Moved current group index computation in GroupFastScroller from render-time to a scroll event listener with requestAnimationFrame throttling, using the scroll element's scrollTop to avoid transient mismatches between scrollOffset and getVirtualItems().
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0766d7a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
