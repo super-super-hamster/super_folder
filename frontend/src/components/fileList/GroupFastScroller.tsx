@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
+import { useMemo, useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VirtualListItem } from '../../utils/fileSorting'
 
@@ -19,7 +19,9 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
   const [isHoveringScroller, setIsHoveringScroller] = useState(false)
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
+  const [activeSize, setActiveSize] = useState({ width: 0, height: 0 })
   const scrollerZoneRef = useRef<HTMLDivElement>(null)
+  const activeItemRef = useRef<HTMLDivElement>(null)
   const targetGroupRef = useRef<number>(0)
   const lastWheelTime = useRef<number>(0)
   const rafPendingRef = useRef(false)
@@ -121,6 +123,19 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
     return () => el.removeEventListener('wheel', handleWheel)
   }, [isGrouped, groups.length, headerIndices, rowVirtualizer, computeCurrentGroup])
 
+  useLayoutEffect(() => {
+    const el = activeItemRef.current
+    if (!el) return
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      setActiveSize({ width: rect.width, height: rect.height })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [currentGroupIndex, isHoveringScroller])
+
   const visibleGroups: { title: string, offset: number, index: number }[] = []
   if (isHoveringScroller && isGrouped) {
     for (let i = -2; i <= 2; i++) {
@@ -129,6 +144,13 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
         visibleGroups.push({ title: groups[idx], offset: i, index: idx })
       }
     }
+  }
+
+  const getItemClasses = (offset: number) => {
+    const abs = Math.abs(offset)
+    if (abs === 0) return 'h-9 px-3 font-bold text-gray-900 text-xl'
+    if (abs === 1) return 'h-8 px-2 font-medium text-gray-600 text-base'
+    return 'h-7 px-2 font-medium text-gray-500 text-sm'
   }
 
   if (!isGrouped || groups.length === 0) return null
@@ -148,18 +170,29 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
             exit={{ opacity: 0, x: 20 }}
             className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none"
           >
+            {activeSize.width > 0 && (
+              <motion.div
+                initial={false}
+                animate={{ width: activeSize.width, height: activeSize.height }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-sf-selected rounded-lg pointer-events-none z-0"
+              />
+            )}
             {visibleGroups.map((g) => {
               const isCenter = g.offset === 0
-              const opacity = isCenter ? 1 : (g.offset === 1 || g.offset === -1 ? 0.6 : 0.3)
+              const opacity = isCenter ? 1 : (Math.abs(g.offset) === 1 ? 0.6 : 0.3)
 
               return (
-                <div
+                <motion.div
                   key={g.index}
-                  className={`flex items-center justify-center transition-all duration-200 whitespace-nowrap ${isCenter ? 'h-9 px-3 bg-sf-selected rounded-lg font-bold text-gray-900 text-lg' : 'h-7 px-2 rounded-md font-medium text-gray-500 text-sm'}`}
+                  ref={isCenter ? activeItemRef : undefined}
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className={`relative z-10 flex items-center justify-center whitespace-nowrap rounded-lg ${getItemClasses(g.offset)}`}
                   style={{ opacity }}
                 >
                   {isCenter ? g.title : g.title.charAt(0)}
-                </div>
+                </motion.div>
               )
             })}
           </motion.div>
