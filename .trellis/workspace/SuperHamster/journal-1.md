@@ -826,3 +826,36 @@ Fixed the group fast scroller briefly showing the wrong group when scrolling fro
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: Refine group fast scroller to topmost visibly displayed group
+
+**Date**: 2026-07-12
+**Task**: Refine group fast scroller to topmost visibly displayed group
+**Branch**: `main`
+
+### Summary
+
+Updated GroupFastScroller current-group detection: instead of showing a group whose header only barely peeks above the viewport, it now selects the first group header that has at least 22px of visible height. The wheel handler also reuses this logic for consistency. Falls back to the previous straddling logic if no header reaches the 22px threshold.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `310b459` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

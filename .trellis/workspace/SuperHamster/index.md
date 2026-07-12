@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 24
+- **Total Sessions**: 25
 - **Last Active**: 2026-07-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~828 | Active |
+| `journal-1.md` | ~861 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 25 | 2026-07-12 | Refine group fast scroller to topmost visibly displayed group | `310b459` | `main` |
 | 24 | 2026-07-12 | Fix grouped file list scroller flicker | `0766d7a` | `main` |
 | 23 | 2026-07-11 | Replace title attributes with HeroUI Tooltip | `bd568e3`, `5caea28` | `main` |
 | 22 | 2026-07-07 | Fix HeroUI Switch/Checkbox scroll shift bug, add file info panel, glob wildcards | `da65655`, `9701ffb`, `22acf77` | `main` |
