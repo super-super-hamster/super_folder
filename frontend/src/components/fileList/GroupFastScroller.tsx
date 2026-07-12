@@ -150,7 +150,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="absolute right-8 top-1/2 -translate-y-1/2 w-max overflow-hidden pointer-events-none flex flex-col items-center"
+            className="absolute right-8 top-1/2 -translate-y-1/2 w-max overflow-hidden pointer-events-none relative flex flex-col items-center justify-center"
             style={{ height: containerHeight }}
           >
             <motion.div
