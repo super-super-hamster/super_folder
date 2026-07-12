@@ -67,6 +67,8 @@ interface SettingsState {
   setInitialPathCustomPrivacy: (path: string) => void
   showParentDirInNav: boolean
   setShowParentDirInNav: (value: boolean) => void
+  autoCollapseSidebar: boolean
+  setAutoCollapseSidebar: (value: boolean) => void
 
   // Save/Load to backend
   loadFromBackend: () => Promise<void>
@@ -165,6 +167,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
       showParentDirInNav: false,
       setShowParentDirInNav: (value) => set({ showParentDirInNav: value }),
+      autoCollapseSidebar: true,
+      setAutoCollapseSidebar: (value) => set({ autoCollapseSidebar: value }),
 
       loadFromBackend: async () => {
         try {
@@ -331,6 +335,7 @@ export const useSettingsStore = create<SettingsState>()(
         cacheLimitEnabled: state.cacheLimitEnabled,
         autoCleanPeriod: state.autoCleanPeriod,
         showParentDirInNav: state.showParentDirInNav,
+        autoCollapseSidebar: state.autoCollapseSidebar,
       }),
     }
   )

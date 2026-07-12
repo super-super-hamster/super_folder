@@ -12,7 +12,7 @@ import { getFileIcon } from '../../utils/fileFormatting'
 export default function Sidebar() {
   const { isSidebarExpanded, setSidebarExpanded, setSettingsOpen } = useUIStore()
   const { navigate, goBack, activeTabId, tabs } = useTabsStore()
-  const { shortcuts, searchPresets, loadFromBackend, showParentDirInNav } = useSettingsStore()
+  const { shortcuts, searchPresets, loadFromBackend, showParentDirInNav, autoCollapseSidebar } = useSettingsStore()
   const { fetchFavorites } = useFavoriteStore()
   const [drives, setDrives] = useState<string[]>([])
   const [defaultPaths, setDefaultPaths] = useState<Record<string, string>>({})
@@ -29,10 +29,10 @@ export default function Sidebar() {
   }, [])
 
   useEffect(() => {
-    if (showParentDirInNav) {
+    if (showParentDirInNav || !autoCollapseSidebar) {
       setSidebarExpanded(true)
     }
-  }, [showParentDirInNav])
+  }, [showParentDirInNav, autoCollapseSidebar])
 
   const activeTab = tabs.find(t => t.id === activeTabId)
   const currentPath = activeTab?.currentPath
@@ -175,11 +175,11 @@ export default function Sidebar() {
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       onMouseEnter={() => {
         if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current)
-        expandTimeoutRef.current = setTimeout(() => setSidebarExpanded(true), 500)
+        expandTimeoutRef.current = setTimeout(() => setSidebarExpanded(true), 200)
       }}
       onMouseLeave={() => {
         if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current)
-        if (!isBrowsing) {
+        if (autoCollapseSidebar && !isBrowsing) {
           setSidebarExpanded(false)
         }
       }}

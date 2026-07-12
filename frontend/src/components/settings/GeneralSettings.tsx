@@ -29,6 +29,7 @@ export default function GeneralSettings() {
     initialPathModePrivacy, setInitialPathModePrivacy,
     initialPathCustomPrivacy, setInitialPathCustomPrivacy,
     showParentDirInNav, setShowParentDirInNav,
+    autoCollapseSidebar, setAutoCollapseSidebar,
   } = useSettingsStore()
   const privacyMode = usePrivacyStore((state) => state.state?.mode || 'public')
   const isPrivacy = privacyMode === 'privacy'
@@ -265,6 +266,22 @@ export default function GeneralSettings() {
               <div className="text-sm font-semibold text-gray-800">导航栏显示上一级目录</div>
             </div>
             <Switch isSelected={showParentDirInNav} onChange={setShowParentDirInNav} className="relative">
+              {({ isSelected }) => (
+                <Switch.Content>
+                  <Switch.Control className={isSelected ? 'bg-green-500' : 'bg-gray-300'}>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
+              )}
+            </Switch>
+          </div>
+
+          <div className="bg-sf-panel/80 rounded-xl p-5 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-gray-800">导航栏自动折叠</div>
+              <div className="text-xs text-gray-500">关闭后导航栏将保持展开</div>
+            </div>
+            <Switch isSelected={autoCollapseSidebar} onChange={setAutoCollapseSidebar} className="relative">
               {({ isSelected }) => (
                 <Switch.Content>
                   <Switch.Control className={isSelected ? 'bg-green-500' : 'bg-gray-300'}>
