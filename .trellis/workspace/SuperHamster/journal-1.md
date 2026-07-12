@@ -892,3 +892,36 @@ Added whitespace-nowrap to the group fast scroller indicator labels so titles li
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: Fix sidebar '..' navigation history logic
+
+**Date**: 2026-07-12
+**Task**: Fix sidebar '..' navigation history logic
+**Branch**: `main`
+
+### Summary
+
+Fixed handleDotDot in Sidebar.tsx: it previously compared the parent path against the current history entry, causing incorrect goBack behavior. Now it compares against history[historyIndex - 1] (the path after one back). Only when that matches the parent path does it pop the stack via goBack; otherwise it navigates to the parent directory as a new history entry.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3284377` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
