@@ -155,7 +155,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
               return (
                 <div
                   key={g.index}
-                  className={`flex items-center justify-center transition-all duration-200 ${isCenter ? 'h-9 px-3 bg-sf-selected rounded-lg font-bold text-gray-900 text-lg' : 'h-7 px-2 rounded-md font-medium text-gray-500 text-sm'}`}
+                  className={`flex items-center justify-center transition-all duration-200 whitespace-nowrap ${isCenter ? 'h-9 px-3 bg-sf-selected rounded-lg font-bold text-gray-900 text-lg' : 'h-7 px-2 rounded-md font-medium text-gray-500 text-sm'}`}
                   style={{ opacity }}
                 >
                   {isCenter ? g.title : g.title.charAt(0)}
