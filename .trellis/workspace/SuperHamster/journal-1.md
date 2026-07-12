@@ -1090,3 +1090,36 @@ Replaced per-item Framer Motion layout animations in GroupFastScroller with a si
 ### Next Steps
 
 - None - task complete
+
+
+## Session 33: Center group scroller highlight vertically
+
+**Date**: 2026-07-12
+**Task**: Center group scroller highlight vertically
+**Branch**: `main`
+
+### Summary
+
+Fixed the group scroller highlight appearing at the top of the viewport instead of the center. Added justify-center and relative positioning to the container so the active-group highlight aligns with the translated list's active item.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d84665b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
