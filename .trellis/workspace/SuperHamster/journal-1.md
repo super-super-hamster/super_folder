@@ -859,3 +859,36 @@ Updated GroupFastScroller current-group detection: instead of showing a group wh
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: Prevent group fast scroller label wrapping
+
+**Date**: 2026-07-12
+**Task**: Prevent group fast scroller label wrapping
+**Branch**: `main`
+
+### Summary
+
+Added whitespace-nowrap to the group fast scroller indicator labels so titles like '0-9' render on a single line instead of wrapping.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ecc7219` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
