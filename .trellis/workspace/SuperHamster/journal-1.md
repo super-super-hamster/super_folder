@@ -1057,3 +1057,36 @@ Fixed the group fast scroller highlight box disappearing after scrolling. Root c
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: Fix group scroller fast-scroll stacking
+
+**Date**: 2026-07-12
+**Task**: Fix group scroller fast-scroll stacking
+**Branch**: `main`
+
+### Summary
+
+Replaced per-item Framer Motion layout animations in GroupFastScroller with a single translating list. Fast scrolling no longer causes items to pile on one side because the whole reel now translates as one unit. The active group highlight stays fixed in the center and adapts its width to the active group text.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `31a7989` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

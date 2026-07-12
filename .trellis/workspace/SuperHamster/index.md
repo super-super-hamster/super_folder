@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 31
+- **Total Sessions**: 32
 - **Last Active**: 2026-07-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1059 | Active |
+| `journal-1.md` | ~1092 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 32 | 2026-07-12 | Fix group scroller fast-scroll stacking | `31a7989` | `main` |
 | 31 | 2026-07-12 | Fix group scroller highlight disappearing after scroll | `12141a2` | `main` |
 | 30 | 2026-07-12 | Group scroller fixed highlight with animated text | `ced26c8` | `main` |
 | 29 | 2026-07-12 | Make CreateFolder undoable | `2ef35ed` | `main` |
