@@ -925,3 +925,36 @@ Fixed handleDotDot in Sidebar.tsx: it previously compared the parent path agains
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: Add auto-collapse sidebar setting and faster hover expand
+
+**Date**: 2026-07-12
+**Task**: Add auto-collapse sidebar setting and faster hover expand
+**Branch**: `main`
+
+### Summary
+
+Added a new General setting '导航栏自动折叠' (autoCollapseSidebar), default enabled. When disabled, the main Sidebar stays expanded regardless of mouse leave or whether the current path has a parent. Also reduced the Sidebar hover expand delay from 500ms to 200ms.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ffc0e43` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

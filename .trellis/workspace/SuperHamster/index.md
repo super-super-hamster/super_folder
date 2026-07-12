@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-07-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~927 | Active |
+| `journal-1.md` | ~960 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-07-12 | Add auto-collapse sidebar setting and faster hover expand | `ffc0e43` | `main` |
 | 27 | 2026-07-12 | Fix sidebar '..' navigation history logic | `3284377` | `main` |
 | 26 | 2026-07-12 | Prevent group fast scroller label wrapping | `ecc7219` | `main` |
 | 25 | 2026-07-12 | Refine group fast scroller to topmost visibly displayed group | `310b459` | `main` |
