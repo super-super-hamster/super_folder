@@ -19,10 +19,13 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
   const [isHoveringScroller, setIsHoveringScroller] = useState(false)
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
+  const [direction, setDirection] = useState(1)
   const scrollerZoneRef = useRef<HTMLDivElement>(null)
   const targetGroupRef = useRef<number>(0)
   const lastWheelTime = useRef<number>(0)
   const rafPendingRef = useRef(false)
+  const prevIndexRef = useRef(0)
+  const skipInitialRef = useRef(true)
 
   const computeCurrentGroup = useCallback(() => {
     if (!isGrouped || groups.length === 0) return 0
@@ -69,6 +72,17 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   useEffect(() => {
     setCurrentGroupIndex(computeCurrentGroup())
   }, [computeCurrentGroup])
+
+  useEffect(() => {
+    if (currentGroupIndex !== prevIndexRef.current) {
+      setDirection(currentGroupIndex > prevIndexRef.current ? 1 : -1)
+      prevIndexRef.current = currentGroupIndex
+    }
+  }, [currentGroupIndex])
+
+  useEffect(() => {
+    skipInitialRef.current = false
+  }, [])
 
   useEffect(() => {
     const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
@@ -130,13 +144,6 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
   if (!isGrouped || groups.length === 0) return null
 
-  const itemHeight = 36
-  const gap = 8
-  const step = itemHeight + gap
-  const visibleCount = 5
-  const containerHeight = visibleCount * itemHeight + (visibleCount - 1) * gap
-  const translateY = -(currentGroupIndex * step + itemHeight / 2)
-
   return (
     <div
       ref={scrollerZoneRef}
@@ -150,39 +157,46 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="absolute right-8 top-1/2 -translate-y-1/2 w-max overflow-hidden pointer-events-none relative flex flex-col items-center justify-center"
-            style={{ height: containerHeight }}
+            className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none"
           >
-            <motion.div
-              layout
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              className="relative z-10 flex items-center justify-center whitespace-nowrap px-3 h-9 bg-sf-selected rounded-lg font-bold text-gray-900 text-xl"
-            >
-              {groups[currentGroupIndex]}
-            </motion.div>
+            {[-2, -1, 0, 1, 2].map((offset) => {
+              const idx = currentGroupIndex + offset
+              const abs = Math.abs(offset)
+              const isCenter = offset === 0
+              const baseClasses = getItemClasses(offset)
 
-            <motion.div
-              animate={{ y: translateY }}
-              transition={{ type: 'spring', stiffness: 600, damping: 45 }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-0"
-            >
-              {groups.map((title, idx) => {
-                const offset = idx - currentGroupIndex
-                const abs = Math.abs(offset)
-                const isCenter = offset === 0
-                const opacity = abs <= 2 ? (isCenter ? 0 : (abs === 1 ? 0.6 : 0.3)) : 0
-
+              if (idx < 0 || idx >= groups.length) {
                 return (
                   <div
-                    key={idx}
-                    className={`flex items-center justify-center whitespace-nowrap rounded-lg ${getItemClasses(offset)}`}
-                    style={{ opacity }}
+                    key={`placeholder-${offset}`}
+                    className={`invisible flex items-center justify-center whitespace-nowrap rounded-lg ${baseClasses}`}
+                    aria-hidden
                   >
-                    {isCenter ? '\u00A0' : title.charAt(0)}
+                    &nbsp;
                   </div>
                 )
-              })}
-            </motion.div>
+              }
+
+              const opacity = isCenter ? 1 : (abs === 1 ? 0.6 : 0.3)
+
+              return (
+                <div
+                  key={`slot-${offset}`}
+                  className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-lg ${isCenter ? 'bg-sf-selected ' : ''}${baseClasses}`}
+                  style={{ opacity }}
+                >
+                  <motion.div
+                    key={idx}
+                    initial={skipInitialRef.current ? false : { y: direction * 18, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 600, damping: 40 }}
+                    className="flex items-center justify-center whitespace-nowrap"
+                  >
+                    {isCenter ? groups[idx] : groups[idx].charAt(0)}
+                  </motion.div>
+                </div>
+              )
+            })}
           </motion.div>
         )}
       </AnimatePresence>
