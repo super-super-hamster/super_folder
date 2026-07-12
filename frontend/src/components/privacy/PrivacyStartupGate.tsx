@@ -5,7 +5,7 @@ import { usePrivacyStore } from '../../store/privacyStore'
 const PASSWORD_LENGTH = 6
 
 export default function PrivacyStartupGate() {
-  const { dialogMode, unlock, loading, error } = usePrivacyStore()
+  const { dialogMode, unlock, lock, loading, error } = usePrivacyStore()
   const [password, setPassword] = useState('')
   const inputWrapRef = useRef<HTMLDivElement>(null)
   const isOpen = dialogMode === 'startupUnlock'
@@ -61,6 +61,12 @@ export default function PrivacyStartupGate() {
           </InputOTP.Group>
         </InputOTP>
         {error && <p className="text-sm text-red-500">{error}</p>}
+        <button
+          onClick={() => lock()}
+          className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none mt-2"
+        >
+          以公开模式进入&gt;
+        </button>
       </div>
     </div>
   )

@@ -200,6 +200,10 @@ export default function FileList() {
 
   useEffect(() => {
     rowVirtualizer.measure()
+  }, [listItems, rowVirtualizer])
+
+  useEffect(() => {
+    rowVirtualizer.measure()
   }, [viewMode, effectiveColumns])
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VirtualListItem } from '../../utils/fileSorting'
 
@@ -18,32 +18,58 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   }, [headerIndices, listItems])
 
   const [isHoveringScroller, setIsHoveringScroller] = useState(false)
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
   const scrollerZoneRef = useRef<HTMLDivElement>(null)
   const targetGroupRef = useRef<number>(0)
   const lastWheelTime = useRef<number>(0)
+  const rafPendingRef = useRef(false)
 
-  let currentGroupIndex = 0
-  if (isGrouped && groups.length > 0) {
+  const computeCurrentGroup = useCallback(() => {
+    if (!isGrouped || groups.length === 0) return 0
+    const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
+    const scrollTop = scrollElement?.scrollTop ?? rowVirtualizer.scrollOffset ?? 0
     const virtualItems = rowVirtualizer.getVirtualItems()
-    if (virtualItems.length > 0) {
-      let topIndex = virtualItems[0].index
-      const scrollOffset = rowVirtualizer.scrollOffset || 0
-      for (const item of virtualItems) {
-        if (item.start + item.size > scrollOffset) {
-          topIndex = item.index
-          break
-        }
-      }
+    if (virtualItems.length === 0) return 0
 
-      for (let i = 0; i < headerIndices.length; i++) {
-        if (headerIndices[i] <= topIndex) {
-          currentGroupIndex = i
-        } else {
-          break
-        }
+    let topIndex = virtualItems[0].index
+    for (const item of virtualItems) {
+      if (item.start + item.size > scrollTop) {
+        topIndex = item.index
+        break
       }
     }
-  }
+
+    let idx = 0
+    for (let i = 0; i < headerIndices.length; i++) {
+      if (headerIndices[i] <= topIndex) {
+        idx = i
+      } else {
+        break
+      }
+    }
+    return idx
+  }, [isGrouped, groups.length, headerIndices, rowVirtualizer])
+
+  useEffect(() => {
+    setCurrentGroupIndex(computeCurrentGroup())
+  }, [computeCurrentGroup])
+
+  useEffect(() => {
+    const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
+    if (!scrollElement) return
+
+    const handleScroll = () => {
+      if (rafPendingRef.current) return
+      rafPendingRef.current = true
+      requestAnimationFrame(() => {
+        rafPendingRef.current = false
+        setCurrentGroupIndex(computeCurrentGroup())
+      })
+    }
+
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true })
+    return () => scrollElement.removeEventListener('scroll', handleScroll)
+  }, [rowVirtualizer.scrollElement, computeCurrentGroup])
 
   useEffect(() => {
     const el = scrollerZoneRef.current
@@ -53,13 +79,14 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
       e.stopPropagation()
       if (!isGrouped || groups.length === 0) return
 
+      const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
+      const scrollTop = scrollElement?.scrollTop ?? rowVirtualizer.scrollOffset ?? 0
       const virtualItems = rowVirtualizer.getVirtualItems()
       if (virtualItems.length === 0) return
 
       let topIndex = virtualItems[0].index
-      const scrollOffset = rowVirtualizer.scrollOffset || 0
       for (const item of virtualItems) {
-        if (item.start + item.size > scrollOffset) {
+        if (item.start + item.size > scrollTop) {
           topIndex = item.index
           break
         }
