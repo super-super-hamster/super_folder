@@ -185,6 +185,12 @@ function App() {
           useUndoStore.getState().showMessage(err || "恢复失败", true);
           (window as any).go.main.App.ClearUndoStack();
         });
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        const { tabs, activeTabId, removeTab } = useTabsStore.getState()
+        if (tabs.length > 1) {
+          removeTab(activeTabId)
+        }
       }
     };
 
