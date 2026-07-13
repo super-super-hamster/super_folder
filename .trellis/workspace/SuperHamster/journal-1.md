@@ -1189,3 +1189,36 @@ Added a global Ctrl+W keyboard shortcut in App.tsx that closes the active tab, b
 ### Next Steps
 
 - None - task complete
+
+
+## Session 36: Fix drive-root parent path in sidebar navigation
+
+**Date**: 2026-07-13
+**Task**: Fix drive-root parent path in sidebar navigation
+**Branch**: `main`
+
+### Summary
+
+Fixed Sidebar getParentPath returning 'C:' instead of 'C:\' when the current directory is directly under a drive root. This caused ReadDir to produce relative-looking paths like 'C:b', which broke navigation, breadcrumb rendering, and the parent-directory sidebar view.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1dbf202` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 35
+- **Total Sessions**: 36
 - **Last Active**: 2026-07-13
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1191 | Active |
+| `journal-1.md` | ~1224 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 36 | 2026-07-13 | Fix drive-root parent path in sidebar navigation | `1dbf202` | `main` |
 | 35 | 2026-07-13 | Add Ctrl+W shortcut to close current tab | `1415313` | `main` |
 | 34 | 2026-07-12 | Fixed group scroller layout with fixed slots | `c15f7d7` | `main` |
 | 33 | 2026-07-12 | Center group scroller highlight vertically | `d84665b` | `main` |
