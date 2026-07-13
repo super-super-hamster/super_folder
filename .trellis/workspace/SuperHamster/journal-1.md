@@ -1156,3 +1156,36 @@ Replaced the translating list approach with 5 fixed slots in GroupFastScroller. 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: Add Ctrl+W shortcut to close current tab
+
+**Date**: 2026-07-13
+**Task**: Add Ctrl+W shortcut to close current tab
+**Branch**: `main`
+
+### Summary
+
+Added a global Ctrl+W keyboard shortcut in App.tsx that closes the active tab, but only when more than one tab is open. It reuses the existing removeTab action which guards against unsaved changes.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1415313` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
