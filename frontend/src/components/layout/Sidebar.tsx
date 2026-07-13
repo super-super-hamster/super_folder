@@ -44,12 +44,20 @@ export default function Sidebar() {
 
   const getParentPath = (path: string): string => {
     const idx = path.lastIndexOf('\\')
-    return idx > 0 ? path.slice(0, idx) : path
+    if (idx <= 0) return path
+    const parent = path.slice(0, idx)
+    if (/^[a-zA-Z]:$/i.test(parent)) {
+      return parent + '\\'
+    }
+    return parent
   }
 
   const getFileName = (path: string): string => {
-    const idx = path.lastIndexOf('\\')
-    return idx >= 0 ? path.slice(idx + 1) : path
+    const normalized = path.replace(/\\+$/, '')
+    const idx = normalized.lastIndexOf('\\')
+    if (idx < 0) return normalized
+    const name = normalized.slice(idx + 1)
+    return name || normalized
   }
 
   const isBrowsing = showParentDirInNav && hasParent(currentPath)
