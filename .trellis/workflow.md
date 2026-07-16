@@ -235,9 +235,11 @@ Dispatch prompt starts with `Active task: <task path from task.py current>`. Rea
      instead of dispatching sub-agents. -->
 
 [workflow-state:in_progress-inline]
-Flow: `trellis-before-dev` -> edit -> `trellis-check` -> validation -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
-Do not dispatch implement/check sub-agents in inline mode.
-Read context: `prd.md` -> `design.md if present` -> `implement.md if present`, plus relevant spec/research loaded by skills.
+Codex inline only; do not dispatch implement/check sub-agents.
+Context gate: run `trellis-before-dev` and read task artifacts/specs once on the first implementation turn. Reuse that context on later turns. Reload only after a package/layer switch, a material scope change, or context loss/compaction.
+Fast path: an explicit same-layer follow-up that changes no API, database, persisted state, dependency, cross-layer contract, feature, or business flow may be edited directly. Run exactly one complete build for the affected project (`cd frontend && npm run build` for frontend visual changes), then report briefly.
+Fast-path exclusions: do not automatically run `trellis-check`, browser automation, screenshots, task-document updates, `trellis-update-spec`, or a full git audit.
+Finish gate: only when the user says the task is approved, complete, or ready to commit, run one full `trellis-check` and final validation pass; rerun only to fix failures. Batch task records/screenshots then, update specs only for durable knowledge, and commit only with explicit user approval before `/trellis:finish-work`.
 [/workflow-state:in_progress-inline]
 
 ### Phase 3: Finish
@@ -280,13 +282,23 @@ When a user request matches one of these intents inside an active task, route fi
 
 [/Claude Code, Cursor, OpenCode, codex-sub-agent, Kiro, Gemini, Qoder, CodeBuddy, Copilot, Droid, Pi]
 
-[codex-inline, Kilo, Antigravity, Devin]
+[codex-inline]
+
+- Planning or unclear requirements -> `trellis-brainstorm`.
+- First implementation turn, package/layer switch, material scope change, or lost context -> `trellis-before-dev`.
+- Explicit same-layer micro follow-up -> edit directly and run one complete affected-project build; skip the formal finish tools.
+- Significant implementation -> follow normal Phase 2 implementation and quality checks.
+- Repeated debugging -> `trellis-break-loop`; final durable spec updates -> `trellis-update-spec`.
+
+[/codex-inline]
+
+[Kilo, Antigravity, Devin]
 
 - Planning or unclear requirements -> `trellis-brainstorm`.
 - Before editing -> `trellis-before-dev`; after editing -> `trellis-check`.
 - Repeated debugging -> `trellis-break-loop`; spec updates -> `trellis-update-spec`.
 
-[/codex-inline, Kilo, Antigravity, Devin]
+[/Kilo, Antigravity, Devin]
 
 ### Guardrails
 
@@ -512,7 +524,17 @@ The platform prelude auto-handles the context load requirement:
 
 [/Kiro]
 
-[codex-inline, Kilo, Antigravity, Devin]
+[codex-inline]
+
+1. On the first implementation turn, load `trellis-before-dev`, task artifacts, relevant specs, and research once.
+2. Reuse loaded context unless the package/layer changes, scope changes materially, or context was lost/compacted.
+3. For an explicit same-layer micro follow-up with no API, database, persisted-state, dependency, cross-layer-contract, feature, or business-flow change, edit directly.
+4. After each micro follow-up, run exactly one complete build for the affected project. Frontend visual changes use `cd frontend && npm run build`.
+5. Do not run browser automation, screenshots, task-document updates, a full git audit, or finish-phase skills during a micro follow-up unless the user explicitly requests them.
+
+[/codex-inline]
+
+[Kilo, Antigravity, Devin]
 
 1. Load the `trellis-before-dev` skill to read project guidelines
 2. Read `{TASK_DIR}/prd.md`, then `design.md` if present, then `implement.md` if present
@@ -520,7 +542,7 @@ The platform prelude auto-handles the context load requirement:
 4. Implement the code per reviewed artifacts
 5. Run project lint and type-check
 
-[/codex-inline, Kilo, Antigravity, Devin]
+[/Kilo, Antigravity, Devin]
 
 #### 2.2 Quality check `[required · repeatable]`
 
@@ -540,7 +562,15 @@ The check agent's job:
 
 [/Claude Code, Cursor, OpenCode, codex-sub-agent, Kiro, Gemini, Qoder, CodeBuddy, Copilot, Droid, Pi]
 
-[codex-inline, Kilo, Antigravity, Devin]
+[codex-inline]
+
+Do not load `trellis-check` after each micro follow-up. Run one formal full-scope check only when the user says the task is approved, complete, or ready to commit. If that check finds issues, fix them and rerun only the failed checks until green.
+
+For significant or risky implementation outside the fast-path criteria, load `trellis-check` and verify spec compliance, lint/type-check/tests, and cross-layer consistency as normal.
+
+[/codex-inline]
+
+[Kilo, Antigravity, Devin]
 
 Load the `trellis-check` skill and verify the code per its guidance:
 - Spec compliance
@@ -549,7 +579,7 @@ Load the `trellis-check` skill and verify the code per its guidance:
 
 If issues are found → fix → re-check, until green.
 
-[/codex-inline, Kilo, Antigravity, Devin]
+[/Kilo, Antigravity, Devin]
 
 **Final pass (before Phase 3.4 commit)**: the last 2.2 of a task must run full-scope, not just on the latest implement chunk. List all affected packages with `python ./.trellis/scripts/get_context.py --mode packages`, then load each package's spec index Quality Check section. This catches cross-layer / multi-package issues a mid-iteration local 2.2 cannot.
 

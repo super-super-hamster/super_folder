@@ -403,7 +403,7 @@ export default function FileList() {
       }}
     >
       {viewMode === 'list' && (
-        <div className={`grid ${isSelectionMode ? 'grid-cols-[20px_1fr_96px_128px]' : 'grid-cols-[1fr_96px_128px]'} items-center gap-4 pl-[40px] pr-10 py-2 border-b border-gray-200 bg-sf-panel/80 backdrop-blur shrink-0 text-xs font-semibold text-gray-500 wails-no-drag`}>
+        <div className={`grid ${isSelectionMode ? 'grid-cols-[20px_1fr_96px_128px]' : 'grid-cols-[1fr_96px_128px]'} items-center gap-4 pl-[40px] pr-10 py-2 border-b border-sf-border bg-sf-panel/85 shrink-0 text-xs font-semibold text-sf-text-secondary wails-no-drag`}>
           {isSelectionMode && <div></div>}
           <div className="text-left">名称</div>
           <div className="text-right">大小</div>
@@ -442,13 +442,11 @@ export default function FileList() {
                 top: dragBox.top,
                 width: dragBox.width,
                 height: dragBox.height,
-                backgroundColor: 'rgba(156, 163, 175, 0.3)',
-                border: '2px solid #4b5563',
-                borderRadius: '12px',
                 boxSizing: 'border-box',
                 pointerEvents: 'none',
                 zIndex: 50
               }}
+              className="sf-selection-box"
             />
           )}
 

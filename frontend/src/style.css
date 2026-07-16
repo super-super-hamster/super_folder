@@ -3,6 +3,25 @@
 @plugin "@tailwindcss/typography";
 @import "../node_modules/@heroui/react/dist/styles.css";
 
+:root {
+  color-scheme: light;
+  --sf-desk: #ffffff;
+  --sf-paper: #fffcf1;
+  --sf-paper-muted: #fbf2d8;
+  --sf-paper-edge: #e4dac0;
+  --sf-paper-item: #f8eecb;
+  --sf-paper-item-hover: #fdf4d4;
+  --sf-paper-selected: #fff1bd;
+  --sf-ink: #272923;
+  --sf-ink-muted: #686b64;
+  --sf-accent: #416b57;
+  --sf-danger: #db2626;
+  --sf-shadow-paper: 2px 3px 4px rgba(45, 42, 35, 0.50), 3px 5px 12px rgba(45, 42, 35, 0.06);
+  --sf-shadow-paper-hover: 1px 2px 3px rgba(45, 42, 35, 0.12), 4px 7px 14px rgba(45, 42, 35, 0.08);
+  --sf-shadow-raised: 2px 4px 8px rgba(45, 42, 35, 0.12), 8px 16px 32px rgba(45, 42, 35, 0.14);
+  --sf-shadow-modal: 3px 8px 18px rgba(45, 42, 35, 0.13), 14px 28px 64px rgba(45, 42, 35, 0.18);
+}
+
 /* Wails frameless window drag support */
 .wails-draggable {
   --wails-draggable: drag;
@@ -41,8 +60,126 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: transparent;
-  color: #1f2937; /* Tailwind gray-800 */
-  font-family: 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif !important;
+  color: var(--sf-ink);
+  font-family: 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.sf-desk {
+  background-color: var(--sf-desk);
+}
+
+.sf-paper,
+.sf-paper-muted,
+.sf-paper-raised,
+.sf-overlay {
+  isolation: isolate;
+  border-color: var(--sf-paper-edge);
+  color: var(--sf-ink);
+}
+
+.sf-paper {
+  background-color: var(--sf-paper);
+  box-shadow: var(--sf-shadow-paper), inset 1px 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.sf-paper-muted {
+  background-color: var(--sf-paper-muted);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.sf-paper-raised {
+  background-color: var(--sf-paper);
+  box-shadow: var(--sf-shadow-raised), inset 1px 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.sf-overlay {
+  background-color: var(--sf-paper);
+  box-shadow: var(--sf-shadow-modal), inset 1px 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.sf-paper::before,
+.sf-paper-muted::before,
+.sf-paper-raised::before,
+.sf-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background-image: url('./assets/textures/paper-fiber.png');
+  background-repeat: repeat;
+  background-size: 512px 512px;
+  mix-blend-mode: multiply;
+  opacity: 0.024;
+  pointer-events: none;
+}
+
+.sf-paper > *,
+.sf-paper-muted > *,
+.sf-paper-raised > *,
+.sf-overlay > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sf-control,
+.sf-list-item,
+.sf-context-menu > button {
+  transition: background-color 140ms ease-out, color 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out, transform 80ms ease-out;
+}
+
+.sf-list-item[data-selected='true'],
+.sf-list-item[data-selected='true']:hover {
+  background-color: var(--sf-paper-selected);
+}
+
+.sf-control:hover:not(:disabled) {
+  background-color: var(--sf-paper-item-hover);
+  box-shadow: 1px 2px 4px rgba(45, 42, 35, 0.08);
+}
+
+.sf-control:active:not(:disabled),
+.sf-context-menu > button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(45, 42, 35, 0.12);
+}
+
+.sf-control:focus-visible,
+.sf-list-item:focus-visible,
+.sf-context-menu > button:focus-visible {
+  outline: 2px solid var(--sf-accent);
+  outline-offset: 2px;
+}
+
+.sf-context-menu > button:hover:not(:disabled) {
+  background-color: var(--sf-paper-item-hover);
+}
+
+.sf-context-menu > .h-px {
+  background-color: var(--sf-paper-edge);
+}
+
+.sf-selection-box {
+  background-color: rgba(228, 206, 145, 0.34);
+  border: 1px solid rgba(143, 113, 53, 0.58);
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .sf-control:active,
+  .sf-context-menu > button:active,
+  .sf-motion-surface {
+    transform: none !important;
+  }
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

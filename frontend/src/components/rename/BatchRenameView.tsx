@@ -245,7 +245,7 @@ export default function BatchRenameView() {
   }
 
   return (
-    <div className="flex w-full h-full bg-white relative items-center justify-center p-8 gap-8">
+    <div className="flex w-full h-full bg-sf-page relative items-center justify-center p-8 gap-8">
       {/* Left Container */}
       <ScrollArea className="w-[400px] h-[600px] bg-sf-panel rounded-3xl" innerClassName="p-6 flex flex-col gap-3">
         {files.map(f => (

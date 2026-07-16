@@ -119,7 +119,7 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
   }
 
   return (
-    <div className="w-full h-full bg-white relative flex flex-col min-h-0 wails-no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+    <div className="w-full h-full bg-sf-page relative flex flex-col min-h-0 wails-no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
       {renderContent()}
     </div>
   )

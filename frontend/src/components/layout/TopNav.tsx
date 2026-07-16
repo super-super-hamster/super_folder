@@ -70,8 +70,11 @@ const getParentPath = (path: string) => {
 }
 
 export default function TopNav() {
-  const viewTp = useTooltipState(200)
   const minTp = useTooltipState(200)
+  const viewTp = useTooltipState(200)
+  const sortTp = useTooltipState(200)
+  const refreshTp = useTooltipState(200)
+  const maximizeTp = useTooltipState(200)
   const { globalTags: allGlobalTags } = useTagStore()
   const { 
     isSearchFocused, setSearchFocused, 
@@ -336,11 +339,12 @@ export default function TopNav() {
   }, [activeTabId, activeTab?.currentPath, isSearchActive])
 
   return (
-    <div className="flex items-center h-14 bg-white rounded-2xl shadow-panel border border-gray-100 wails-draggable px-4 shrink-0">
+    <div className="sf-paper relative flex items-center h-14 rounded-lg border wails-draggable px-4 shrink-0">
       <div className="flex items-center gap-1 wails-no-drag">
         <button 
           id="nav-back-button"
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus:outline-none"
+          aria-label="后退"
+          className="sf-control w-7 h-7 flex items-center justify-center rounded-md disabled:opacity-30 focus:outline-none"
           onClick={goBack} 
           disabled={!activeTab || activeTab.historyIndex <= 0}
         >
@@ -348,7 +352,8 @@ export default function TopNav() {
         </button>
         <button 
           id="nav-forward-button"
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus:outline-none"
+          aria-label="前进"
+          className="sf-control w-7 h-7 flex items-center justify-center rounded-md disabled:opacity-30 focus:outline-none"
           onClick={goForward} 
           disabled={!activeTab || activeTab.historyIndex >= activeTab.history.length - 1}
         >
@@ -367,7 +372,7 @@ export default function TopNav() {
             }
           }}
           transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-          className={`flex items-center bg-gray-100 rounded-full p-1 overflow-x-auto overflow-y-hidden no-scrollbar transition-colors duration-200 ease-out group/tabs ${isSearchActive ? 'w-auto shrink-0' : 'flex-1 min-w-0'}`}
+          className={`flex items-center bg-sf-item rounded-full p-1 overflow-x-auto overflow-y-hidden no-scrollbar transition-colors duration-200 ease-out group/tabs ${isSearchActive ? 'w-auto shrink-0' : 'flex-1 min-w-0'}`}
         >
           <AnimatePresence>
             {tabs.map((tab) => {
@@ -393,12 +398,12 @@ export default function TopNav() {
                   exit={isSearchActive ? { opacity: 0, width: 0, transition: { duration: 0 } } : { opacity: 0, width: 0 }}
                   transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
                   className={`relative flex items-center transition-colors whitespace-nowrap group shrink-0 ${
-                    isActive ? 'active-tab-wrapper' : 'px-3 py-1 rounded-full hover:bg-gray-200/50 text-gray-600'
+                    isActive ? 'active-tab-wrapper' : 'px-3 py-1 rounded-full hover:bg-sf-item-hover text-gray-600'
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
                   {isActive ? (
-                    <div className="bg-white shadow-sm rounded-full px-3 py-1 flex items-center shrink-0 min-w-0 font-medium text-primary relative z-panel">
+                    <div className="bg-sf-page shadow-sm rounded-full px-3 py-1 flex items-center shrink-0 min-w-0 font-medium text-primary relative z-panel">
                       <img src={`/src/assets/icons/${leadingIcon}`} className="w-4 h-4 mr-2 opacity-70 shrink-0" alt="Folder" />
                         <div className="text-sm tracking-wider flex items-center h-full shrink-0 min-w-0">
                           {tab.currentPath === 'batch-rename://' ? (
@@ -442,6 +447,7 @@ export default function TopNav() {
           </AnimatePresence>
           {!isSearchActive && (
             <button 
+              aria-label="新建标签页"
               className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-300/50 ml-1 shrink-0 transition-colors opacity-0 group-hover/tabs:opacity-100 focus:outline-none"
               onClick={() => addTab('C:\\')}
             >
@@ -455,7 +461,7 @@ export default function TopNav() {
           id="search-container"
           layout
           transition={{ type: 'tween', duration: 0.2, ease: 'easeOut' }}
-          className={`relative flex items-center bg-gray-100 rounded-full focus-within:bg-gray-200/80 px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
+          className={`relative flex items-center bg-sf-item rounded-full focus-within:bg-sf-item-hover px-3 py-1.5 transition-colors duration-200 ease-out wails-no-drag ${isSearchActive ? 'flex-1 min-w-0' : 'w-[100px] shrink-0'}`}
         >
           {isSearchActive && (
             <div className="w-4 h-4 mr-2 shrink-0 flex items-center justify-center">
@@ -522,19 +528,15 @@ export default function TopNav() {
       {/* Right Controls Area - NEVER CHANGES SIZE */}
       <div className="flex items-center gap-3 wails-no-drag shrink-0">
         <Dropdown>
-          <Dropdown.Trigger>
+          <Dropdown.Trigger aria-label="切换视图">
             <Tooltip delay={200} isOpen={viewTp.isOpen}>
-              <button
-                ref={viewTp.triggerRef as React.Ref<HTMLButtonElement>}
-                className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
-                {...viewTp.triggerProps}
-              >
+              <span ref={viewTp.triggerRef as React.Ref<HTMLSpanElement>} className="sf-control w-8 h-8 shrink-0 flex items-center justify-center rounded-md focus:outline-none" {...viewTp.triggerProps}>
                 <img src="/src/assets/icons/eye_line.svg" className="w-4 h-4 text-gray-700" />
-              </button>
-              <Tooltip.Content placement="bottom" triggerRef={viewTp.triggerRef}>视图选项</Tooltip.Content>
+              </span>
+              <Tooltip.Content placement="bottom" triggerRef={viewTp.triggerRef}>切换视图</Tooltip.Content>
             </Tooltip>
           </Dropdown.Trigger>
-          <Dropdown.Popover className="w-24 p-1 rounded-xl border border-gray-200 shadow-lg" placement="bottom end">
+          <Dropdown.Popover className="sf-paper-raised w-24 p-1 rounded-lg border" placement="bottom end">
             <Dropdown.Menu
               selectionMode="single"
               selectedKeys={new Set([viewMode])}
@@ -543,15 +545,15 @@ export default function TopNav() {
                 if (selected) setViewMode(selected as 'grid' | 'list' | 'album')
               }}
             >
-              <Dropdown.Item id="grid" textValue="网格模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+              <Dropdown.Item id="grid" textValue="网格模式" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                 <img src="/src/assets/icons/apps-2-line.svg" className="w-4 h-4 mr-3" />
                 网格模式
               </Dropdown.Item>
-              <Dropdown.Item id="list" textValue="列表模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+              <Dropdown.Item id="list" textValue="列表模式" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                 <img src="/src/assets/icons/list_check_line.svg" className="w-4 h-4 mr-3" />
                 列表模式
               </Dropdown.Item>
-              <Dropdown.Item id="album" textValue="相册模式" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+              <Dropdown.Item id="album" textValue="相册模式" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                 <img src="/src/assets/icons/photo_album_2_line.svg" className="w-4 h-4 mr-3" />
                 相册模式
               </Dropdown.Item>
@@ -565,7 +567,7 @@ export default function TopNav() {
                 setIsGrouped(selected.has('grouped'))
               }}
             >
-              <Dropdown.Item id="grouped" textValue="启用分组" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+              <Dropdown.Item id="grouped" textValue="启用分组" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                 <div className="w-4 h-4 mr-3 flex items-center justify-center">
                   {isGrouped ? <img src="/src/assets/icons/check_line.svg" className="w-4 h-4" /> : <span className="w-4 h-4" />}
                 </div>
@@ -576,21 +578,24 @@ export default function TopNav() {
         </Dropdown>
 
         <Dropdown>
-          <Dropdown.Trigger>
-            <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
-              {(() => {
-                const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
-                if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
-                if (currentSortOption === 'name_desc') return <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 text-gray-700" />
-                if (currentSortOption === 'time_desc') return <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 text-gray-700" />
-                if (currentSortOption === 'time_asc') return <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 text-gray-700" />
-                if (currentSortOption === 'size_desc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
-                if (currentSortOption === 'size_asc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
-                return null
-              })()}
-            </button>
+          <Dropdown.Trigger aria-label="排序方式">
+            <Tooltip delay={200} isOpen={sortTp.isOpen}>
+              <span ref={sortTp.triggerRef as React.Ref<HTMLSpanElement>} className="sf-control w-8 h-8 shrink-0 flex items-center justify-center rounded-md focus:outline-none" {...sortTp.triggerProps}>
+                {(() => {
+                  const currentSortOption = activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption
+                  if (currentSortOption === 'name_asc') return <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 text-gray-700" />
+                  if (currentSortOption === 'name_desc') return <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 text-gray-700" />
+                  if (currentSortOption === 'time_desc') return <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 text-gray-700" />
+                  if (currentSortOption === 'time_asc') return <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 text-gray-700" />
+                  if (currentSortOption === 'size_desc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
+                  if (currentSortOption === 'size_asc') return <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 text-gray-700" />
+                  return null
+                })()}
+              </span>
+              <Tooltip.Content placement="bottom" triggerRef={sortTp.triggerRef}>排序方式</Tooltip.Content>
+            </Tooltip>
           </Dropdown.Trigger>
-          <Dropdown.Popover className="w-48 p-1 rounded-xl border border-gray-200 shadow-lg" placement="bottom end">
+          <Dropdown.Popover className="sf-paper-raised w-48 p-1 rounded-lg border" placement="bottom end">
             <Dropdown.Menu
               selectionMode="single"
               selectedKeys={new Set([activeTab?.currentPath === 'recent://' ? recentSortOption : sortOption])}
@@ -606,28 +611,28 @@ export default function TopNav() {
               }}
             >
               <Dropdown.Section>
-                <Dropdown.Item id="name_asc" textValue="按名称 (A-Z)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="name_asc" textValue="按名称 (A-Z)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/AZ_sort_ascending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (A-Z)
                 </Dropdown.Item>
-                <Dropdown.Item id="name_desc" textValue="按名称 (Z-A)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="name_desc" textValue="按名称 (Z-A)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/ZA_sort_descending_letters_line.svg" className="w-4 h-4 mr-3" /> 按名称 (Z-A)
                 </Dropdown.Item>
               </Dropdown.Section>
               <Separator className="my-1 bg-gray-200/50" />
               <Dropdown.Section>
-                <Dropdown.Item id="time_desc" textValue="按时间 (从新到旧)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="time_desc" textValue="按时间 (从新到旧)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/sort_by_time_down.svg" className="w-4 h-4 mr-3" /> 按时间 (从新到旧)
                 </Dropdown.Item>
-                <Dropdown.Item id="time_asc" textValue="按时间 (从旧到新)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="time_asc" textValue="按时间 (从旧到新)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/sort_by_time_up.svg" className="w-4 h-4 mr-3" /> 按时间 (从旧到新)
                 </Dropdown.Item>
               </Dropdown.Section>
               <Separator className="my-1 bg-gray-200/50" />
               <Dropdown.Section>
-                <Dropdown.Item id="size_desc" textValue="按大小 (从大到小)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="size_desc" textValue="按大小 (从大到小)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从大到小)
                 </Dropdown.Item>
-                <Dropdown.Item id="size_asc" textValue="按大小 (从小到大)" className="rounded-lg px-3 py-2 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black data-[selected=true]:font-medium">
+                <Dropdown.Item id="size_asc" textValue="按大小 (从小到大)" className="rounded-md px-3 py-2 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text data-[selected=true]:font-medium">
                   <img src="/src/assets/icons/database-2-line.svg" className="w-4 h-4 mr-3" /> 按大小 (从小到大)
                 </Dropdown.Item>
               </Dropdown.Section>
@@ -635,23 +640,29 @@ export default function TopNav() {
           </Dropdown.Popover>
         </Dropdown>
 
-        <button onClick={triggerRefresh} className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
-          <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" autoPlayCount={refreshAnimationCount} />
-        </button>
+        <Tooltip delay={200} isOpen={refreshTp.isOpen}>
+          <button aria-label="刷新" ref={refreshTp.triggerRef as unknown as React.Ref<HTMLButtonElement>} onClick={triggerRefresh} className="sf-control w-8 h-8 shrink-0 flex items-center justify-center rounded-md focus:outline-none" {...refreshTp.triggerProps}>
+            <AnimatedClickIcon animData={refreshAnim} className="w-4 h-4 text-gray-700" autoPlayCount={refreshAnimationCount} />
+          </button>
+          <Tooltip.Content placement="bottom" triggerRef={refreshTp.triggerRef}>刷新</Tooltip.Content>
+        </Tooltip>
         
         <div className="w-[1px] h-4 bg-gray-300 mx-1 shrink-0"></div>
 
         <div className="flex items-center gap-1 text-gray-600 shrink-0">
           <Tooltip delay={200} isOpen={minTp.isOpen}>
-            <button ref={minTp.triggerRef as unknown as React.Ref<HTMLButtonElement>} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none relative" onClick={() => Minimize()} {...minTp.triggerProps}>
+            <button aria-label="最小化" ref={minTp.triggerRef as unknown as React.Ref<HTMLButtonElement>} className="sf-control w-7 h-7 flex items-center justify-center rounded-md focus:outline-none relative" onClick={() => Minimize()} {...minTp.triggerProps}>
               <img src="/src/assets/icons/minimize_line.svg" className="w-4 h-4" />
             </button>
             <Tooltip.Content placement="bottom" triggerRef={minTp.triggerRef}>最小化</Tooltip.Content>
           </Tooltip>
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" onClick={handleMaximize}>
-            <img src={isMaximized ? "/src/assets/icons/fullscreen_exit_line.svg" : "/src/assets/icons/fullscreen_line.svg"} className="w-4 h-4" />
-          </button>
-          <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500 hover:text-white transition-colors focus:outline-none" onClick={() => Close()}>
+          <Tooltip delay={200} isOpen={maximizeTp.isOpen}>
+            <button aria-label={isMaximized ? '退出全屏' : '全屏'} ref={maximizeTp.triggerRef as unknown as React.Ref<HTMLButtonElement>} className="sf-control w-7 h-7 flex items-center justify-center rounded-md focus:outline-none" onClick={handleMaximize} {...maximizeTp.triggerProps}>
+              <img src={isMaximized ? "/src/assets/icons/fullscreen_exit_line.svg" : "/src/assets/icons/fullscreen_line.svg"} className="w-4 h-4" />
+            </button>
+            <Tooltip.Content placement="bottom" triggerRef={maximizeTp.triggerRef}>{isMaximized ? '退出全屏' : '全屏'}</Tooltip.Content>
+          </Tooltip>
+          <button aria-label="关闭" className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-sf-danger hover:text-white transition-colors focus:outline-none active:translate-y-px" onClick={() => Close()}>
             <img src="/src/assets/icons/close_line.svg" className="w-4 h-4" />
           </button>
         </div>

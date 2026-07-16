@@ -48,14 +48,15 @@ export default function FileListItem({
   const isDragOver = dragOverPath === file.path
 
   const containerClass = viewMode === 'list'
-    ? `grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md transition-colors cursor-pointer group select-none relative ${isDragOver ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover/60'}`
+    ? `sf-list-item grid ${isSelectionMode ? 'grid-cols-[20px_24px_1fr_96px_128px]' : 'grid-cols-[24px_1fr_96px_128px]'} items-center gap-4 px-4 h-[40px] w-full rounded-md cursor-pointer group select-none relative ${isDragOver ? 'bg-sf-selected ring-1 ring-sf-accent' : isSelected ? 'bg-sf-selected' : 'hover:bg-sf-item-hover/70'}`
     : viewMode === 'album'
-    ? `flex flex-col items-center justify-center p-0.5 rounded-xl transition-colors cursor-pointer group select-none w-full mx-auto relative ${isDragOver ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover/60'} ${file.isDir ? 'h-28' : 'h-20'}`
-    : `flex flex-col items-center justify-start p-2 rounded-xl transition-colors cursor-pointer group select-none h-36 w-28 mx-auto relative ${isDragOver ? 'bg-blue-100 ring-2 ring-blue-400' : isSelected ? 'bg-sf-selected/75 hover:bg-sf-item-hover' : 'hover:bg-sf-item-hover'}`
+    ? `sf-list-item flex flex-col items-center justify-center p-0.5 rounded-md cursor-pointer group select-none w-full mx-auto relative ${isDragOver ? 'bg-sf-selected ring-1 ring-sf-accent' : isSelected ? 'bg-sf-selected' : 'hover:bg-sf-item-hover/70'} ${file.isDir ? 'h-28' : 'h-20'}`
+    : `sf-list-item flex flex-col items-center justify-start p-2 rounded-md cursor-pointer group select-none h-36 w-28 mx-auto relative ${isDragOver ? 'bg-sf-selected ring-1 ring-sf-accent' : isSelected ? 'bg-sf-selected' : 'hover:bg-sf-item-hover'}`
 
   return (
     <div
       id={`file-${file.path}`}
+      data-selected={isSelected ? 'true' : undefined}
       draggable={true}
       onDragStart={(e) => onDragStart(e, file)}
       onDragOver={(e) => onDragOver(e, file)}

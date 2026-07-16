@@ -86,7 +86,7 @@ export default function ConversionView() {
   }
 
   return (
-    <div className="h-full w-full bg-white flex flex-col p-8 select-none overflow-hidden relative">
+    <div className="h-full w-full bg-sf-page flex flex-col p-8 select-none overflow-hidden relative">
       <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto relative">
         {/* Top Header */}
         <div className="flex items-center justify-center space-x-12 mb-8 mt-4">

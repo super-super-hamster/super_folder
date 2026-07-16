@@ -362,9 +362,9 @@ export const ModalManager = () => {
 
   return (
     <Modal>
-      <Modal.Backdrop isOpen={isOpen} onOpenChange={handleOpenChange} variant="blur" className="bg-transparent">
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={handleOpenChange} variant="opaque" className="bg-black/20">
         <Modal.Container placement="center">
-          <Modal.Dialog className="rounded-2xl shadow-panel">
+          <Modal.Dialog className="sf-overlay relative rounded-lg border border-sf-border shadow-modal">
             {isModalVisible && !activeModal && <ProgressModalContent />}
             {activeModal === 'conflict' && <ConflictModalContent />}
             {activeModal === 'rename_conflict' && <RenameConflictModalContent />}

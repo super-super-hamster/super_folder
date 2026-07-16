@@ -58,7 +58,7 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
         initial={false}
         animate={{ opacity: isOpen ? 1 : 0, width: isOpen ? rightSidebarWidth : 0, marginLeft: isOpen ? 0 : -12 }}
         transition={{ type: 'tween', duration: isResizing ? 0 : 0.2, ease: 'easeOut' }}
-        className={`h-full bg-white rounded-2xl shadow-panel flex flex-col shrink-0 overflow-hidden border border-gray-100 wails-no-drag select-none ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`sf-paper relative h-full rounded-lg flex flex-col shrink-0 overflow-hidden border wails-no-drag select-none ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!isOpen}
       >
       <div className="p-4">
@@ -88,10 +88,10 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
       <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full no-scrollbar">
         {isTabPending ? (
           <div className="w-full p-4 space-y-4">
-            <Skeleton className="h-8 rounded-lg" />
-            <Skeleton className="h-24 rounded-lg" />
-            <Skeleton className="h-4 w-4/5 rounded-lg" />
-            <Skeleton className="h-4 w-3/5 rounded-lg" />
+            <Skeleton className="h-8 rounded-md" />
+            <Skeleton className="h-24 rounded-md" />
+            <Skeleton className="h-4 w-4/5 rounded-md" />
+            <Skeleton className="h-4 w-3/5 rounded-md" />
           </div>
         ) : (
           <>

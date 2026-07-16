@@ -11,7 +11,7 @@ export default function SettingsContent() {
   const { activeSettingsTab } = useUIStore()
 
   return (
-    <div className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 flex flex-col overflow-hidden relative">
+    <div className="sf-paper flex-1 rounded-lg border flex flex-col overflow-hidden relative">
       <ScrollArea className="flex-1 min-h-0 wails-no-drag" innerClassName="p-8">
         {activeSettingsTab === 'general' && <GeneralSettings />}
         {activeSettingsTab === 'privacy' && <PrivacySettings />}

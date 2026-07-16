@@ -225,7 +225,7 @@ function App() {
 
   return (
     <>
-      <div className="flex h-screen w-screen bg-gray-200 p-4 gap-4 overflow-hidden select-none font-sans text-gray-800 wails-draggable">
+      <div className="sf-desk flex h-screen w-screen p-4 gap-4 overflow-hidden select-none font-sans text-sf-text wails-draggable">
         { /* Sidebar Island */ }
         <div className="shrink-0 h-full">
           {isSettingsOpen ? <SettingsSidebar /> : <Sidebar />}
@@ -253,7 +253,7 @@ function App() {
                 <RightSidebar isOpen={isRightSidebarOpen} />
 
                 { /* FileList Island or File Editor */ }
-                <main className="flex-1 bg-white rounded-2xl shadow-panel border border-gray-100 overflow-hidden flex flex-col relative wails-no-drag min-w-0">
+                <main className="sf-paper flex-1 rounded-lg border overflow-hidden flex flex-col relative wails-no-drag min-w-0">
                   {activePath?.endsWith('\\相似图片') ? (
                     <SimilarImages />
                   ) : activePath?.endsWith('\\简繁转换') ? (

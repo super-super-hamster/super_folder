@@ -109,3 +109,25 @@ const getContainerCoords = (clientX, clientY) => ({
 - Subtracts 24px from `x` to account for the left sidebar gutter
 - Subtracts 16px from `y` for the top padding of the scroll container
 - Adds `scrollTop` so the y coordinate tracks content position during scroll
+
+---
+
+## Selected State Must Override Hover
+
+Virtual file items must keep their selected background when the pointer is over them. Expose selection on the item element and use a selector that is more specific than the ordinary hover utility.
+
+```tsx
+<div
+  className="sf-list-item"
+  data-selected={isSelected ? 'true' : undefined}
+/>
+```
+
+```css
+.sf-list-item[data-selected='true'],
+.sf-list-item[data-selected='true']:hover {
+  background-color: var(--sf-paper-selected);
+}
+```
+
+Do not add a lighter `hover:bg-*` class to the selected branch. The interaction priority is `drag-over > selected > hover > rest`, and state changes must not alter row or grid geometry.

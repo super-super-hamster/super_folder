@@ -1,0 +1,29 @@
+{
+  "id": "paper-card-visual-refresh",
+  "name": "paper-card-visual-refresh",
+  "title": "纸质卡片视觉与交互重构",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "SuperHamster",
+  "assignee": "SuperHamster",
+  "createdAt": "2026-07-13",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-13-paper-workspace-prototype",
+    "07-13-paper-global-migration"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

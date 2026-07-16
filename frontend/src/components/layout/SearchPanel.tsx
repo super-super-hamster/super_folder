@@ -2,14 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '../../store/uiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useState, useEffect } from 'react'
-import { Input, Dropdown, Label, Header, Separator, Select, ListBox, Tooltip } from '@heroui/react'
-import { useTooltipState } from '../../utils/useTooltipState'
+import { Input, Dropdown, Label, Header, Separator, Select, ListBox } from '@heroui/react'
 import SimpleDatePicker from '../common/SimpleDatePicker'
 import { parseSearchQuery, buildSearchQuery } from '../../utils/searchQuery'
 import ScrollArea from '../common/ScrollArea'
 
 export default function SearchPanel() {
-  const spTp = useTooltipState(200)
   const { searchFilter, setSearchFilter, isSearchPanelOpen, setSearchPanelOpen, searchSuggestions, selectedSuggestionIndex, searchQuery, searchPanelHeight, setSearchPanelHeight } = useUIStore()
   const { searchPresets } = useSettingsStore()
   const [isResizing, setIsResizing] = useState(false)
@@ -145,7 +143,7 @@ export default function SearchPanel() {
     />
   )
 
-  const negatedBg = (negated: boolean) => negated ? 'bg-yellow-50' : 'bg-gray-100'
+  const negatedBg = (negated: boolean) => negated ? 'bg-yellow-50' : 'bg-sf-panel'
 
   return (
     <motion.div 
@@ -156,7 +154,7 @@ export default function SearchPanel() {
       transition={{ duration: isResizing ? 0 : 0.2, ease: 'easeInOut' }}
       className="flex-shrink-0 wails-no-drag relative z-20"
     >
-      <div className="bg-white rounded-2xl shadow-panel overflow-hidden border border-gray-100 w-full h-full flex flex-col relative">
+      <div className="sf-paper rounded-lg overflow-hidden border w-full h-full flex flex-col relative">
         <div className="p-6 h-full flex transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
         {/* Left Filter Panel */}
         <ScrollArea className="w-[200px] border-r border-gray-300 pr-6" innerClassName="flex flex-col gap-3">
@@ -167,7 +165,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -220,7 +218,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isTypeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -272,7 +270,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-sf-panel rounded-md px-4 py-2 flex items-center justify-between relative group"
               >
                 <span className="text-sm text-gray-800">区分大小写</span>
                 <button onClick={() => handleRemoveFilter('case')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -286,7 +284,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex items-center justify-between relative group"
+                className="bg-sf-panel rounded-md px-4 py-2 flex items-center justify-between relative group"
               >
                 <span className="text-sm text-gray-800">正则表达式</span>
                 <button onClick={() => handleRemoveFilter('regex')} className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity">
@@ -300,7 +298,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isSizeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isSizeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -354,14 +352,14 @@ export default function SearchPanel() {
                     <Select.Value className="text-xs" />
                     <Select.Indicator className="text-gray-400" />
                   </Select.Trigger>
-                  <Select.Popover className="border border-gray-200 shadow-lg rounded-xl p-1">
+                  <Select.Popover className="sf-paper-raised border rounded-lg p-1">
                     <ListBox>
                       {(['KB', 'MB', 'GB'] as const).map((unit) => (
                         <ListBox.Item
                           key={unit}
                           id={unit}
                           textValue={unit}
-                          className="rounded-lg text-xs px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black cursor-pointer"
+                          className="rounded-md text-xs px-3 py-1.5 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text cursor-pointer"
                         >
                           {unit}
                         </ListBox.Item>
@@ -377,7 +375,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isTimeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isTimeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -422,7 +420,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isImageShapeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isImageShapeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -457,7 +455,7 @@ export default function SearchPanel() {
                     })()}
                     <Select.Value className="sr-only" />
                   </Select.Trigger>
-                  <Select.Popover className="border border-gray-200 shadow-lg rounded-xl p-1">
+                  <Select.Popover className="sf-paper-raised border rounded-lg p-1">
                     <ListBox>
                       {([
                         { id: 'square', icon: '/src/assets/icons/square_line.svg' },
@@ -468,7 +466,7 @@ export default function SearchPanel() {
                           key={item.id}
                           id={item.id}
                           textValue={item.id}
-                          className="rounded-lg px-3 py-1.5 data-[hover=true]:bg-gray-100 data-[selected=true]:bg-sf-selected/75 data-[selected=true]:text-black cursor-pointer"
+                          className="rounded-md px-3 py-1.5 data-[hover=true]:bg-sf-item-hover data-[selected=true]:bg-sf-selected data-[selected=true]:text-sf-text cursor-pointer"
                         >
                           <img src={item.icon} className="w-8 h-8" />
                         </ListBox.Item>
@@ -484,7 +482,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gray-100 rounded-xl px-4 py-2 flex flex-col relative group"
+                className="bg-sf-panel rounded-md px-4 py-2 flex flex-col relative group"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-800 font-medium">搜索深度</span>
@@ -532,7 +530,7 @@ export default function SearchPanel() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`${negatedBg(searchFilter.isIncludeNegated)} rounded-xl px-4 py-2 flex flex-col relative group`}
+                className={`${negatedBg(searchFilter.isIncludeNegated)} rounded-md px-4 py-2 flex flex-col relative group`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
@@ -581,7 +579,7 @@ export default function SearchPanel() {
           {(availableFilters.length > 0 || searchPresets.length > 0) && (
             <Dropdown>
               <Dropdown.Trigger>
-                <span className="w-full flex items-center justify-center py-1 text-sf-text-secondary text-xl hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                <span className="w-full flex items-center justify-center py-1 text-sf-text-secondary text-xl hover:bg-sf-item-hover rounded-md transition-colors cursor-pointer">
                   +
                 </span>
               </Dropdown.Trigger>
@@ -635,8 +633,8 @@ export default function SearchPanel() {
             return (
               <div
                 key={idx}
-                className={`flex items-center px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                  isSelected ? 'bg-gray-200/80' : 'hover:bg-gray-100'
+                className={`flex items-center px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
+                  isSelected ? 'bg-sf-selected' : 'hover:bg-sf-item-hover'
                 }`}
                 onClick={() => {
                   const { tags, remarks, keyword } = parseSearchQuery(searchQuery)
@@ -670,17 +668,13 @@ export default function SearchPanel() {
           })}
         </div>
         </div>
-        <Tooltip delay={200} isOpen={spTp.isOpen}>
-          <button
-            ref={spTp.triggerRef as React.Ref<HTMLButtonElement>}
-            className="absolute left-1/2 bottom-0 z-[60] -translate-x-1/2 cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-t-md transition-colors focus:outline-none wails-no-drag"
-            onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
-            {...spTp.triggerProps}
-          >
-            <img src={`/src/assets/icons/${isSearchPanelOpen ? 'up_line.svg' : 'down_line.svg'}`} className="w-4 h-4 opacity-70" alt="切换搜索面板" />
-          </button>
-          <Tooltip.Content placement="top" triggerRef={spTp.triggerRef}>{isSearchPanelOpen ? '收起搜索面板' : '展开搜索面板'}</Tooltip.Content>
-        </Tooltip>
+        <button
+          className="bottom-0 z-[60] cursor-pointer p-1 px-4 bg-transparent hover:bg-sf-item-hover/50 rounded-t-md transition-colors focus:outline-none wails-no-drag"
+          style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+          onClick={() => setSearchPanelOpen(!isSearchPanelOpen)}
+        >
+          <img src={`/src/assets/icons/${isSearchPanelOpen ? 'up_line.svg' : 'down_line.svg'}`} className="w-4 h-4 opacity-70" alt="切换搜索面板" />
+        </button>
       </div>
       {/* Resizer Handle */}
       {isSearchPanelOpen && <div 

@@ -16,7 +16,7 @@ export default function SettingsSidebar() {
 
   return (
     <motion.div 
-      className="flex flex-col h-full bg-white rounded-2xl shadow-panel border border-gray-100 py-4 overflow-hidden shrink-0 wails-draggable"
+      className="sf-paper relative flex flex-col h-full rounded-lg border py-4 overflow-hidden shrink-0 wails-draggable"
       initial={false}
       animate={{ width: isSidebarExpanded ? 220 : 64 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}

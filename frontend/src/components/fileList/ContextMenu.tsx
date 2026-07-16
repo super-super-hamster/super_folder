@@ -391,7 +391,7 @@ export default function ContextMenu() {
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.1 }}
         style={{ top: menuY, left: menuX }}
-        className="fixed z-[60] w-44 bg-white/90 backdrop-blur-md rounded-lg shadow-panel border border-gray-100 py-2 flex flex-col text-sm text-gray-800 font-medium overflow-hidden"
+        className="sf-paper-raised sf-context-menu sf-motion-surface fixed z-[60] w-44 rounded-lg border py-2 flex flex-col text-sm text-sf-text font-medium overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}
       >

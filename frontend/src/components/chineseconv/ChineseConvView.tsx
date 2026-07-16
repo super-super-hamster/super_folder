@@ -120,7 +120,7 @@ export default function ChineseConvView() {
   const allDone = files.length > 0 && files.every(f => f.status === 'success' || f.status === 'error')
 
   return (
-    <div className="h-full w-full bg-white flex flex-col p-8 select-none overflow-hidden relative">
+    <div className="h-full w-full bg-sf-page flex flex-col p-8 select-none overflow-hidden relative">
       <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto relative">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-6">
