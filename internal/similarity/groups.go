@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"super_folder/internal/database"
 	"super_folder/internal/models"
 	"sync"
@@ -441,10 +442,17 @@ func buildGroups(pairs []models.SimilarPair) [][]string {
 		}
 
 		if len(group) > 1 {
+			sort.Strings(group)
 			groups = append(groups, group)
 		}
 	}
 
+	sort.Slice(groups, func(i, j int) bool {
+		if groups[i][0] != groups[j][0] {
+			return groups[i][0] < groups[j][0]
+		}
+		return strings.Join(groups[i], "\x00") < strings.Join(groups[j], "\x00")
+	})
 	return groups
 }
 
@@ -453,7 +461,20 @@ func LoadSimilarGroups(folderPath string, threshold int, useMax bool) ([][]strin
 	if err != nil {
 		return nil, err
 	}
-	return buildGroups(pairs), nil
+	groups := buildGroups(pairs)
+	valid := make([][]string, 0, len(groups))
+	for _, group := range groups {
+		current := make([]string, 0, len(group))
+		for _, path := range group {
+			if _, err := os.Stat(path); err == nil {
+				current = append(current, path)
+			}
+		}
+		if len(current) > 1 {
+			valid = append(valid, current)
+		}
+	}
+	return valid, nil
 }
 
 func NeedsReindex(folderPath string, includeSubfolders bool, threshold int, useMax bool) (bool, error) {
@@ -545,7 +566,10 @@ func FindImagesSimilarTo(queryPath string, folderPath string, includeSubfolders 
 	}
 
 	sort.Slice(matches, func(i, j int) bool {
-		return matches[i].distance < matches[j].distance
+		if matches[i].distance != matches[j].distance {
+			return matches[i].distance < matches[j].distance
+		}
+		return matches[i].path < matches[j].path
 	})
 
 	result := make([]string, len(matches))

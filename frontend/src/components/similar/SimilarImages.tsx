@@ -108,6 +108,7 @@ export default function SimilarImages() {
   const storageKey = useMemo(() => hiddenKey(folderPath, threshold, useMax), [folderPath, threshold, useMax])
 
   useEffect(() => {
+    if (loading) return
     const loaded = loadHiddenSignatures(storageKey)
     const valid = new Set(groups.map(g => getGroupSignature(g)))
     const filtered = new Set(Array.from(loaded).filter(s => valid.has(s)))
@@ -117,7 +118,7 @@ export default function SimilarImages() {
     if (filtered.size !== loaded.size) {
       saveHiddenSignatures(storageKey, filtered)
     }
-  }, [storageKey, groups])
+  }, [storageKey, groups, loading])
 
   const loadGroups = useCallback(async () => {
     setLoading(true)
@@ -193,7 +194,7 @@ export default function SimilarImages() {
   }
 
   const toggleHidden = useCallback((signature: string) => {
-    setPendingHidden(prev => {
+    const update = (prev: Set<string>) => {
       const next = new Set(prev)
       if (next.has(signature)) {
         next.delete(signature)
@@ -202,7 +203,9 @@ export default function SimilarImages() {
       }
       saveHiddenSignatures(storageKey, next)
       return next
-    })
+    }
+    setPendingHidden(update)
+    setDisplayedHidden(update)
   }, [storageKey])
 
   const groupMetas = useMemo(() => {
@@ -298,7 +301,7 @@ export default function SimilarImages() {
   }
 
   return (
-    <div className="flex-1 bg-sf-page rounded-2xl shadow-panel border border-sf-border overflow-hidden flex flex-col wails-no-drag">
+    <div className="flex-1 bg-transparent overflow-hidden flex flex-col wails-no-drag">
       <div className="flex items-center px-5 py-3 border-b border-gray-100">
         <div className="text-sm font-medium text-gray-700">{title}</div>
       </div>
