@@ -121,6 +121,13 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
     }
 
     let fetchPromise: Promise<models.FileInfo[]>
+	const runSearch = async (req: Record<string, any>) => {
+	  const results = await SearchFiles(req)
+	  return results
+	  const diagnostics = ''
+	  window.alert(`搜索诊断:\n${diagnostics || '无诊断数据'}`)
+	  return results
+	}
     let isSearchRequest = false
     let cleanupDirectoryEvents: (() => void) | null = null
 
@@ -207,7 +214,9 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         fetchPromise = Promise.resolve([])
       }
     } else if (debouncedSearchQuery && debouncedSearchQuery.trim() !== '') {
-      const maxTime = searchFilter?.maxTime
+      const isSizeFilter = searchFilter?.isSizeFilter === true
+      const isTimeFilter = searchFilter?.isTimeFilter === true
+      const maxTime = isTimeFilter ? searchFilter?.maxTime : null
       const unit = searchFilter?.sizeUnit || 'MB'
       const toBytes = (val: number | null) => {
         if (val == null) return null
@@ -238,9 +247,9 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
         folderPaths: searchFilter?.isFolderPathsFilter ? (searchFilter?.folderPaths || []) : [],
         rootPath: currentPath,
         limit: 2000,
-        minSize: toBytes(searchFilter?.minSize ?? null),
-        maxSize: toBytes(searchFilter?.maxSize ?? null),
-        minTime: searchFilter?.minTime ?? null,
+        minSize: isSizeFilter ? toBytes(searchFilter?.minSize ?? null) : null,
+        maxSize: isSizeFilter ? toBytes(searchFilter?.maxSize ?? null) : null,
+        minTime: isTimeFilter ? searchFilter?.minTime ?? null : null,
         maxTime: maxTime != null ? maxTime + 24 * 60 * 60 * 1000 - 1 : null,
         imageShape: searchFilter?.isImageShapeFilter ? searchFilter?.imageShape : undefined
       }

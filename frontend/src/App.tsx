@@ -25,7 +25,7 @@ import { RecordInitialPath, InspectPathForNavigation, IsPathProtected, GetConfig
 import { getLastInitialPath, isFunctionPage } from './utils/pathUtils'
 
 function App() {
-  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen, searchQuery } = useUIStore()
+  const { isSearchPanelOpen, isRightSidebarOpen, isSettingsOpen, isTerminalOpen } = useUIStore()
   const { tabs, activeTabId } = useTabsStore()
   const { initialized, dialogMode } = usePrivacyStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
@@ -239,7 +239,7 @@ function App() {
           { /* Search Panel Island (Conditionally rendered) */ }
           {!isSettingsOpen && (
             <AnimatePresence>
-              {(isSearchPanelOpen || searchQuery !== '') && <SearchPanel />}
+              {isSearchPanelOpen && <SearchPanel />}
             </AnimatePresence>
           )}
 

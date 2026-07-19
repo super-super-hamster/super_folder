@@ -5,7 +5,8 @@ import { useTabsStore } from '../../store/tabsStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useFavoriteStore } from '../../store/favoriteStore'
 import { useTaskStore } from '../../store/taskStore'
-import { GetDefaultPaths, GetDrives, ReadDir, OpenFileWithDefault, PasteFiles } from '../../../wailsjs/go/main/App'
+import { useModalStore } from '../../store/modalStore'
+import { GetDefaultPaths, GetDrives, CanAccessPath, ReadDir, OpenFileWithDefault, PasteFiles } from '../../../wailsjs/go/main/App'
 import { models } from '../../../wailsjs/go/models'
 import { getFileIcon } from '../../utils/fileFormatting'
 
@@ -22,7 +23,17 @@ export default function Sidebar() {
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    GetDrives().then(setDrives)
+    let active = true
+    const refreshDrives = () => GetDrives().then(next => active && setDrives(next || [])).catch(() => undefined)
+    refreshDrives()
+    const timer = window.setInterval(refreshDrives, 2500)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
     GetDefaultPaths().then(setDefaultPaths)
     loadFromBackend()
     fetchFavorites()
@@ -74,6 +85,20 @@ export default function Sidebar() {
   const handleNavigate = (path: string | undefined, name: string) => {
     if (path) {
       setSettingsOpen(false)
+      if (/^[a-zA-Z]:\\$/.test(path)) {
+        CanAccessPath(path).then((canAccess) => {
+          if (!canAccess) {
+            setDrives(current => current.filter(drive => drive !== path))
+            useModalStore.getState().openModal('warning', { message: '路径不存在或设备已移除。' })
+            return
+          }
+          navigate(path, name)
+        }).catch(() => {
+          setDrives(current => current.filter(drive => drive !== path))
+          useModalStore.getState().openModal('warning', { message: '路径不存在或设备已移除。' })
+        })
+        return
+      }
       navigate(path, name)
     }
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { motion, AnimatePresence, Reorder } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ComboBox, Input, ListBox } from '@heroui/react'
 import { useSelectionStore } from '../../store/selectionStore'
 import { useTagStore } from '../../store/tagStore'
@@ -8,7 +8,7 @@ import { models } from '../../../wailsjs/go/models'
 
 export default function TagPanel() {
   const { selectedPaths } = useSelectionStore()
-  const { globalTags, fetchGlobalTags, createTag, reorderTags, triggerTagRefresh, tagRefreshKey } = useTagStore()
+  const { globalTags, fetchGlobalTags, createTag, triggerTagRefresh, tagRefreshKey } = useTagStore()
   
   const [fileTags, setFileTags] = useState<models.Tag[]>([])
   const [isAdding, setIsAdding] = useState(false)
@@ -22,16 +22,11 @@ export default function TagPanel() {
   }
 
   const addingTagsRef = useRef(new Set<string>())
-  const fileTagsRef = useRef<models.Tag[]>([])
 
   useEffect(() => {
     fetchGlobalTags()
     fetchUsageCounts()
   }, [])
-
-  useEffect(() => {
-    fileTagsRef.current = fileTags
-  }, [fileTags])
 
   const fetchUsageCounts = async () => {
     try {
@@ -86,10 +81,10 @@ export default function TagPanel() {
     try {
       let type = ''
       let name = tagName.trim()
-      if (name.includes(':') || name.includes('：')) {
-          const parts = name.split(/[:：]/)
-          type = parts[0].trim()
-          name = parts[1].trim()
+      const lastColon = Math.max(name.lastIndexOf(':'), name.lastIndexOf('：'))
+      if (lastColon >= 0) {
+          type = name.slice(0, lastColon).trim()
+          name = name.slice(lastColon + 1).trim()
       }
       
       if (!name) return
@@ -102,13 +97,20 @@ export default function TagPanel() {
       }
 
       if (!fileTags.find(t => t.id === tag!.id)) {
-        await AddTagToFiles(paths, tag!)
         setFileTags(prev => [...prev, tag!])
-        await fetchUsageCounts()
-        triggerTagRefresh()
+        try {
+          await AddTagToFiles(paths, tag!)
+          void fetchUsageCounts()
+          triggerTagRefresh()
+        } catch (error) {
+          setFileTags(prev => prev.filter(t => t.id !== tag!.id))
+          throw error
+        }
       }
       setIsAdding(false)
       setInputValue('')
+    } catch (error) {
+      setTagError(String(error))
     } finally {
       addingTagsRef.current.delete(tagName)
     }
@@ -124,22 +126,77 @@ export default function TagPanel() {
     triggerTagRefresh()
   }
 
-  const handleReorderTags = (nextTags: models.Tag[]) => {
-    setFileTags(nextTags)
+  interface GroupNode {
+    segment: string
+    fullPath: string
+    tags: models.Tag[]
+    children: GroupNode[]
   }
 
-  const handleReorderEnd = () => {
-    const reorderedFileTags = fileTagsRef.current
-    const reorderedFileTagIds = new Set(reorderedFileTags.map(t => t.id))
-    let nextFileTagIndex = 0
-    const orderedIds = globalTags.map(tag => {
-      if (!reorderedFileTagIds.has(tag.id)) {
-        return tag.id
+  const groupedTags = useMemo(() => {
+    const rootNodes: GroupNode[] = []
+    const flatTags: models.Tag[] = []
+    const nodeMap = new Map<string, GroupNode>()
+
+    fileTags.forEach(tag => {
+      if (!tag.type) {
+        flatTags.push(tag)
+        return
       }
-      return reorderedFileTags[nextFileTagIndex++]?.id || tag.id
+
+      const parts = tag.type.split(':')
+      let path = ''
+      let parentNodes = rootNodes
+
+      parts.forEach((part, i) => {
+        path = path ? `${path}:${part}` : part
+
+        if (!nodeMap.has(path)) {
+          const node: GroupNode = { segment: part, fullPath: path, tags: [], children: [] }
+          nodeMap.set(path, node)
+          parentNodes.push(node)
+        }
+
+        const node = nodeMap.get(path)!
+
+        if (i === parts.length - 1) {
+          node.tags.push(tag)
+        }
+
+        parentNodes = node.children
+      })
     })
-    reorderTags(orderedIds).catch(console.error)
+
+    return { rootNodes, flatTags }
+  }, [fileTags])
+
+  const handleRemoveGroup = async (fullPath: string) => {
+    const tagIds = fileTags
+      .filter(t => t.type === fullPath || t.type.startsWith(fullPath + ':'))
+      .map(t => t.id)
+    if (tagIds.length === 0) return
+    const paths = Array.from(selectedPaths)
+    await RemoveTagFromFiles(paths, tagIds)
+    setFileTags(prev => prev.filter(t => !tagIds.includes(t.id)))
+    await fetchGlobalTags()
+    await fetchUsageCounts()
+    triggerTagRefresh()
   }
+
+  const renderGroupNode = (node: GroupNode, depth: number): React.ReactNode => (
+    <div key={node.fullPath} className={depth > 0 ? 'ml-4' : ''}>
+      <div className="flex items-center justify-between text-sm font-semibold text-gray-600 py-1.5 px-2 select-none">
+        <span>{node.segment}</span>
+        <button onClick={() => handleRemoveGroup(node.fullPath)} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all text-xs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        </button>
+      </div>
+      {node.children.map(child => renderGroupNode(child, depth + 1))}
+      {node.tags.map(tag => (
+        <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} />
+      ))}
+    </div>
+  )
 
   const visibleGlobalTags = useMemo(() => {
     return globalTags.filter(tag => (usageCounts[tag.id] || 0) > 0)
@@ -150,14 +207,43 @@ export default function TagPanel() {
     // Unique tags from global tags based on type and name
     const uniqueTags = Array.from(new Map(visibleGlobalTags.map(item => [`${item.type}:${item.name}`, item])).values())
     
-    // If input contains ':', show the actual tags
-    if (inputValue.includes(':')) {
-      return uniqueTags.map(item => ({
-        id: item.id,
-        textValue: item.type ? `${item.type}: ${item.name}` : item.name,
-        display: item.type ? `${item.type}: ${item.name}` : item.name,
-        isTypeOnly: false
-      }))
+    // If input contains ':', show sub-type prefixes and matching tags
+    if (/[:：]/.test(inputValue)) {
+      const result: any[] = []
+      const trimmed = inputValue.trim()
+
+      // Show sub-type prefixes when input ends with ':'
+      if (/[:：]$/.test(trimmed)) {
+        const prefix = trimmed.slice(0, -1).trim()
+        const seen = new Set<string>()
+        uniqueTags.forEach(item => {
+          if (item.type && (item.type === prefix || item.type.startsWith(prefix + ':'))) {
+            const rest = item.type.slice(prefix.length).replace(/^:/, '')
+            const nextSeg = rest.includes(':') ? rest.split(':')[0] : rest
+            if (nextSeg && !seen.has(nextSeg)) {
+              seen.add(nextSeg)
+              const full = prefix ? `${prefix}:${nextSeg}` : nextSeg
+              result.push({
+                id: `type-${full}`,
+                textValue: `${full}:`,
+                display: `${full}:`,
+                isTypeOnly: true
+              })
+            }
+          }
+        })
+      }
+
+      uniqueTags.forEach(item => {
+        result.push({
+          id: item.id,
+          textValue: item.type ? `${item.type}: ${item.name}` : item.name,
+          display: item.type ? `${item.type}: ${item.name}` : item.name,
+          isTypeOnly: false
+        })
+      })
+
+      return result
     }
     
     // Otherwise, show only tag types (with a colon) and tags without a type
@@ -194,16 +280,10 @@ export default function TagPanel() {
 
   return (
     <div className="w-full p-4 flex flex-col gap-3 text-gray-800">
-      <Reorder.Group
-        axis="y"
-        values={fileTags}
-        onReorder={handleReorderTags}
-        className="flex flex-col gap-2"
-      >
-        {fileTags.map(tag => (
-          <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} onDragEnd={handleReorderEnd} />
-        ))}
-      </Reorder.Group>
+      {groupedTags.rootNodes.map(node => renderGroupNode(node, 0))}
+      {groupedTags.flatTags.map(tag => (
+        <TagItem key={tag.id} tag={tag} onRemove={() => handleRemoveTag(tag.id)} />
+      ))}
 
       <div className="flex flex-col items-center mt-2 w-full">
         <AnimatePresence>
@@ -231,6 +311,9 @@ export default function TagPanel() {
                     const selectedTag = visibleGlobalTags.find(t => t.id === key)
                     if (selectedTag) {
                       handleAddTag(selectedTag.type ? `${selectedTag.type}: ${selectedTag.name}` : selectedTag.name)
+                      setInputValue('')
+                    } else {
+                      handleAddTag(keyStr)
                       setInputValue('')
                     }
                   }
@@ -289,25 +372,21 @@ export default function TagPanel() {
   )
 }
 
-function TagItem({ tag, onRemove, onDragEnd }: { tag: models.Tag, onRemove: () => void, onDragEnd: () => void }) {
+function TagItem({ tag, onRemove }: { tag: models.Tag, onRemove: () => void }) {
   return (
-    <Reorder.Item
-      value={tag}
-      onDragEnd={onDragEnd}
-      className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors select-none hover:bg-gray-100 cursor-grab active:cursor-grabbing"
-    >
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors hover:bg-gray-100">
+      <div className="flex items-center gap-2 min-w-0">
         <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' style={{ color: tag.colorHex }} className='shrink-0'>
           <g fill='none'>
             <path d='M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z' />
             <path fill='currentColor' d='M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v16.028c0 1.22-1.38 1.93-2.372 1.221L12 18.229l-5.628 4.02c-.993.71-2.372 0-2.372-1.22z' />
           </g>
         </svg>
-        <span className="text-[14px] text-gray-800">{tag.type ? `${tag.type}: ${tag.name}` : tag.name}</span>
+        <span className="text-[14px] text-gray-800 truncate">{tag.name}</span>
       </div>
-      <button onClick={onRemove} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all">
+      <button onClick={onRemove} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
       </button>
-    </Reorder.Item>
+    </div>
   )
 }

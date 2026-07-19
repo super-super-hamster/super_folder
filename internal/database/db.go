@@ -314,6 +314,51 @@ func SetTagsForFile(path string, tagIDs []string) error {
 	})
 }
 
+// UpdatePathPrefix keeps path-based metadata aligned when a directory moves.
+func UpdatePathPrefix(oldPath, newPath string) error {
+	oldPath = strings.TrimRight(oldPath, `\`)
+	newPath = strings.TrimRight(newPath, `\`)
+	if oldPath == "" || newPath == "" {
+		return nil
+	}
+	rewrite := func(path string) string {
+		if strings.EqualFold(path, oldPath) {
+			return newPath
+		}
+		prefix := oldPath + `\`
+		if len(path) > len(prefix) && strings.EqualFold(path[:len(prefix)], prefix) {
+			return newPath + path[len(oldPath):]
+		}
+		return ""
+	}
+	return DB.Transaction(func(tx *gorm.DB) error {
+		var fileTags []models.FileTag
+		if err := tx.Find(&fileTags).Error; err != nil { return err }
+		for _, item := range fileTags {
+			if path := rewrite(item.Path); path != "" && path != item.Path {
+				if err := tx.Model(&models.FileTag{}).Where("path = ? AND tag_id = ?", item.Path, item.TagID).Updates(map[string]interface{}{"path": path}).Error; err != nil { return err }
+			}
+		}
+
+		var remarks []models.Remark
+		if err := tx.Find(&remarks).Error; err != nil { return err }
+		for _, item := range remarks {
+			if path := rewrite(item.Path); path != "" && path != item.Path {
+				if err := tx.Model(&models.Remark{}).Where("path = ?", item.Path).Update("path", path).Error; err != nil { return err }
+			}
+		}
+
+		var favorites []models.Favorite
+		if err := tx.Find(&favorites).Error; err != nil { return err }
+		for _, item := range favorites {
+			if path := rewrite(item.Path); path != "" && path != item.Path {
+				if err := tx.Model(&models.Favorite{}).Where("path = ?", item.Path).Update("path", path).Error; err != nil { return err }
+			}
+		}
+		return nil
+	})
+}
+
 func GetRemark(path string) (string, error) {
 	var remark models.Remark
 	err := DB.Where("path = ?", path).First(&remark).Error

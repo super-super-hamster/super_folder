@@ -15,8 +15,16 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState('预览')
   const [isTabPending, startTabTransition] = useTransition()
   const deferredActiveTab = useDeferredValue(activeTab)
+  const [contentReady, setContentReady] = useState(false)
   const { rightSidebarWidth, setRightSidebarWidth } = useUIStore()
   const [isResizing, setIsResizing] = useState(false)
+
+  useEffect(() => {
+    setContentReady(false)
+    if (!isOpen) return
+    const timer = window.setTimeout(() => setContentReady(true), 220)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, deferredActiveTab])
 
   const tabs = ['预览', '信息', '高级']
 
@@ -86,7 +94,7 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-start text-sm overflow-y-auto relative pb-4 pt-2 w-full no-scrollbar">
-        {isTabPending ? (
+        {isTabPending || !contentReady ? (
           <div className="w-full p-4 space-y-4">
             <Skeleton className="h-8 rounded-md" />
             <Skeleton className="h-24 rounded-md" />

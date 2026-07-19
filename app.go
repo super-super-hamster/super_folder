@@ -853,6 +853,25 @@ func (a *App) GetTagsForFiles(paths []string) (map[string][]models.Tag, error) {
 	if err != nil {
 		return nil, err
 	}
+	for _, path := range paths {
+		if _, ok := result[path]; ok {
+			continue
+		}
+		adsTags, adsErr := fs.ReadTagsFromADS(path)
+		if adsErr != nil || len(adsTags) == 0 {
+			continue
+		}
+		tagIDs := make([]string, 0, len(adsTags))
+		for _, tag := range adsTags {
+			_ = database.CreateTag(&tag)
+			tagIDs = append(tagIDs, tag.ID)
+		}
+		if len(tagIDs) > 0 {
+			if err := database.SetTagsForFile(path, tagIDs); err == nil {
+				result[path] = adsTags
+			}
+		}
+	}
 	if a.isPrivacyMode() {
 		return result, nil
 	}
@@ -1001,7 +1020,6 @@ func (a *App) SearchFiles(req map[string]interface{}) ([]models.FileInfo, error)
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
-
 	var fileInfos []models.FileInfo
 	for _, p := range result.Paths {
 		if !a.isPrivacyMode() {

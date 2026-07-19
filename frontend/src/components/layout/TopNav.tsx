@@ -136,7 +136,7 @@ export default function TopNav() {
     setSearchQuery(buildSearchQuery({ tags, remarks, keyword: val }))
 
     const { keyword: remaining } = parseSearchQuery(val)
-    const typed = remaining.trim().toLowerCase()
+    const typed = remaining.trim().toLowerCase().replace(/：/g, ':')
     let suggestions: any[] = []
 
     const prefixOptions = [

@@ -41,22 +41,10 @@ func (s *Searcher) Start() {
 	drives := []string{"C", "D", "E", "F", "G"}
 
 	onRename := func(oldPath, newPath string) {
-		err := database.DB.Model(&models.FileTag{}).
-			Where("path = ?", oldPath).
-			Update("path", newPath).Error
-		if err != nil {
-			log.Printf("Failed to update path in FileTag DB: %s -> %s, err: %v", oldPath, newPath, err)
+		if err := database.UpdatePathPrefix(oldPath, newPath); err != nil {
+			log.Printf("Failed to update metadata paths: %s -> %s, err: %v", oldPath, newPath, err)
 		} else {
-			log.Printf("Updated DB path for FileTag: %s -> %s", oldPath, newPath)
-		}
-
-		err2 := database.DB.Model(&models.Remark{}).
-			Where("path = ?", oldPath).
-			Update("path", newPath).Error
-		if err2 != nil {
-			log.Printf("Failed to update path in Remark DB: %s -> %s, err: %v", oldPath, newPath, err2)
-		} else {
-			log.Printf("Updated DB path for Remark: %s -> %s", oldPath, newPath)
+			log.Printf("Updated metadata paths: %s -> %s", oldPath, newPath)
 		}
 	}
 
@@ -140,7 +128,33 @@ type SearchRequest struct {
 }
 
 type SearchResponse struct {
-	Paths []string `json:"paths"`
+	Paths       []string `json:"paths"`
+	Diagnostics SearchDiagnostics `json:"diagnostics"`
+}
+
+type SearchDiagnostics struct {
+	Keyword      string         `json:"keyword"`
+	RootPaths    []string       `json:"rootPaths"`
+	EngineNodes  map[string]int `json:"engineNodes"`
+	VisitedNodes int            `json:"visitedNodes"`
+	NameMatches  int            `json:"nameMatches"`
+	FullPaths    int            `json:"fullPaths"`
+	RootMatches  int            `json:"rootMatches"`
+	SizeTimePass int            `json:"sizeTimePass"`
+	ShapePass    int            `json:"shapePass"`
+	PrivacyPass  int            `json:"privacyPass"`
+	PrivacyMode  string         `json:"privacyMode"`
+	MatchedPaths int            `json:"matchedPaths"`
+}
+
+type searchCounters struct {
+	visitedNodes int
+	nameMatches  int
+	fullPaths    int
+	rootMatches  int
+	sizeTimePass int
+	shapePass    int
+	privacyPass  int
 }
 
 func (s *Searcher) handleSearch(w http.ResponseWriter, r *http.Request) {
@@ -164,10 +178,27 @@ func (s *Searcher) handleSearch(w http.ResponseWriter, r *http.Request) {
 		req.RootPaths = []string{req.RootPath}
 	}
 
-	paths := s.executeSearch(&req)
+	counters := &searchCounters{}
+	paths := s.executeSearch(&req, counters)
+	engineNodes := make(map[string]int, len(s.engines))
+	for drive, engine := range s.engines {
+		engine.Mu.RLock()
+		engineNodes[drive] = len(engine.Nodes)
+		engine.Mu.RUnlock()
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(SearchResponse{Paths: paths})
+	json.NewEncoder(w).Encode(SearchResponse{
+		Paths: paths,
+		Diagnostics: SearchDiagnostics{
+			Keyword: req.Keyword, RootPaths: req.RootPaths,
+			EngineNodes: engineNodes, MatchedPaths: len(paths),
+			VisitedNodes: counters.visitedNodes, NameMatches: counters.nameMatches,
+			FullPaths: counters.fullPaths, RootMatches: counters.rootMatches,
+			SizeTimePass: counters.sizeTimePass, ShapePass: counters.shapePass,
+			PrivacyPass: counters.privacyPass, PrivacyMode: req.PrivacyMode,
+		},
+	})
 }
 
 func matchesSizeTime(path string, minSize, maxSize, minTime, maxTime *int64) bool {
@@ -353,7 +384,7 @@ func convertGlobToRegex(pattern string, ci bool) *regexp.Regexp {
 	return regexp.MustCompile(buf.String())
 }
 
-func (s *Searcher) executeSearch(req *SearchRequest) []string {
+func (s *Searcher) executeSearch(req *SearchRequest, counters *searchCounters) []string {
 	includeProtected := req.PrivacyMode == privacy.ModePrivacy
 	var regex *regexp.Regexp
 	if req.IsRegex && req.Keyword != "" {
@@ -528,17 +559,19 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				}
 			}
 
-			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
+			if matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
 				continue
 			}
+			counters.sizeTimePass++
 
 			if hasRemarkFilter && !remarkPaths[strings.ToLower(fullPath)] {
 				continue
 			}
 
-			if !matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
+			if matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
 				continue
 			}
+			counters.shapePass++
 
 			if !includeProtected {
 				hidden, err := privacy.IsPathHiddenInPublic(fullPath)
@@ -546,6 +579,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 					continue
 				}
 			}
+			counters.privacyPass++
 
 			results = append(results, fullPath)
 		}
@@ -568,6 +602,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 
 		engine.Mu.RLock()
 		for frn, node := range engine.Nodes {
+			counters.visitedNodes++
 			if len(results) >= req.Limit {
 				break
 			}
@@ -604,6 +639,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			if !matched {
 				continue
 			}
+			counters.nameMatches++
 
 			if len(req.IncludeStrings) > 0 {
 				includeMatched := false
@@ -647,6 +683,9 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 			}
 
 			fullPath := engine.GetFullPathLocked(frn)
+			if fullPath != "" {
+				counters.fullPaths++
+			}
 
 			if len(req.FolderPaths) > 0 {
 				fpMatched := false
@@ -685,19 +724,22 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 				if !pathMatched {
 					continue
 				}
+				counters.rootMatches++
 			}
 
-			if !matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
+			if matchesSizeTime(fullPath, req.MinSize, req.MaxSize, req.MinTime, req.MaxTime) == req.SizeNegated {
 				continue
 			}
+			counters.sizeTimePass++
 
 			if hasRemarkFilter && !remarkPaths[strings.ToLower(fullPath)] {
 				continue
 			}
 
-			if !matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
+			if matchesImageShape(fullPath, req.ImageShape) == req.ImageShapeNegated {
 				continue
 			}
+			counters.shapePass++
 
 			if !includeProtected {
 				hidden, err := privacy.IsPathHiddenInPublic(fullPath)
@@ -705,6 +747,7 @@ func (s *Searcher) executeSearch(req *SearchRequest) []string {
 					continue
 				}
 			}
+			counters.privacyPass++
 
 			results = append(results, fullPath)
 		}

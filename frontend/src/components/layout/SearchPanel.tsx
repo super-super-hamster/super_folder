@@ -152,10 +152,10 @@ export default function SearchPanel() {
       animate={{ height: isSearchPanelOpen ? searchPanelHeight : 0, opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: isResizing ? 0 : 0.2, ease: 'easeInOut' }}
-      className="flex-shrink-0 wails-no-drag relative z-20"
+      className="flex-shrink-0 min-h-0 wails-no-drag relative z-20 overflow-hidden"
     >
       <div className="sf-paper rounded-lg overflow-hidden border w-full h-full flex flex-col relative">
-        <div className="p-6 h-full flex transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
+        <div className="p-6 h-full min-h-0 flex transition-opacity" style={{ opacity: isSearchPanelOpen ? 1 : 0 }}>
         {/* Left Filter Panel */}
         <ScrollArea className="w-[200px] border-r border-gray-300 pr-6" innerClassName="flex flex-col gap-3">
           
