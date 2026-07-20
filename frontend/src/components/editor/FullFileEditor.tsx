@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { isImage, isCode, isMarkdown, isText, isVideo, isAudio, isPdf, isDocx, isXlsx, isEditableText, isEpub } from '../../utils/previewHelper'
-import ImagePreview from '../preview/ImagePreview'
+import ImageGalleryViewer from '../preview/ImageGalleryViewer'
 import PdfPreview from '../preview/PdfPreview'
 import DocxPreview from '../preview/DocxPreview'
 import XlsxPreview from '../preview/XlsxPreview'
@@ -99,7 +99,7 @@ export default function FullFileEditor({ path }: FullFileEditorProps) {
       )
     }
 
-    if (isImage(ext)) return <ImagePreview path={path} />
+    if (isImage(ext)) return <ImageGalleryViewer path={path} />
     if (isPdf(ext)) return <PdfPreview path={path} />
     if (isDocx(ext)) return <DocxPreview path={path} />
     if (isXlsx(ext)) return <XlsxPreview path={path} />

@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	ModePublic  = "public"
-	ModePrivacy = "privacy"
+	ModePublic         = "public"
+	ModePrivacy        = "privacy"
+	pathQueryBatchSize = 400
 
 	passwordConfigKey = "privacy_password"
 	restoreConfigKey  = "privacy_restore_on_startup"
@@ -182,13 +183,19 @@ func DirectProtectedPaths(paths []string) (map[string]bool, error) {
 		normalized = append(normalized, n)
 		lookup[n] = path
 	}
-	var protected []models.ProtectedPath
-	if err := database.DB.Where("path IN ?", normalized).Find(&protected).Error; err != nil {
-		return nil, err
-	}
-	for _, item := range protected {
-		if original, ok := lookup[item.Path]; ok {
-			result[original] = true
+	for start := 0; start < len(normalized); start += pathQueryBatchSize {
+		end := start + pathQueryBatchSize
+		if end > len(normalized) {
+			end = len(normalized)
+		}
+		var protected []models.ProtectedPath
+		if err := database.DB.Where("path IN ?", normalized[start:end]).Find(&protected).Error; err != nil {
+			return nil, err
+		}
+		for _, item := range protected {
+			if original, ok := lookup[item.Path]; ok {
+				result[original] = true
+			}
 		}
 	}
 	return result, nil
@@ -204,21 +211,66 @@ func IsDirectPathProtected(path string) (bool, error) {
 }
 
 func IsPathHiddenInPublic(path string) (bool, error) {
-	ancestors := PathAncestors(path)
-	if len(ancestors) == 0 {
-		return false, nil
+	hidden, err := HiddenPaths([]string{path})
+	return hidden[path], err
+}
+
+func HiddenPaths(paths []string) (map[string]bool, error) {
+	result := make(map[string]bool, len(paths))
+	ancestorsByPath := make(map[string][]string, len(paths))
+	ancestorSet := make(map[string]struct{})
+	allAncestors := make([]string, 0, len(paths))
+
+	for _, path := range paths {
+		ancestors := PathAncestors(path)
+		ancestorsByPath[path] = ancestors
+		for _, ancestor := range ancestors {
+			if _, exists := ancestorSet[ancestor]; exists {
+				continue
+			}
+			ancestorSet[ancestor] = struct{}{}
+			allAncestors = append(allAncestors, ancestor)
+		}
 	}
-	var count int64
-	if err := database.DB.Model(&models.ProtectedPath{}).Where("path IN ?", ancestors).Count(&count).Error; err != nil {
-		return false, err
+
+	hiddenAncestors := make(map[string]struct{})
+	for start := 0; start < len(allAncestors); start += pathQueryBatchSize {
+		end := start + pathQueryBatchSize
+		if end > len(allAncestors) {
+			end = len(allAncestors)
+		}
+		batch := allAncestors[start:end]
+
+		var protected []models.ProtectedPath
+		if err := database.DB.Where("path IN ?", batch).Find(&protected).Error; err != nil {
+			return nil, err
+		}
+		for _, item := range protected {
+			hiddenAncestors[item.Path] = struct{}{}
+		}
+
+		var protectedTagPaths []string
+		if err := database.DB.Table("file_tags").
+			Joins("JOIN tags ON tags.id = file_tags.tag_id").
+			Where("lower(file_tags.path) IN ? AND tags.is_protected = ?", batch, true).
+			Distinct("lower(file_tags.path)").
+			Pluck("lower(file_tags.path)", &protectedTagPaths).Error; err != nil {
+			return nil, err
+		}
+		for _, protectedPath := range protectedTagPaths {
+			hiddenAncestors[protectedPath] = struct{}{}
+		}
 	}
-	if count > 0 {
-		return true, nil
+
+	for path, ancestors := range ancestorsByPath {
+		for _, ancestor := range ancestors {
+			if _, hidden := hiddenAncestors[ancestor]; hidden {
+				result[path] = true
+				break
+			}
+		}
 	}
-	if err := database.DB.Table("file_tags").Joins("JOIN tags ON tags.id = file_tags.tag_id").Where("lower(file_tags.path) IN ? AND tags.is_protected = ?", ancestors, true).Count(&count).Error; err != nil {
-		return false, err
-	}
-	return count > 0, nil
+	return result, nil
 }
 
 func FilterVisibleFiles(files []models.FileInfo, includeProtectedState bool) ([]models.FileInfo, error) {
@@ -229,22 +281,25 @@ func FilterVisibleFiles(files []models.FileInfo, includeProtectedState bool) ([]
 	for i, file := range files {
 		paths[i] = file.Path
 	}
-	direct, err := DirectProtectedPaths(paths)
+	if includeProtectedState {
+		direct, err := DirectProtectedPaths(paths)
+		if err != nil {
+			return nil, err
+		}
+		visible := make([]models.FileInfo, 0, len(files))
+		for _, file := range files {
+			file.IsProtected = direct[file.Path]
+			visible = append(visible, file)
+		}
+		return visible, nil
+	}
+	hidden, err := HiddenPaths(paths)
 	if err != nil {
 		return nil, err
 	}
 	visible := make([]models.FileInfo, 0, len(files))
 	for _, file := range files {
-		if includeProtectedState {
-			file.IsProtected = direct[file.Path]
-			visible = append(visible, file)
-			continue
-		}
-		hidden, err := IsPathHiddenInPublic(file.Path)
-		if err != nil {
-			return nil, err
-		}
-		if !hidden {
+		if !hidden[file.Path] {
 			visible = append(visible, file)
 		}
 	}
@@ -252,13 +307,13 @@ func FilterVisibleFiles(files []models.FileInfo, includeProtectedState bool) ([]
 }
 
 func FilterVisiblePaths(paths []string) ([]string, error) {
+	hidden, err := HiddenPaths(paths)
+	if err != nil {
+		return nil, err
+	}
 	visible := make([]string, 0, len(paths))
 	for _, path := range paths {
-		hidden, err := IsPathHiddenInPublic(path)
-		if err != nil {
-			return nil, err
-		}
-		if !hidden {
+		if !hidden[path] {
 			visible = append(visible, path)
 		}
 	}

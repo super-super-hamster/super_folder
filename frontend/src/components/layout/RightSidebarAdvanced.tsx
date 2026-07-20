@@ -64,7 +64,11 @@ export default function RightSidebarAdvanced() {
 
   return (
     <div className="w-full flex flex-col h-full">
-      <div className="p-4 border-b border-gray-100 space-y-3">
+      <ScrollArea className="flex-1 min-h-0">
+        <TagPanel />
+      </ScrollArea>
+
+      <div className="p-4 border-t border-gray-100 space-y-3">
         <div className="text-sm font-semibold text-gray-700">查找相似图片</div>
 
         <Select
@@ -138,10 +142,6 @@ export default function RightSidebarAdvanced() {
           开始查找
         </button>
       </div>
-
-      <ScrollArea className="flex-1 min-h-0">
-        <TagPanel />
-      </ScrollArea>
     </div>
   )
 }

@@ -13,3 +13,12 @@ frontend/node_modules
 build/windows/installer/tmp/
 
 vite-dev.err
+
+.agents/
+.codex/
+.gocache-codex/
+.opencode/
+
+.trellis/*
+!.trellis/spec/
+!.trellis/spec/**

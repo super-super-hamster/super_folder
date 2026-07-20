@@ -9,6 +9,7 @@ export interface UseFileListShortcutsCallbacks {
   onDelete: (shiftKey: boolean) => void
   onRename: () => void
   onSearchFocus: () => void
+  onNavigateSelection: (direction: 'up' | 'down' | 'left' | 'right') => void
 }
 
 export function useFileListShortcuts(callbacks: UseFileListShortcutsCallbacks) {
@@ -42,6 +43,8 @@ export function useFileListShortcuts(callbacks: UseFileListShortcutsCallbacks) {
       } else if (e.ctrlKey && e.key.toLowerCase() === 'f') {
         e.preventDefault()
         callbacks.onSearchFocus()
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        callbacks.onNavigateSelection(e.key.slice(5).toLowerCase() as 'up' | 'down' | 'left' | 'right')
       }
     }
 

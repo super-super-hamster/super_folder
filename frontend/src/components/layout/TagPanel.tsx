@@ -184,11 +184,19 @@ export default function TagPanel() {
   }
 
   const renderGroupNode = (node: GroupNode, depth: number): React.ReactNode => (
-    <div key={node.fullPath} className={depth > 0 ? 'ml-4' : ''}>
-      <div className="flex items-center justify-between text-sm font-semibold text-gray-600 py-1.5 px-2 select-none">
-        <span>{node.segment}</span>
-        <button onClick={() => handleRemoveGroup(node.fullPath)} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all text-xs">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+    <div key={node.fullPath} className={`${depth > 0 ? 'ml-8' : ''} group`}>
+      <div className="flex items-center justify-between text-sm font-semibold text-gray-600 py-1.5 px-2 select-none rounded transition-colors group-hover:bg-gray-100">
+        <div className="flex items-center gap-2 min-w-0">
+          <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' style={{ color: '#9CA3AF' }} className='shrink-0'>
+            <g fill='none'>
+              <path d='M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z' />
+              <path fill='currentColor' d='M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v16.028c0 1.22-1.38 1.93-2.372 1.221L12 18.229l-5.628 4.02c-.993.71-2.372 0-2.372-1.22z' />
+            </g>
+          </svg>
+          <span className="truncate">{node.segment}</span>
+        </div>
+        <button onClick={() => handleRemoveGroup(node.fullPath)} className="text-sf-text hover:bg-gray-200 rounded p-0.5 transition-all shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
       {node.children.map(child => renderGroupNode(child, depth + 1))}
@@ -374,7 +382,7 @@ export default function TagPanel() {
 
 function TagItem({ tag, onRemove }: { tag: models.Tag, onRemove: () => void }) {
   return (
-    <div className="flex items-center justify-between group rounded py-1.5 px-2 transition-colors hover:bg-gray-100">
+    <div className="flex items-center justify-between rounded py-1.5 px-2 transition-colors hover:bg-gray-100 group-hover:bg-gray-100">
       <div className="flex items-center gap-2 min-w-0">
         <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' style={{ color: tag.colorHex }} className='shrink-0'>
           <g fill='none'>

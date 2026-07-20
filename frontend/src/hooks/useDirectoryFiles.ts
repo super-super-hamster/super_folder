@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDebounce } from 'use-debounce'
 import { useUIStore } from '../store/uiStore'
 import { useSettingsStore } from '../store/settingsStore'
@@ -6,23 +6,11 @@ import { useTagStore, generateColorFromName } from '../store/tagStore'
 import { useModalStore } from '../store/modalStore'
 import { usePrivacyStore } from '../store/privacyStore'
 import { useTabsStore } from '../store/tabsStore'
-import { ReadDirChunked, SearchFiles, GetFavorites, GetRecentItems, GetTagsForFiles, CanAccessPath, GetProtectedPaths } from '../../wailsjs/go/main/App'
-import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime'
+import { SearchFiles, GetFavorites, GetRecentItems, GetTagsForFiles, CanAccessPath, GetProtectedPaths } from '../../wailsjs/go/main/App'
 import { models } from '../../wailsjs/go/models'
 import { parseSearchQuery } from '../utils/searchQuery'
-
-function mergeFilesByPath(base: models.FileInfo[], next: models.FileInfo[]): models.FileInfo[] {
-  if (next.length === 0) return base
-  const seen = new Set(base.map(file => file.path))
-  const merged = [...base]
-  for (const file of next) {
-    if (!seen.has(file.path)) {
-      seen.add(file.path)
-      merged.push(file)
-    }
-  }
-  return merged
-}
+import { deleteDirectoryCache, getDirectoryCache, setDirectoryCache } from '../utils/directoryCache'
+import { streamDirectory } from '../utils/directoryLoader'
 
 function getTagColorIdentity(tag: models.Tag): string {
   return tag.type ? `${tag.type}:${tag.name}` : tag.name
@@ -47,28 +35,31 @@ export interface UseDirectoryFilesResult {
   missingPreset: boolean
 }
 
-const prevLoadKeyRef = { current: '' as string | undefined }
-
 export function useDirectoryFiles(currentPath: string | undefined): UseDirectoryFilesResult {
   const [files, setFiles] = useState<models.FileInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [fileTagColors, setFileTagColors] = useState<Record<string, string>>({})
   const [protectedPathMap, setProtectedPathMap] = useState<Record<string, boolean>>({})
   const [missingPreset, setMissingPreset] = useState(false)
+  const tagRequestIdRef = useRef(0)
 
   const { refreshKey, searchQuery, searchFilter, setSearchLoading } = useUIStore()
+  const prevLoadKeyRef = useRef<string | undefined>(undefined)
+  const previousRefreshKeyRef = useRef(refreshKey)
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const { searchPresets, smartFolders } = useSettingsStore()
   const { tagRefreshKey } = useTagStore()
   const privacyMode = usePrivacyStore(state => state.state?.mode)
 
   useEffect(() => {
-    if (files.length === 0) {
+    if (loading || files.length === 0) {
       setFileTagColors({})
       return
     }
+    const requestId = ++tagRequestIdRef.current
     const paths = files.map(f => f.path)
     GetTagsForFiles(paths).then(res => {
+      if (requestId !== tagRequestIdRef.current) return
       const colors: Record<string, string> = {}
       for (const [path, tags] of Object.entries(res)) {
         if (tags && tags.length > 0) {
@@ -78,10 +69,10 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       }
       setFileTagColors(colors)
     }).catch(console.error)
-  }, [files, tagRefreshKey])
+  }, [files, loading, tagRefreshKey])
 
   useEffect(() => {
-    if (privacyMode !== 'privacy' || files.length === 0) {
+    if (privacyMode !== 'privacy' || loading || files.length === 0) {
       setProtectedPathMap({})
       return
     }
@@ -93,7 +84,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       }
       setProtectedPathMap(next)
     }).catch(console.error)
-  }, [files, privacyMode])
+  }, [files, loading, privacyMode])
 
   useEffect(() => {
     if (!currentPath || currentPath.endsWith('\\转换')) {
@@ -111,7 +102,9 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
       }).catch(console.error)
     }
 
-    const loadKey = `${currentPath}|${privacyMode || 'public'}|${debouncedSearchQuery || ''}|${JSON.stringify(searchFilter)}`
+    const refreshChanged = previousRefreshKeyRef.current !== refreshKey
+    previousRefreshKeyRef.current = refreshKey
+    const loadKey = `${currentPath}|${privacyMode || 'public'}|${debouncedSearchQuery || ''}|${JSON.stringify(searchFilter)}|${refreshKey}`
     if (prevLoadKeyRef.current !== loadKey) {
       setLoading(true)
       setFiles([])
@@ -129,7 +122,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 	  return results
 	}
     let isSearchRequest = false
-    let cleanupDirectoryEvents: (() => void) | null = null
+    let cleanupDirectoryStream: (() => void) | null = null
 
     const parsed = parseSearchQuery(debouncedSearchQuery || '')
     let keyword = parsed.keyword
@@ -262,37 +255,26 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
     } else if (currentPath?.endsWith('\\批量重命名')) {
       fetchPromise = Promise.resolve([])
     } else {
-      const reqId = Date.now().toString() + Math.random().toString()
-      let receivedChunk = false
-      let directoryEventsActive = true
-      cleanupDirectoryEvents = () => {
-        directoryEventsActive = false
-        EventsOff('directory:chunk:' + reqId)
-        EventsOff('directory:done:' + reqId)
-      }
-      EventsOn('directory:chunk:' + reqId, (chunk: models.FileInfo[]) => {
-        if (isMounted && directoryEventsActive) {
-          receivedChunk = true
-          setFiles(prev => {
-            return mergeFilesByPath(prev, chunk || [])
-          })
-        }
-      })
-      EventsOn('directory:done:' + reqId, () => {
-        cleanupDirectoryEvents?.()
-      })
+      const cacheMode = privacyMode || 'public'
+      if (refreshChanged) deleteDirectoryCache(currentPath, cacheMode)
+      const cached = refreshChanged ? undefined : getDirectoryCache(currentPath, cacheMode)
 
-      fetchPromise = ReadDirChunked(currentPath, reqId).then(res => {
-        if (isMounted) {
-          const files = res || []
-          if (receivedChunk) {
-            setFiles(prev => mergeFilesByPath(files, prev))
-          } else {
-            setFiles([...files])
-          }
-        }
-        return null as unknown as models.FileInfo[]
-      })
+      if (cached?.complete) {
+        fetchPromise = Promise.resolve(cached.files)
+      } else {
+        if (cached?.files.length) setFiles(cached.files)
+        fetchPromise = new Promise<models.FileInfo[]>((resolve, reject) => {
+          cleanupDirectoryStream = streamDirectory(currentPath, {
+            onUpdate: (nextFiles, complete) => {
+              if (!isMounted) return
+              setDirectoryCache(currentPath, cacheMode, nextFiles, complete)
+              setFiles(nextFiles)
+              if (complete) resolve(null as unknown as models.FileInfo[])
+            },
+            onError: reject,
+          })
+        })
+      }
     }
 
     if (isSearchRequest) setSearchLoading(true)
@@ -315,7 +297,7 @@ export function useDirectoryFiles(currentPath: string | undefined): UseDirectory
 
     return () => {
       isMounted = false
-      cleanupDirectoryEvents?.()
+      cleanupDirectoryStream?.()
       if (isSearchRequest) setSearchLoading(false)
     }
   }, [currentPath, refreshKey, debouncedSearchQuery, searchFilter, privacyMode, setSearchLoading])

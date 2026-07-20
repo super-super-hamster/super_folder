@@ -102,9 +102,11 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   }, [rowVirtualizer.scrollElement, computeCurrentGroup])
 
   useEffect(() => {
-    const el = scrollerZoneRef.current
-    if (!el) return
+    const scrollElement = rowVirtualizer.scrollElement as HTMLElement | undefined
+    if (!scrollElement) return
     const handleWheel = (e: WheelEvent) => {
+      const zone = scrollerZoneRef.current?.getBoundingClientRect()
+      if (!zone || e.clientX < zone.left || e.clientX > zone.right || e.clientY < zone.top || e.clientY > zone.bottom) return
       e.preventDefault()
       e.stopPropagation()
       if (!isGrouped || groups.length === 0) return
@@ -131,9 +133,18 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
 
       lastWheelTime.current = now
     }
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
-  }, [isGrouped, groups.length, headerIndices, rowVirtualizer, computeCurrentGroup])
+    scrollElement.addEventListener('wheel', handleWheel, { passive: false })
+    return () => scrollElement.removeEventListener('wheel', handleWheel)
+  }, [isGrouped, groups.length, headerIndices, rowVirtualizer.scrollElement, rowVirtualizer, computeCurrentGroup])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const zone = scrollerZoneRef.current?.getBoundingClientRect()
+      setIsHoveringScroller(!!zone && e.clientX >= zone.left && e.clientX <= zone.right && e.clientY >= zone.top && e.clientY <= zone.bottom)
+    }
+    document.addEventListener('mousemove', handleMouseMove)
+    return () => document.removeEventListener('mousemove', handleMouseMove)
+  }, [])
 
   const getItemClasses = (offset: number) => {
     const abs = Math.abs(offset)
@@ -147,9 +158,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
   return (
     <div
       ref={scrollerZoneRef}
-      className="absolute right-0 top-0 bottom-0 w-16 z-20"
-      onMouseEnter={() => setIsHoveringScroller(true)}
-      onMouseLeave={() => setIsHoveringScroller(false)}
+      className="absolute right-0 top-0 bottom-0 w-16 z-20 pointer-events-none"
     >
       <AnimatePresence>
         {isHoveringScroller && (
@@ -182,7 +191,7 @@ export default function GroupFastScroller({ rowVirtualizer, listItems, isGrouped
               return (
                 <div
                   key={`slot-${offset}`}
-                  className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-lg ${isCenter ? 'bg-sf-selected ' : ''}${baseClasses}`}
+                  className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-lg ${isCenter ? 'bg-sf-selected/75 ' : ''}${baseClasses}`}
                   style={{ opacity }}
                 >
                   <motion.div

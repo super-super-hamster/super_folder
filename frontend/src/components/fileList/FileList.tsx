@@ -42,6 +42,8 @@ export default function FileList() {
   const { searchPresets, smartFolders, setSmartFolders, doubleClickOpenMode } = useSettingsStore()
   
   const [isCreatingSmartFolder, setIsCreatingSmartFolder] = useState(false)
+  const [lastClickedPath, setLastClickedPath] = useState<string | null>(null)
+  const [showLocateButton, setShowLocateButton] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -136,8 +138,27 @@ export default function FileList() {
         }
       }
     },
-    onSearchFocus: () => setSearchFocused(true)
-  }), [files, selectedPaths, currentPath, clipboardItems, operation])
+    onSearchFocus: () => setSearchFocused(true),
+    onNavigateSelection: (direction: 'up' | 'down' | 'left' | 'right') => {
+      if (selectedPaths.size !== 1) return
+      const shortcutColumns = viewMode === 'list' ? 1 : columns
+      const activeSortOption = currentPath === 'recent://' ? recentSortOption : sortOption
+      const shortcutItems = processFiles(files, activeSortOption, shortcutColumns, isGrouped, viewMode)
+      const orderedFiles = shortcutItems.filter(item => item.type === 'row').flatMap(item => (item as any).items as models.FileInfo[])
+      const currentIndex = orderedFiles.findIndex(file => selectedPaths.has(file.path))
+      if (currentIndex < 0) return
+      const step = viewMode === 'list'
+        ? (direction === 'up' || direction === 'left' ? -1 : 1)
+        : direction === 'up' ? -shortcutColumns
+        : direction === 'down' ? shortcutColumns
+        : direction === 'left' ? -1 : 1
+      const nextIndex = Math.max(0, Math.min(orderedFiles.length - 1, currentIndex + step))
+      if (nextIndex !== currentIndex) {
+        selectOnly(orderedFiles[nextIndex].path)
+        setLastClickedPath(orderedFiles[nextIndex].path)
+      }
+    }
+  }), [files, selectedPaths, currentPath, clipboardItems, operation, viewMode, columns, sortOption, recentSortOption, isGrouped])
 
   useFileListShortcuts(shortcutCallbacks)
 
@@ -172,8 +193,6 @@ export default function FileList() {
     })
     return result
   }, [listItems])
-
-  const [lastClickedPath, setLastClickedPath] = useState<string | null>(null)
 
   const { isDragging, dragBox, dragSelectedPaths, edgeFeedback, onPointerDown: handlePointerDown } = useMarqueeSelection({ scrollRef, listItems, columns, viewMode })
 
@@ -229,10 +248,28 @@ export default function FileList() {
     }
   }, [currentPath, files, loading])
 
+  const updateLocateButton = () => {
+    if (selectedPaths.size !== 1 || !scrollRef.current) {
+      setShowLocateButton(false)
+      return
+    }
+    const path = Array.from(selectedPaths)[0]
+    const index = listItems.findIndex(item => item.type === 'row' && item.items?.some(file => file.path === path))
+    const virtualItem = index >= 0 ? rowVirtualizer.getVirtualItems().find(item => item.index === index) : null
+    const top = scrollRef.current.scrollTop
+    const bottom = top + scrollRef.current.clientHeight
+    setShowLocateButton(index >= 0 && (!virtualItem || virtualItem.start < top || virtualItem.start + virtualItem.size > bottom))
+  }
+
+  useEffect(() => {
+    updateLocateButton()
+  }, [selectedPaths, listItems, rowVirtualizer])
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (currentPath) {
       useUIStore.getState().setScrollPosition(currentPath, e.currentTarget.scrollTop)
     }
+    updateLocateButton()
   }
 
   const handleFileClick = (e: React.MouseEvent, file: models.FileInfo) => {
@@ -417,7 +454,7 @@ export default function FileList() {
         className="h-full w-full overflow-y-auto px-6 pt-4 no-scrollbar pb-20 relative"
         onPointerDown={handlePointerDown}
       >
-      {loading ? (
+      {loading && files.length === 0 ? (
         <div className="flex items-center justify-center h-36 text-gray-400">正在加载文件...</div>
       ) : files.length === 0 ? (
         <div className="flex justify-center text-gray-400 py-10">
@@ -565,6 +602,17 @@ export default function FileList() {
       </div>
 
       <ProgressCapsule />
+
+      {showLocateButton && selectedPaths.size === 1 && (
+        <button
+          type="button"
+          aria-label="定位选中文件"
+          className="absolute right-4 bottom-4 z-40 w-9 h-9 rounded-full bg-sf-panel border border-sf-border shadow-panel flex items-center justify-center hover:bg-sf-item-hover transition-colors"
+          onClick={() => setScrollToPath(Array.from(selectedPaths)[0])}
+        >
+          <img src="/src/assets/icons/aiming_2_line.svg" className="w-5 h-5 opacity-75" alt="定位" />
+        </button>
+      )}
 
       <GroupFastScroller rowVirtualizer={rowVirtualizer} listItems={listItems} isGrouped={isGrouped} />
 

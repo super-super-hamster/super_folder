@@ -273,7 +273,7 @@ export default function SimilarImages() {
 
   if (loading) {
     return (
-      <div className="flex-1 bg-sf-page rounded-2xl shadow-panel border border-sf-border overflow-hidden flex flex-col items-center justify-center wails-no-drag">
+      <div className="flex-1 bg-sf-page shadow-panel border border-sf-border overflow-hidden flex flex-col items-center justify-center wails-no-drag">
         <div className="w-80 space-y-4">
           <div className="text-center text-gray-600 text-sm">
             {progress.stage === 'checking' && '正在检查数据状态...'}
@@ -294,7 +294,7 @@ export default function SimilarImages() {
 
   if (groups.length === 0) {
     return (
-      <div className="flex-1 bg-sf-page rounded-2xl shadow-panel border border-sf-border overflow-hidden flex flex-col items-center justify-center wails-no-drag">
+      <div className="flex-1 bg-sf-page shadow-panel border border-sf-border overflow-hidden flex flex-col items-center justify-center wails-no-drag">
         <div className="text-gray-500 text-sm">未找到相似图片</div>
       </div>
     )
