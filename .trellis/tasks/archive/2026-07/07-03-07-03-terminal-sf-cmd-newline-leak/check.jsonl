@@ -1,1 +1,0 @@
-{"file": "frontend/src/components/terminal/TerminalPanel.tsx", "reason": "Verified: syncRemaining replaces syncingConpty with counter-based sync; sfLineCount fully removed; single \\r sent; prompt counting in output handler. Two indentation artifacts fixed (lines 384-385, 561-562). Build passes."}
